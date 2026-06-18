@@ -216,7 +216,7 @@
   </div>
   <div id="hint">
     마우스(또는 터치)·<kbd>↑</kbd> <kbd>↓</kbd>로 패들 이동 ·
-    공을 받을수록 게이지가 차고 가득 차면 <b style="color:#f2cc60">자동 스매시 ⚡</b><br />
+    공을 받을수록 게이지가 차고 가득 차면 <b style="color:#f2cc60">자동 스매시 ⚡</b> · AI도 가끔 <b style="color:#f2cc60">강타</b>하니 주의!<br />
     <kbd>Space</kbd> 시작 / 일시정지 · <kbd>M</kbd> 음소거 · <kbd>F</kbd> 전체화면 · 먼저 <b>7점</b> 내면 승리
   </div>
 
@@ -240,12 +240,13 @@
   const SMASH_SPEED_MAX = 22;
   const SMASH_GAUGE_MAX = 3;      // 공을 이만큼 받으면 게이지가 가득 차고, 다음 타구가 자동 스매시
   const WIN_SCORE = 7;
+  const AI_SMASH_MIN_RALLY = 3;   // AI는 랠리가 이만큼 이어진 뒤부터 스매시 시도(서브 직후 첫 응수부터 강타 방지)
 
-  // 난이도별 AI 속도와 공 초기 속도
+  // 난이도별 AI 속도·공 초기 속도·AI 스매시 확률(매 응수마다 판정, 0이면 스매시 안 함)
   const DIFFICULTIES = {
-    1: { name: "쉬움",   aiSpeed: 5.5, ballSpeed: 6 },
-    2: { name: "보통",   aiSpeed: 6, ballSpeed: 6 },
-    3: { name: "어려움", aiSpeed: 8, ballSpeed: 7 },
+    1: { name: "쉬움",   aiSpeed: 5.5, ballSpeed: 6, smashChance: 0    },
+    2: { name: "보통",   aiSpeed: 6,   ballSpeed: 6, smashChance: 0.12 },
+    3: { name: "어려움", aiSpeed: 8,   ballSpeed: 7, smashChance: 0.25 },
   };
   let difficulty = 2; // 기본 보통
 
@@ -316,6 +317,7 @@
     aiScore:     ["이건 못 받겠지?", "하하! 너무 느린데?", "이게 로봇의 실력이다!", "내 승리는 정해져 있다!"],
     playerScore: ["인간~ 쫌 하는데?", "바, 방심했을 뿐이다!", "운이 좋았군!", "다음 공은 못 막는다!"],
     rally:       ["제법 버티는군!", "오~ 끈질긴데?", "이 정도로는 안 끝나지!"],
+    aiSmash:     ["받아랏, 강타!", "이건 못 막지!", "스매시!! 하하!", "로봇의 필살기다!"],
     aiWin:       ["역시 로봇의 승리! 하하!", "인간은 아직 멀었군.", "기계는 지치지 않는다!"],
     playerWin:   ["크윽... 다음엔 안 진다!", "인간 승리... 인정한다.", "재대결을 신청한다!"],
   };
@@ -547,7 +549,11 @@
       smashGauge = ready ? 0 : smashGauge + 1;
     } else if (ball.vx > 0 && hitsPaddle(ai)) {
       ball.x = ai.x - ball.r;
-      bounceFrom(ai, -1, false);
+      // AI 스매시: 난이도별 확률 + 최소 랠리 조건을 만족하면 강타. 발동 시 도발 멘트.
+      const aiSmash = rally >= AI_SMASH_MIN_RALLY &&
+                      Math.random() < DIFFICULTIES[difficulty].smashChance;
+      bounceFrom(ai, -1, aiSmash);
+      if (aiSmash) sayRobot(TAUNTS.aiSmash);
     }
 
     // 아이템 등장/충돌
