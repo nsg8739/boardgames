@@ -3,3 +3,8 @@
 
 # Claude Code local settings (personal)
 .claude/settings.local.json
+
+# 비밀/환경 파일 — 절대 커밋 금지 (public 저장소)
+.env
+.env.local
+config/secrets.json
