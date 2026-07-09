@@ -33,11 +33,21 @@
     box-sizing: border-box;
     overscroll-behavior: none;
     overflow-x: hidden;
+    overflow-y: auto;
   }
   /* body를 뷰포트 폭으로 '확정'해, 자식의 max-content가 퍼센트 조상을 통해 body를
      shrink-to-fit로 부풀리는 flex 피드백 루프를 차단(모바일 가로 넘침 방지). */
   html { width: 100%; }
   body { width: 100%; max-width: 100%; }
+  body.screen-menu {
+    overflow-y: hidden;
+  }
+  body.screen-playing,
+  body.screen-lobby,
+  body.screen-over {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
   /* 게임 배경 이미지(파일명 공백은 %20). 어두운 오버레이를 얹어 전경 텍스트 가독성 확보.
      뷰포트 전체를 덮는 고정 레이어(::before)로 깔아, 창 크기·스크롤과 무관하게 항상 빈틈없이 채운다.
      (body 배경+attachment:fixed 방식은 일부 환경에서 가장자리가 안 채워지는 문제가 있어 이 방식으로.) */
@@ -91,6 +101,11 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+  }
+  body.screen-playing #stage,
+  body.screen-lobby #stage,
+  body.screen-over #stage {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
   }
 
   /* 게임 보드 */
@@ -355,6 +370,12 @@
         url("DA%20VINCI%20CODE_1.png") center top / auto 65svh no-repeat;
     }
     html, body { width: 100vw; max-width: 100vw; padding: 0; overflow-x: hidden; }
+    body.screen-playing,
+    body.screen-lobby,
+    body.screen-over {
+      min-height: 100svh;
+      overflow-y: auto;
+    }
     #stage {
       width: calc(100vw - 32px);
       max-width: calc(100vw - 32px);
@@ -1247,6 +1268,8 @@
   // ========================================================================
   function setScreen(s) {
     screen = s;
+    document.body.classList.remove("screen-connecting", "screen-menu", "screen-lobby", "screen-playing", "screen-over");
+    document.body.classList.add(`screen-${s}`);
     $("board").classList.toggle("hidden", !(s === SCREEN.PLAYING || s === SCREEN.OVER));
     $("menu").classList.toggle("hidden", s !== SCREEN.MENU);
     $("lobby").classList.toggle("hidden", s !== SCREEN.LOBBY);
