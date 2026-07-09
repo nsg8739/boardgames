@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>다빈치코드 — 온라인 대전 (2~4인)</title>
+<style>
+  /* 골드 팔레트 — 배경(브라운/골드)과 맞춘 인터랙티브 색상 */
+  :root {
+    --gold: #c9a227;         /* 기본 골드(버튼/선택) */
+    --gold-bright: #e6c04a;  /* 밝은 골드(강조/호버) */
+    --gold-soft: #f2cc60;    /* 기존 밝은 강조(뽑은 타일/조커) */
+    --warm-bg: #241f16;      /* 따뜻한 어두운 버튼 바탕 */
+    --warm-border: #5a4a25;  /* 따뜻한 테두리 */
+    --warm-text: #ece0c4;    /* 따뜻한 밝은 글자 */
+    --ink: #1a1508;          /* 골드 위 어두운 글자 */
+  }
+  html, body {
+    margin: 0;
+    min-height: 100%;
+    background: #0d1117;
+    color: #e6edf3;
+    font-family: "Segoe UI", "Malgun Gothic", sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    box-sizing: border-box;
+    overscroll-behavior: none;
+  }
+  /* 게임 배경 이미지(파일명 공백은 %20). 어두운 오버레이를 얹어 전경 텍스트 가독성 확보.
+     뷰포트 전체를 덮는 고정 레이어(::before)로 깔아, 창 크기·스크롤과 무관하게 항상 빈틈없이 채운다.
+     (body 배경+attachment:fixed 방식은 일부 환경에서 가장자리가 안 채워지는 문제가 있어 이 방식으로.) */
+  body { background: #17110a; }  /* 이미지 가장자리와 어울리는 어두운 폴백 */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(rgba(13, 17, 23, 0.32), rgba(13, 17, 23, 0.46)),
+      url("DA%20VINCI%20CODE_1.png") center center / cover no-repeat;
+    pointer-events: none;
+  }
+  h1 { font-weight: 600; font-size: clamp(15px, 5vw, 19px); margin: 0 0 10px; letter-spacing: 1px; text-align: center; }
+  #conn { font-size: 12px; color: #8b949e; margin-bottom: 8px; min-height: 16px; text-align: center; }
+  #conn .ok { color: #3fb950; }
+  #conn .bad { color: #f85149; }
+
+  /* board가 숨겨져도(메뉴/로비/결과 화면) 절대배치 패널이 채울 영역을 확보.
+     board의 min-height(420, border-box)와 맞춘다. 안 그러면 stage 높이가 0이 돼 패널이 겹친다. */
+  #stage { position: relative; width: min(560px, 96vw); min-height: 420px; }
+
+  /* 게임 보드 */
+  #board {
+    background: rgba(18, 15, 10, 0.86); border: 2px solid var(--warm-border); border-radius: 10px;
+    padding: 16px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5); min-height: 420px; box-sizing: border-box;
+  }
+  #board.hidden { display: none; }
+  .poolInfo { text-align: center; font-size: 12px; color: #8b949e; margin-bottom: 8px; }
+
+  .side { margin: 8px 0; padding: 8px; border-radius: 8px; }
+  .side.active { background: rgba(63, 185, 80, 0.08); box-shadow: inset 0 0 0 1px rgba(63, 185, 80, 0.35); }
+  .side.eliminated { opacity: 0.45; }
+  .side .label { font-size: 13px; color: #8b949e; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .side .label .turnDot { width: 9px; height: 9px; border-radius: 50%; background: #30363d; flex: none; }
+  .side.active .label .turnDot { background: #3fb950; box-shadow: 0 0 8px #3fb950; }
+  .side.active .label { color: #e6edf3; font-weight: 600; }
+  .side .label .badge { font-size: 11px; color: #f85149; border: 1px solid #f85149; border-radius: 4px; padding: 0 5px; }
+
+  .tiles { display: flex; flex-wrap: wrap; gap: 6px; min-height: 62px; align-items: flex-end; }
+
+  .tile {
+    width: 40px; height: 58px; border-radius: 6px; display: flex; align-items: center; justify-content: center;
+    font-size: 24px; font-weight: 700; position: relative; border: 2px solid transparent; user-select: none;
+    transition: transform 0.08s, box-shadow 0.1s; flex: none;
+  }
+  .tile.black { background: #0b0e14; color: #e6edf3; border-color: #4a3d20; }
+  .tile.white { background: #e6edf3; color: #0d1117; border-color: #cbb26a; }
+  .tile.joker.black { color: #f2cc60; }
+  .tile.joker.white { color: #b8860b; }
+  .tile.hidden-face .num { opacity: 0; }
+  .tile.hidden-face::after { content: "?"; position: absolute; font-size: 24px; opacity: 0.6; }
+  .tile.secret { border-style: dashed; }
+  .tile.black.secret { border-color: var(--gold-bright); }
+  .tile.white.secret { border-color: var(--gold); }
+  .tile.drawn { transform: translateY(-8px); box-shadow: 0 0 0 2px #f2cc60, 0 4px 12px rgba(242, 204, 96, 0.4); }
+  .tile.drawn::before { content: "NEW"; position: absolute; top: -16px; font-size: 9px; letter-spacing: 1px; color: #f2cc60; font-weight: 700; }
+  .tile.guessable { cursor: pointer; }
+  .tile.guessable:hover { box-shadow: 0 0 0 2px var(--gold-bright); }
+  .tile.selected { box-shadow: 0 0 0 3px var(--gold-bright) !important; }
+  .tile.flash-right { animation: flashRight 0.7s; }
+  .tile.flash-wrong { animation: flashWrong 0.7s; }
+  @keyframes flashRight { 0%,100% { box-shadow: none; } 30% { box-shadow: 0 0 0 3px #3fb950; } }
+  @keyframes flashWrong { 0%,100% { box-shadow: none; } 30% { box-shadow: 0 0 0 3px #f85149; } }
+
+  /* 조커 배치용 삽입 지점 */
+  .gap { width: 14px; height: 58px; border-radius: 4px; border: 2px dashed #f2cc60; background: rgba(242,204,96,0.08); cursor: pointer; flex: none; }
+  .gap:hover { background: rgba(242,204,96,0.28); }
+
+  #status { text-align: center; font-size: 14px; margin: 14px 0 6px; min-height: 20px; line-height: 1.5; }
+  #feedback { text-align: center; font-size: 13px; color: #8b949e; min-height: 18px; }
+
+  #numpad { margin: 12px auto 0; max-width: 340px; }
+  #numpad.hidden { display: none; }
+  #numpad .grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+  #numpad .np { font-family: inherit; font-size: 17px; font-weight: 600; padding: 10px 0; border: 1px solid var(--warm-border); border-radius: 6px; background: var(--warm-bg); color: var(--warm-text); cursor: pointer; }
+  #numpad .np:hover { filter: brightness(1.35); border-color: var(--gold); }
+  #numpad .np.joker { grid-column: span 2; color: var(--gold-soft); border-color: var(--gold-soft); }
+  #numpad .npCancel { margin-top: 8px; width: 100%; background: transparent; }
+
+  #decide { display: flex; gap: 10px; justify-content: center; margin-top: 12px; }
+  #decide.hidden { display: none; }
+
+  /* 패널 — 한 번에 하나만 표시되므로 절대배치 오버레이가 아니라 일반 흐름으로 두어
+     stage가 내용 높이에 맞게 늘어나게 한다(내용이 길어져도 위/아래로 삐져나오지 않음). */
+  .panel { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; background: rgba(18, 15, 10, 0.86); border: 2px solid var(--warm-border); border-radius: 10px; padding: 20px 16px; box-sizing: border-box; text-align: center; min-height: 420px; }
+  .panel.hidden { display: none; }
+  .panel h2 { font-size: clamp(20px, 6vw, 28px); font-weight: 700; margin: 0; }
+  .panel .sub { font-size: 14px; color: #8b949e; margin-top: -4px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  button.btn { font-family: inherit; cursor: pointer; border: 1px solid var(--warm-border); border-radius: 6px; background: var(--warm-bg); color: var(--warm-text); padding: 11px 22px; font-size: 15px; transition: filter 0.1s; }
+  button.btn:hover { filter: brightness(1.25); }
+  button.primary { background: var(--gold); border-color: var(--gold-bright); color: var(--ink); font-weight: 600; }
+  button.host { background: var(--gold-bright); border-color: var(--gold-soft); color: var(--ink); font-weight: 700; }
+
+  /* 옵션 세그먼트 컨트롤 */
+  .opt { display: flex; align-items: center; gap: 10px; }
+  .opt .optLabel { font-size: 13px; color: #8b949e; width: 42px; text-align: right; }
+  .seg { display: inline-flex; border: 1px solid var(--warm-border); border-radius: 6px; overflow: hidden; }
+  .seg button { font-family: inherit; cursor: pointer; border: none; background: var(--warm-bg); color: var(--warm-text); padding: 8px 14px; font-size: 14px; border-right: 1px solid var(--warm-border); }
+  .seg button:last-child { border-right: none; }
+  .seg button.on { background: var(--gold); color: var(--ink); font-weight: 700; }
+  #ruleNote { font-size: 12px; color: #8b949e; max-width: 440px; line-height: 1.5; margin-top: -2px; }
+  #numpad .npDouble { grid-column: span 6; margin-top: 2px; border: 1px solid var(--gold-soft); border-radius: 6px; background: var(--warm-bg); color: var(--gold-soft); font-family: inherit; font-size: 13px; padding: 8px 0; cursor: pointer; }
+  #numpad .npDouble.on { background: var(--gold-soft); color: var(--ink); font-weight: 700; }
+
+  #codeInput { font-family: inherit; font-size: 22px; letter-spacing: 6px; text-align: center; text-transform: uppercase; width: 150px; padding: 10px; border-radius: 6px; border: 1px solid var(--warm-border); background: #0d0b07; color: var(--warm-text); }
+  #roomCode { font-size: clamp(34px, 12vw, 52px); font-weight: 800; letter-spacing: 10px; color: #f2cc60; margin: 4px 0; }
+  #rosterInfo { font-size: 14px; color: #8b949e; }
+  .err { color: #f85149; font-size: 13px; min-height: 16px; }
+  .divider { width: 80%; border-top: 1px solid var(--warm-border); margin: 4px 0; }
+  #hint { margin-top: 12px; font-size: 12px; color: #8b949e; text-align: center; line-height: 1.7; max-width: 560px; }
+  a { color: var(--gold-bright); }
+</style>
+</head>
+<body>
+  <h1>🔎 다빈치코드 온라인 대전</h1>
+  <div id="conn">서버 연결 중…</div>
+
+  <div id="stage">
+    <div id="board" class="hidden">
+      <div class="poolInfo">남은 더미: <span id="poolCount">0</span>장</div>
+
+      <!-- 상대 플레이어들(동적 생성) -->
+      <div id="oppArea"></div>
+
+      <div id="status"></div>
+      <div id="feedback"></div>
+
+      <!-- 내 손패 -->
+      <div class="side me" id="mySide">
+        <div class="label"><span class="turnDot"></span><span id="myLabel">나</span></div>
+        <div id="myTiles" class="tiles"></div>
+      </div>
+
+      <!-- 숫자 선택 패드 -->
+      <div id="numpad" class="hidden">
+        <div class="grid" id="numpadGrid"></div>
+        <button class="btn npCancel" id="npCancel">취소</button>
+      </div>
+      <div id="numpadHint" style="text-align:center;font-size:12px;color:#8b949e;margin-top:6px;"></div>
+
+      <!-- 정답 후 계속/멈추기 -->
+      <div id="decide" class="hidden">
+        <button class="btn primary" data-choice="continue">계속 추리 ▶</button>
+        <button class="btn" data-choice="stop">멈추기(턴 종료)</button>
+      </div>
+    </div>
+
+    <!-- 메뉴 -->
+    <div id="menu" class="panel">
+      <h2>다빈치코드 온라인</h2>
+      <div class="sub">방을 만들 때 버전과 인원을 설정하세요</div>
+      <div class="opt">
+        <div class="optLabel">버전</div>
+        <div class="seg" id="segVersion">
+          <button data-v="basic" class="on">Basic</button><button data-v="plus">PLUS</button><button data-v="zion">Zion</button>
+        </div>
+      </div>
+      <div id="ruleNote"></div>
+      <div class="opt">
+        <div class="optLabel">인원</div>
+        <div class="seg" id="segPlayers">
+          <button data-v="2" class="on">2명</button><button data-v="3">3명</button><button data-v="4">4명</button>
+        </div>
+      </div>
+      <div class="row"><button id="createBtn" class="btn host">방 만들기</button></div>
+      <div class="divider"></div>
+      <div class="sub">받은 코드로 입장</div>
+      <div class="row">
+        <input id="codeInput" maxlength="4" placeholder="코드" autocomplete="off" />
+        <button id="joinBtn" class="btn primary">입장하기</button>
+      </div>
+      <div id="menuErr" class="err"></div>
+    </div>
+
+    <!-- 로비 -->
+    <div id="lobby" class="panel hidden">
+      <h2 id="lobbyTitle">상대를 기다리는 중…</h2>
+      <div id="lobbyCodeWrap">
+        <div class="sub">이 코드를 상대에게 알려주세요</div>
+        <div id="roomCode">----</div>
+        <button id="copyBtn" class="btn">코드 복사</button>
+      </div>
+      <div id="rosterInfo"></div>
+      <button id="cancelBtn" class="btn">취소</button>
+    </div>
+
+    <!-- 결과 -->
+    <div id="over" class="panel hidden">
+      <h2 id="overTitle">🎉 승리!</h2>
+      <div class="sub" id="overSub"></div>
+      <button id="againBtn" class="btn primary">다시 하기</button>
+    </div>
+  </div>
+
+  <div id="hint">
+    <b>공통</b> — 흑·백 0~11 타일을 오름차순(같은 숫자는 검정이 왼쪽)으로 세웁니다.
+    상대 가림 타일의 숫자를 맞혀 공개시키고, 타일이 모두 공개된 사람은 탈락 · <b>최후의 1인</b>이 승리! (조커 🃏 2개 포함)<br />
+    <b>Basic</b>: 매 턴 1장 뽑아 추리 → 맞히면 공개+턴 넘김, 틀리면 벌칙 없이 턴 넘김.
+    <b>PLUS</b>: 뽑아 추리 → 맞히면 계속/멈추기, 틀리면 뽑은 타일 공개.
+    <b>Zion</b>: 흑2·백2 시작(뽑기 없음) → 맞히면 턴 넘김, 틀리면 1장 받기, 같은 숫자 인접이면 '더블' 지목.<br />
+    <b style="color:#f2cc60">조커(🃏)</b>는 숫자가 없어 아무 위치에나 놓을 수 있고, 추리할 땐 "조커"로 지목 ·
+    탁구 게임으로 가려면 <a href="./index.html">여기</a>
+  </div>
+
+<script>
+(() => {
+  "use strict";
+
+  // ===== 서버 주소 (versus.html과 동일한 중계 서버 재사용) =====
+  const RENDER_URL = "wss://pingpong-server-hgl2.onrender.com";
+  const override = new URLSearchParams(location.search).get("server");
+  const isLocal = ["localhost", "127.0.0.1"].includes(location.hostname) || location.protocol === "file:";
+  const SERVER_URL = override || (isLocal ? "ws://localhost:8080" : RENDER_URL);
+
+  // ===== 네트워크/화면 상태 =====
+  let ws = null;
+  let myIndex = null;         // 이 클라이언트의 플레이어 인덱스(0 = 호스트)
+  let isHost = false;
+  const JOKERS = 2;  // 조커는 옵션에서 제외 — 모든 버전 고정 2개(더미에 포함, 뽑기로 등장)
+  const cfg = { count: 2, jokers: JOKERS, version: "basic" };  // 호스트가 방 만들 때 선택 → 게임 초기화에 사용
+  let optPlayers = 2, optVersion = "basic";  // 메뉴 세그먼트 선택값
+
+  const SCREEN = { CONNECTING: "connecting", MENU: "menu", LOBBY: "lobby", PLAYING: "playing", OVER: "over" };
+  let screen = SCREEN.CONNECTING;
+
+  let lastView = null;
+  let selTarget = null, selIndex = null;  // 추리 중 선택된 (상대 인덱스, 타일 인덱스)
+  let candDoubleLeft = null, dblOn = false; // Zion: 인접 동일숫자 '더블' 후보(왼쪽 인덱스)와 토글 상태
+
+  const $ = (id) => document.getElementById(id);
+
+  // ========================================================================
+  //  게임 엔진 (호스트만 실행)
+  // ========================================================================
+  let G = null;
+  // G = { pool, players:[{hand,eliminated}], count, jokers, turn, phase, drawn, winner, lastGuess }
+  // phase: 'guess' | 'decide' | 'penalty' | 'placeJoker' | 'over'
+
+  const keyOf = (t) => t.value * 2 + (t.color === "w" ? 1 : 0);
+  const allUp = (h) => h.every((t) => t.faceUp);
+  const hasDown = (h) => h.some((t) => !t.faceUp);
+
+  function shuffle(a) {
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  // 숫자 타일을 정렬 위치에 삽입. 조커는 건드리지 않음(핀 고정).
+  // 규칙: 자기보다 큰 "숫자" 타일 바로 앞에 삽입 → 숫자끼리는 항상 오름차순 유지.
+  function insertNumbered(hand, tile) {
+    let i = 0;
+    while (i < hand.length) {
+      const t = hand[i];
+      if (!t.joker && keyOf(t) > keyOf(tile)) break;
+      i++;
+    }
+    hand.splice(i, 0, tile);
+  }
+
+  function newGame() {
+    const count = cfg.count, jokers = cfg.jokers, version = cfg.version;
+    // 숫자 타일 24장(흑/백 0~11)
+    const numbered = [];
+    for (const c of ["b", "w"]) for (let v = 0; v <= 11; v++) numbered.push({ color: c, value: v, joker: false, faceUp: false });
+    shuffle(numbered);
+
+    const players = [];
+    let pool;
+    if (version === "zion") {
+      // Zion: 각 플레이어에게 검정 2 + 흰색 2 = 4장(인원 수와 무관하게 고정)
+      const blacks = numbered.filter((t) => t.color === "b");
+      const whites = numbered.filter((t) => t.color === "w");
+      for (let p = 0; p < count; p++) {
+        const hand = [blacks.pop(), blacks.pop(), whites.pop(), whites.pop()];
+        hand.sort((a, b) => keyOf(a) - keyOf(b));
+        players.push({ hand, eliminated: false });
+      }
+      pool = blacks.concat(whites);  // 남은 숫자 타일
+    } else {
+      const per = count === 2 ? 4 : 3;  // 기본: 2인 4장, 3~4인 3장
+      for (let p = 0; p < count; p++) {
+        const hand = [];
+        for (let k = 0; k < per; k++) hand.push(numbered.pop());
+        hand.sort((a, b) => keyOf(a) - keyOf(b));
+        players.push({ hand, eliminated: false });
+      }
+      pool = numbered.slice();
+    }
+
+    // 남은 숫자 + 조커를 섞어 더미 구성. (조커는 초기 손패엔 안 나오고 더미에서만 등장)
+    for (let k = 0; k < jokers; k++) pool.push({ color: k === 0 ? "w" : "b", value: null, joker: true, faceUp: false });
+    shuffle(pool);
+
+    G = {
+      pool, players, count, jokers, version,
+      turn: Math.floor(Math.random() * count),  // 선공 랜덤
+      phase: "guess", drawn: null, drawReason: null, winner: null, lastGuess: null,
+    };
+    if (version !== "zion") startTurnDraw();  // Zion은 턴 시작 시 뽑지 않음
+    broadcast();
+  }
+
+  function aliveIndices() { return G.players.map((p, i) => (p.eliminated ? -1 : i)).filter((i) => i >= 0); }
+
+  // (기본 Ver) 현재 턴 플레이어가 더미에서 1장 뽑기.
+  function startTurnDraw() {
+    G.phase = "guess";
+    if (G.pool.length > 0) {
+      const t = G.pool.pop();
+      t.faceUp = false;
+      G.drawn = { owner: G.turn, tile: t };
+      G.drawReason = "turn";
+      if (t.joker) {
+        G.phase = "placeJoker";  // 소유자가 위치를 골라 삽입할 때까지 손패에 넣지 않음
+      } else {
+        insertNumbered(G.players[G.turn].hand, t);
+      }
+    } else {
+      G.drawn = null;  // 더미 소진 시 뽑지 않고 바로 추리
+    }
+  }
+
+  // from 다음의 살아있는 플레이어로 턴을 넘김. (기본은 뽑기, Zion은 뽑지 않음)
+  function nextTurn(from) {
+    let i = from;
+    do { i = (i + 1) % G.count; } while (G.players[i].eliminated);
+    G.turn = i;
+    if (G.version === "zion") { G.phase = "guess"; G.drawn = null; G.drawReason = null; }
+    else startTurnDraw();
+  }
+
+  // 어떤 공개 직후 게임 종료(최후 1인) 여부 확인. 종료면 true.
+  function checkWinner() {
+    const alive = aliveIndices();
+    if (alive.length <= 1) { G.winner = alive.length === 1 ? alive[0] : null; G.phase = "over"; return true; }
+    return false;
+  }
+
+  function applyAction(a) {
+    if (!G || G.winner != null) return;
+    if (a.from !== G.turn) return;  // 자기 차례가 아니면 무시
+    if (a.action === "guess" && G.phase === "guess") {
+      if (G.version === "zion") doGuessZion(a.from, a.target, a.index, a);
+      else doGuess(a.from, a.target, a.index, a);
+    }
+    else if (a.action === "decide" && G.phase === "decide") doDecide(a.from, a.choice);
+    else if (a.action === "penalty" && G.phase === "penalty") doPenalty(a.from, a.index);
+    else if (a.action === "placeJoker" && G.phase === "placeJoker") doPlaceJoker(a.from, a.slot);
+  }
+
+  function doPlaceJoker(from, slot) {
+    if (!G.drawn || !G.drawn.tile.joker) return;
+    const hand = G.players[from].hand;
+    const s = Math.max(0, Math.min(hand.length, slot | 0));
+    hand.splice(s, 0, G.drawn.tile);
+    if (G.drawReason === "penalty") {
+      // Zion 오답 벌칙으로 받은 조커 → 배치 후 턴 넘김
+      G.drawn = null; G.drawReason = null;
+      nextTurn(from);
+    } else {
+      G.phase = "guess";  // 기본 Ver: drawn 참조 유지(NEW 강조 + 오답 시 공개 대상), 같은 턴 계속
+    }
+    broadcast();
+  }
+
+  // PLUS / Basic 공통 추리. 둘 다 턴 시작에 1장 뽑음.
+  //  - 정답: PLUS는 계속/멈추기(decide), Basic은 바로 턴 넘김.
+  //  - 오답: PLUS는 뽑은 타일 공개(더미 없으면 내 타일 공개), Basic은 벌칙 없이 턴 넘김.
+  function doGuess(from, target, index, a) {
+    if (target === from) return;
+    const opp = G.players[target];
+    if (!opp || opp.eliminated) return;
+    const tile = opp.hand[index];
+    if (!tile || tile.faceUp) return;
+
+    const guessJoker = !!a.joker;
+    const correct = guessJoker ? !!tile.joker : (!tile.joker && tile.value === a.number);
+    G.lastGuess = { by: from, target, index, correct, guessJoker, number: a.number };
+
+    if (correct) {
+      tile.faceUp = true;
+      if (allUp(opp.hand)) opp.eliminated = true;
+      if (checkWinner()) { broadcast(); return; }
+      if (G.version === "plus") G.phase = "decide";  // PLUS만 연속 추리 선택
+      else nextTurn(from);                            // Basic: 바로 턴 넘김
+    } else if (G.version === "plus") {
+      if (G.drawn) {
+        G.drawn.tile.faceUp = true;   // 방금 뽑은 타일 공개
+        G.drawn = null;
+        if (allUp(G.players[from].hand)) G.players[from].eliminated = true;
+        if (checkWinner()) { broadcast(); return; }
+        nextTurn(from);
+      } else if (hasDown(G.players[from].hand)) {
+        G.phase = "penalty";          // 더미 없음 → 내 가림 타일 하나를 공개
+      } else {
+        nextTurn(from);
+      }
+    } else {
+      nextTurn(from);  // Basic: 오답 벌칙 없음 — 뽑은 타일은 가린 채 턴 넘김
+    }
+    broadcast();
+  }
+
+  function doDecide(from, choice) {
+    if (choice === "continue") G.phase = "guess";
+    else { G.drawn = null; nextTurn(from); }
+    broadcast();
+  }
+
+  function doPenalty(from, index) {
+    const t = G.players[from].hand[index];
+    if (!t || t.faceUp) return;
+    t.faceUp = true;
+    if (allUp(G.players[from].hand)) G.players[from].eliminated = true;
+    if (checkWinner()) { broadcast(); return; }
+    nextTurn(from);
+    broadcast();
+  }
+
+  // ===== Zion Ver 추리 =====
+  // 대상 타일이 인접한 '같은 숫자 쌍'의 일부인가? (검정 왼쪽·흰색 오른쪽, 둘 다 가림)
+  // 이때 단일 지목은 인정되지 않고 '더블'로 두 장을 함께 지목해야 한다.
+  function isPartOfDouble(hand, k) {
+    const t = hand[k];
+    if (t.joker) return false;
+    const R = hand[k + 1], L = hand[k - 1];
+    if (R && !R.joker && !R.faceUp && R.value === t.value) return true;
+    if (L && !L.joker && !L.faceUp && L.value === t.value) return true;
+    return false;
+  }
+
+  // 오답 벌칙: 더미에서 1장을 가림 상태로 손패에 받음. 조커면 배치 대기(true 반환).
+  function zionPenalty(from) {
+    if (G.pool.length > 0) {
+      const t = G.pool.pop();
+      t.faceUp = false;
+      if (t.joker) { G.drawn = { owner: from, tile: t }; G.drawReason = "penalty"; G.phase = "placeJoker"; return true; }
+      insertNumbered(G.players[from].hand, t);
+    }
+    nextTurn(from);  // 더미 비었으면 그냥 턴 넘김
+    return false;
+  }
+
+  function doGuessZion(from, target, index, a) {
+    if (target === from) return;
+    const opp = G.players[target];
+    if (!opp || opp.eliminated) return;
+
+    if (a.double) {
+      // 더블 지목: index = 왼쪽(검정) 인덱스, 쌍 = (index, index+1)
+      const t1 = opp.hand[index], t2 = opp.hand[index + 1];
+      if (!t1 || !t2 || t1.faceUp || t2.faceUp) return;
+      const validPair = !t1.joker && !t2.joker && t1.color === "b" && t2.color === "w";
+      const correct = validPair && !a.joker && t1.value === a.number && t2.value === a.number;
+      G.lastGuess = { by: from, target, index, double: true, number: a.number, correct };
+      if (correct) {
+        t1.faceUp = true; t2.faceUp = true;
+        if (allUp(opp.hand)) opp.eliminated = true;
+        if (checkWinner()) { broadcast(); return; }
+        nextTurn(from);
+      } else {
+        if (zionPenalty(from)) { broadcast(); return; }  // 조커 배치 대기
+      }
+      broadcast();
+      return;
+    }
+
+    const tile = opp.hand[index];
+    if (!tile || tile.faceUp) return;
+    const partOfDouble = isPartOfDouble(opp.hand, index);
+    const guessJoker = !!a.joker;
+    // 더블의 일부면 단일 지목은 무조건 오답(더블로 지목해야 인정)
+    const correct = !partOfDouble && (guessJoker ? !!tile.joker : (!tile.joker && tile.value === a.number));
+    G.lastGuess = { by: from, target, index, double: false, number: a.number, guessJoker, correct };
+    if (correct) {
+      tile.faceUp = true;
+      if (allUp(opp.hand)) opp.eliminated = true;
+      if (checkWinner()) { broadcast(); return; }
+      nextTurn(from);
+    } else {
+      if (zionPenalty(from)) { broadcast(); return; }
+    }
+    broadcast();
+  }
+
+  // 플레이어 pi 관점의 view
+  function viewFor(pi) {
+    const drawnTile = G.drawn ? G.drawn.tile : null;
+    const me = G.players[pi];
+    const others = [];
+    for (let i = 0; i < G.count; i++) {
+      if (i === pi) continue;
+      const p = G.players[i];
+      others.push({
+        index: i, eliminated: p.eliminated,
+        tiles: p.hand.map((t) => ({
+          color: t.color, faceUp: t.faceUp, drawn: t === drawnTile,
+          value: t.faceUp && !t.joker ? t.value : null,
+          joker: t.faceUp ? !!t.joker : false,   // 가림 상태에선 조커 여부 비공개
+        })),
+      });
+    }
+    let lg = null;
+    if (G.lastGuess) {
+      const g = G.lastGuess;
+      lg = {
+        by: g.by, byMe: g.by === pi,
+        target: g.target, targetMe: g.target === pi, index: g.index,
+        correct: g.correct, double: !!g.double,
+        text: g.double ? `${g.number} 더블` : (g.guessJoker ? "조커" : String(g.number)),
+      };
+    }
+    return {
+      myIndex: pi, count: G.count, hasJokers: G.jokers > 0, version: G.version,
+      turn: G.turn, myTurn: G.turn === pi,
+      phase: G.phase, poolCount: G.pool.length,
+      winner: G.winner, iWon: G.winner === pi,
+      drawnMine: G.drawn && G.drawn.owner === pi ? { color: G.drawn.tile.color, joker: !!G.drawn.tile.joker, value: G.drawn.tile.joker ? null : G.drawn.tile.value } : null,
+      my: me.hand.map((t) => ({ color: t.color, joker: !!t.joker, value: t.joker ? null : t.value, faceUp: t.faceUp, drawn: t === drawnTile })),
+      others, lastGuess: lg,
+    };
+  }
+
+  function broadcast() {
+    for (let i = 1; i < G.count; i++) send({ type: "view", view: viewFor(i), to: i });  // 각 게스트에게 개인화 view
+    renderView(viewFor(0));  // 호스트 로컬 렌더
+  }
+
+  // ========================================================================
+  //  액션 디스패치 (호스트는 직접 적용, 게스트는 호스트(0)에게 전송)
+  // ========================================================================
+  function dispatch(a) {
+    a.from = myIndex;
+    if (isHost) applyAction(a);
+    else send({ type: "act", to: 0, a });
+  }
+
+  // ========================================================================
+  //  렌더링
+  // ========================================================================
+  const colorName = (c) => (c === "b" ? "검정" : "흰색");
+  function faceText(t) { return t.joker ? "J" : (t.value != null ? t.value : ""); }
+
+  function tileEl(t, owner) {
+    const el = document.createElement("div");
+    el.className = "tile " + (t.color === "b" ? "black" : "white") + (t.joker ? " joker" : "");
+    const num = document.createElement("span");
+    num.className = "num";
+    num.textContent = faceText(t);
+    el.appendChild(num);
+    if (owner === "me") { if (!t.faceUp) el.classList.add("secret"); }
+    else { if (!t.faceUp) el.classList.add("hidden-face"); }
+    if (t.drawn) el.classList.add("drawn");
+    return el;
+  }
+
+  function labelFor(v, idx) { return v.count === 2 ? "상대" : `플레이어 ${idx + 1}`; }
+
+  function renderView(v) {
+    lastView = v;
+    if (v.winner != null) { showOver(v); return; }
+    if (screen !== SCREEN.PLAYING) setScreen(SCREEN.PLAYING);
+
+    $("poolCount").textContent = v.poolCount;
+    $("myLabel").textContent = v.count === 2 ? "나" : `나 (플레이어 ${v.myIndex + 1})`;
+
+    // 상대 영역
+    const area = $("oppArea");
+    area.innerHTML = "";
+    for (const o of v.others) {
+      const side = document.createElement("div");
+      side.className = "side opp" + (v.turn === o.index ? " active" : "") + (o.eliminated ? " eliminated" : "");
+      const label = document.createElement("div");
+      label.className = "label";
+      label.innerHTML = `<span class="turnDot"></span>${labelFor(v, o.index)}` + (o.eliminated ? ` <span class="badge">탈락</span>` : "");
+      side.appendChild(label);
+      const row = document.createElement("div");
+      row.className = "tiles";
+      o.tiles.forEach((t, i) => {
+        const el = tileEl(t, "opp");
+        if (v.myTurn && v.phase === "guess" && !t.faceUp && !o.eliminated) {
+          el.classList.add("guessable");
+          if (selTarget === o.index && selIndex === i) el.classList.add("selected");
+          el.addEventListener("click", () => openNumpad(o.index, i));
+        }
+        row.appendChild(el);
+      });
+      side.appendChild(row);
+      area.appendChild(side);
+    }
+
+    // 내 손패
+    $("mySide").classList.toggle("active", v.myTurn);
+    const myWrap = $("myTiles");
+    myWrap.innerHTML = "";
+
+    if (v.myTurn && v.phase === "placeJoker") {
+      // 조커 배치: 타일 사이사이에 삽입 지점(gap) 표시
+      const addGap = (slot) => {
+        const g = document.createElement("div");
+        g.className = "gap";
+        g.title = "여기에 놓기";
+        g.addEventListener("click", () => dispatch({ action: "placeJoker", slot }));
+        myWrap.appendChild(g);
+      };
+      addGap(0);
+      v.my.forEach((t, i) => { myWrap.appendChild(tileEl(t, "me")); addGap(i + 1); });
+    } else {
+      v.my.forEach((t, i) => {
+        const el = tileEl(t, "me");
+        if (v.myTurn && v.phase === "penalty" && !t.faceUp) {
+          el.classList.add("guessable");
+          el.addEventListener("click", () => dispatch({ action: "penalty", index: i }));
+        }
+        myWrap.appendChild(el);
+      });
+    }
+
+    flashLastGuess(v);
+
+    const showNumpad = v.myTurn && v.phase === "guess" && selTarget != null && selIndex != null;
+    $("numpad").classList.toggle("hidden", !showNumpad);
+    if (showNumpad) renderNumpad(v); else $("numpadHint").textContent = "";
+    $("decide").classList.toggle("hidden", !(v.myTurn && v.phase === "decide"));
+
+    renderStatus(v);
+  }
+
+  function flashLastGuess(v) {
+    if (!v.lastGuess) return;
+    const g = v.lastGuess;
+    const cls = g.correct ? "flash-right" : "flash-wrong";
+    const idxs = g.double ? [g.index, g.index + 1] : [g.index];  // 더블이면 두 장 모두
+    const flashRow = (row) => { for (const i of idxs) { const el = row && row.children[i]; if (el) el.classList.add(cls); } };
+    if (g.targetMe) {
+      flashRow($("myTiles"));
+    } else {
+      const sections = $("oppArea").children;
+      let oi = 0;
+      for (const o of v.others) {
+        if (o.index === g.target) { flashRow(sections[oi].querySelector(".tiles")); break; }
+        oi++;
+      }
+    }
+  }
+
+  function renderStatus(v) {
+    const st = $("status"), fb = $("feedback");
+    const zion = v.version === "zion";
+    if (!v.myTurn) {
+      const who = labelFor(v, v.turn);
+      st.innerHTML = `⏳ <b>${who}</b>의 차례입니다…`;
+    } else if (v.phase === "placeJoker") {
+      const d = v.drawnMine;
+      const lead = zion ? "벌칙으로 받은" : "뽑은";
+      st.innerHTML = `🃏 ${lead} <b style="color:#f2cc60">${colorName(d.color)} 조커</b> — 손패에서 놓을 위치를 고르세요`;
+    } else if (v.phase === "guess" && zion) {
+      st.innerHTML = `🔎 <b>내 차례</b> — 상대 타일의 숫자를 맞혀보세요 <span style="color:#8b949e">(틀리면 더미에서 1장을 가림으로 받고 턴 종료)</span>`;
+    } else if (v.phase === "guess") {
+      const d = v.drawnMine;
+      const drawnTxt = d
+        ? (d.joker ? `조커 배치 완료 · ` : `뽑은 타일 <b style="color:#f2cc60">[${colorName(d.color)} ${d.value}]</b> · `)
+        : `더미가 비어 이번엔 뽑지 않았습니다 · `;
+      st.innerHTML = `🔎 <b>내 차례</b> — ${drawnTxt}상대 타일을 골라 숫자를 맞혀보세요`;
+    } else if (v.phase === "decide") {
+      st.innerHTML = "✅ <b style='color:#3fb950'>정답!</b> 계속 추리할지 멈출지 선택하세요";
+    } else if (v.phase === "penalty") {
+      st.innerHTML = "❌ <b style='color:#f85149'>오답</b> — 공개할 내 타일 하나를 고르세요";
+    }
+
+    if (v.lastGuess) {
+      const g = v.lastGuess;
+      const who = g.byMe ? "내가" : `${labelFor(v, g.by)}가`;
+      const target = g.targetMe ? "내" : (g.byMe ? "상대" : labelFor(v, g.target) + "의");
+      const res = g.correct ? `<span style="color:#3fb950">정답</span>` : `<span style="color:#f85149">오답</span>`;
+      fb.innerHTML = `${who} ${target} 타일을 <b>${g.text}</b>로 추측 → ${res}`;
+    } else fb.textContent = "";
+  }
+
+  // ===== 숫자 패드 =====
+  // 현재 선택/모드에 맞춰 숫자패드 내용을 다시 그린다(숫자 0~11 + 조커 + Zion 더블 토글).
+  function renderNumpad(v) {
+    const grid = $("numpadGrid");
+    grid.innerHTML = "";
+    for (let n = 0; n <= 11; n++) {
+      const b = document.createElement("button");
+      b.className = "np"; b.textContent = n;
+      b.addEventListener("click", () => submitGuess({ number: n }));
+      grid.appendChild(b);
+    }
+    if (v.hasJokers && !dblOn) {  // 더블 모드에선 조커 지목이 무의미 → 숨김
+      const jb = document.createElement("button");
+      jb.className = "np joker"; jb.textContent = "🃏 조커";
+      jb.addEventListener("click", () => submitGuess({ joker: true }));
+      grid.appendChild(jb);
+    }
+    if (candDoubleLeft != null) {  // Zion: 인접 같은색쌍 후보가 있으면 더블 토글 노출
+      const db = document.createElement("button");
+      db.className = "npDouble" + (dblOn ? " on" : "");
+      db.textContent = (dblOn ? "✓ " : "") + "더블 지목 (옆 타일과 같은 숫자)";
+      db.addEventListener("click", () => { dblOn = !dblOn; renderView(lastView); });
+      grid.appendChild(db);
+    }
+    $("numpadHint").textContent = dblOn
+      ? "선택한 검정+흰색 두 장을 같은 숫자로 함께 지목합니다."
+      : (candDoubleLeft != null ? "인접한 같은 숫자로 보이면 '더블 지목'을 켜세요." : "");
+  }
+
+  // Zion에서 (target, index) 타일이 인접 '검정-흰색 가림' 쌍의 일부인지 → 쌍의 왼쪽 인덱스 반환(없으면 null)
+  function computeCandDouble(v, target, index) {
+    if (!v || v.version !== "zion") return null;
+    const o = v.others.find((x) => x.index === target);
+    if (!o) return null;
+    const tiles = o.tiles, t = tiles[index];
+    if (!t || t.faceUp || t.joker) return null;
+    if (t.color === "b") { const r = tiles[index + 1]; if (r && !r.faceUp && !r.joker && r.color === "w") return index; }
+    if (t.color === "w") { const l = tiles[index - 1]; if (l && !l.faceUp && !l.joker && l.color === "b") return index - 1; }
+    return null;
+  }
+
+  function openNumpad(target, index) {
+    selTarget = target; selIndex = index; dblOn = false;
+    candDoubleLeft = computeCandDouble(lastView, target, index);
+    renderView(lastView);
+  }
+  function resetSel() { selTarget = selIndex = candDoubleLeft = null; dblOn = false; }
+  function submitGuess(guess) {
+    if (selTarget == null || selIndex == null) return;
+    const t = selTarget;
+    if (dblOn && candDoubleLeft != null) {
+      const idx = candDoubleLeft; resetSel();
+      dispatch({ action: "guess", target: t, index: idx, number: guess.number, double: true });
+    } else {
+      const i = selIndex; resetSel();
+      dispatch({ action: "guess", target: t, index: i, number: guess.number, joker: !!guess.joker });
+    }
+  }
+
+  // ========================================================================
+  //  네트워크
+  // ========================================================================
+  function send(obj) { if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj)); }
+
+  function connect() {
+    $("conn").innerHTML = "서버 연결 중… <span style='color:#8b949e'>(무료 서버는 첫 접속에 30~60초 걸릴 수 있어요)</span>";
+    try { ws = new WebSocket(SERVER_URL); }
+    catch (e) { $("conn").innerHTML = "<span class='bad'>서버 주소 오류</span>"; return; }
+
+    ws.addEventListener("open", () => { $("conn").innerHTML = "<span class='ok'>● 서버 연결됨</span>"; setScreen(SCREEN.MENU); });
+    ws.addEventListener("close", () => {
+      $("conn").innerHTML = "<span class='bad'>● 서버 연결 끊김</span> — 새로고침하세요";
+      if (screen === SCREEN.PLAYING || screen === SCREEN.LOBBY) showMenuWithError("서버 연결이 끊겼습니다.");
+    });
+    ws.addEventListener("error", () => { $("conn").innerHTML = "<span class='bad'>● 서버에 연결할 수 없습니다</span> (주소/상태 확인)"; });
+    ws.addEventListener("message", (ev) => { let m; try { m = JSON.parse(ev.data); } catch { return; } onMessage(m); });
+  }
+
+  function onMessage(m) {
+    switch (m.type) {
+      case "created":
+        isHost = true; myIndex = 0;
+        cfg.count = m.capacity; cfg.jokers = JOKERS; cfg.version = optVersion;
+        $("roomCode").textContent = m.code;
+        $("lobbyTitle").textContent = "상대를 기다리는 중…";
+        $("lobbyCodeWrap").style.display = "";
+        setScreen(SCREEN.LOBBY);
+        break;
+      case "joined":
+        isHost = false; myIndex = m.index;
+        cfg.count = m.capacity;
+        $("lobbyTitle").textContent = "입장 완료! 시작 대기 중…";
+        $("lobbyCodeWrap").style.display = "none";
+        setScreen(SCREEN.LOBBY);
+        break;
+      case "roster":
+        $("rosterInfo").textContent = `${m.count} / ${m.capacity}명 입장`;
+        break;
+      case "peer-joined":  // 정원 참 → 시작
+        resetSel();
+        if (isHost) newGame();          // 호스트가 게임 초기화 후 broadcast
+        else setScreen(SCREEN.PLAYING); // 게스트는 첫 view 대기
+        break;
+      case "view":
+        if (!isHost) { resetSel(); renderView(m.view); }
+        break;
+      case "act":
+        if (isHost) applyAction(m.a);
+        break;
+      case "restart":
+        if (isHost) { resetSel(); newGame(); }
+        break;
+      case "error":
+        $("menuErr").textContent = m.message || "오류가 발생했습니다.";
+        break;
+      case "peer-left":
+        showMenuWithError("상대가 나갔습니다. 새 방을 만들거나 다시 입장하세요.");
+        break;
+    }
+  }
+
+  // ========================================================================
+  //  화면 전환
+  // ========================================================================
+  function setScreen(s) {
+    screen = s;
+    $("board").classList.toggle("hidden", !(s === SCREEN.PLAYING || s === SCREEN.OVER));
+    $("menu").classList.toggle("hidden", s !== SCREEN.MENU);
+    $("lobby").classList.toggle("hidden", s !== SCREEN.LOBBY);
+    $("over").classList.toggle("hidden", s !== SCREEN.OVER);
+  }
+  function showMenuWithError(text) { $("menuErr").textContent = text || ""; setScreen(SCREEN.MENU); }
+
+  function showOver(v) {
+    if (v.iWon) {
+      $("overTitle").textContent = "🎉 승리!";
+      $("overSub").textContent = "최후의 1인으로 살아남았습니다!";
+    } else {
+      $("overTitle").textContent = "😢 패배";
+      const w = v.winner;
+      $("overSub").textContent = w != null ? `${labelFor(v, w)}가 승리했습니다.` : "게임 종료.";
+    }
+    setScreen(SCREEN.OVER);
+  }
+
+  // ========================================================================
+  //  메뉴 옵션(세그먼트) + 버튼
+  // ========================================================================
+  function initSeg(id, onPick) {
+    const seg = $(id);
+    seg.addEventListener("click", (e) => {
+      const b = e.target.closest("button"); if (!b) return;
+      [...seg.children].forEach((c) => c.classList.remove("on"));
+      b.classList.add("on");
+      onPick(b.getAttribute("data-v"));
+    });
+  }
+  const RULE_NOTES = {
+    basic: "Basic: 매 턴 더미에서 1장 뽑아(가림) 상대 숫자 추리 · 맞히면 그 타일 공개 후 턴 넘김, 틀리면 벌칙 없이 턴 넘김.",
+    plus: "PLUS: 매 턴 1장 뽑고 상대 숫자 추리 · 맞히면 계속/멈추기, 틀리면 뽑은 타일 공개 후 턴 종료.",
+    zion: "Zion: 각자 검정2·흰색2로 시작(뽑기 없음) · 상대 숫자 추리 → 맞히면 턴 넘김, 틀리면 더미에서 1장 받기 · 같은 숫자가 나란히 있으면 '더블'로 지목해야 인정.",
+  };
+  function updateRuleNote() { $("ruleNote").textContent = RULE_NOTES[optVersion] || ""; }
+  initSeg("segPlayers", (v) => (optPlayers = Number(v)));
+  initSeg("segVersion", (v) => { optVersion = v; updateRuleNote(); });
+  updateRuleNote();
+
+  $("createBtn").addEventListener("click", () => {
+    $("menuErr").textContent = "";
+    send({ type: "create", capacity: optPlayers });  // jokers는 호스트 로컬(cfg)에 보관
+  });
+  $("joinBtn").addEventListener("click", () => {
+    const code = $("codeInput").value.trim().toUpperCase();
+    if (code.length !== 4) { $("menuErr").textContent = "4자리 코드를 입력하세요."; return; }
+    $("menuErr").textContent = ""; send({ type: "join", code });
+  });
+  $("codeInput").addEventListener("keydown", (e) => { if (e.code === "Enter") $("joinBtn").click(); });
+  $("copyBtn").addEventListener("click", () => {
+    const code = $("roomCode").textContent;
+    navigator.clipboard?.writeText(code).then(() => {
+      const b = $("copyBtn"), old = b.textContent; b.textContent = "복사됨!"; setTimeout(() => (b.textContent = old), 1200);
+    }).catch(() => {});
+  });
+  $("cancelBtn").addEventListener("click", () => {
+    if (ws) { try { ws.close(); } catch {} }
+    isHost = false; myIndex = null; connect();
+  });
+  $("npCancel").addEventListener("click", () => { resetSel(); renderView(lastView); });
+  $("decide").addEventListener("click", (e) => {
+    const c = e.target.getAttribute("data-choice");
+    if (c) dispatch({ action: "decide", choice: c });
+  });
+  $("againBtn").addEventListener("click", () => {
+    resetSel();
+    if (isHost) newGame();
+    else send({ type: "restart", to: 0 });
+  });
+
+  // ===== 진단 훅 (?debug 일 때만) =====
+  if (location.search.includes("debug")) {
+    window.__dbg = () => ({
+      screen, isHost, myIndex,
+      turn: lastView && lastView.turn, myTurn: lastView && lastView.myTurn,
+      phase: lastView && lastView.phase, winner: lastView && lastView.winner,
+      version: lastView && lastView.version,
+      poolCount: lastView && lastView.poolCount, count: lastView && lastView.count,
+      myCount: lastView && lastView.my.length,
+      othersCounts: lastView && lastView.others.map((o) => o.tiles.length),
+    });
+    window.__act = (a) => dispatch(a);
+    window.__view = () => lastView;
+    window.__truth = () => (isHost ? G : null);  // 호스트만: 테스트가 정답을 알도록
+  }
+
+  // ===== 시작 =====
+  setScreen(SCREEN.CONNECTING);
+  connect();
+})();
+</script>
+</body>
+</html>
