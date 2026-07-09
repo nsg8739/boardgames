@@ -193,6 +193,7 @@
   .card.join { align-self: center; gap: 16px; }
   .cardTitle { font-family: var(--serif); font-size: 19px; font-weight: 800; color: var(--gold-bright); letter-spacing: .8px; text-shadow: 0 1px 0 #000, 0 0 12px rgba(230, 192, 74, 0.25); text-align: center; }
   .joinDesc { font-size: 13px; color: var(--parchment); line-height: 1.6; text-align: center; }
+  .joinDesc .hl { color: var(--gold-bright); font-weight: 800; letter-spacing: .3px; }
   .card .section { display: flex; flex-direction: column; gap: 9px; }
   /* 좁은 화면: 세로로 쌓기 */
   @media (max-width: 680px) {
@@ -223,11 +224,12 @@
   /* ===== 버튼 중요도(위계) ===== */
   /* 1순위 CTA: '방 만들기' — 가장 크고 밝은 황동, 굵게 */
   .cta-primary {
-    width: 100%; font-family: var(--serif); cursor: pointer; border: 1px solid var(--gold-deep); border-radius: 9px;
-    background: linear-gradient(180deg, var(--gold-bright), var(--gold) 55%, var(--gold-deep));
+    /* 톤을 한 단계 연하게 — 밝은 샴페인 골드 계열, 깊은 그림자도 완화 */
+    width: 100%; font-family: var(--serif); cursor: pointer; border: 1px solid #b79a4e; border-radius: 9px;
+    background: linear-gradient(180deg, #f7e6a6, #ecd383 55%, #d9be6a);
     color: var(--ink); font-weight: 800; font-size: 18px; letter-spacing: 1.5px; padding: 15px 24px;
-    text-shadow: 0 1px 0 rgba(255,255,255,0.3);
-    box-shadow: inset 0 1px 0 rgba(255,250,220,0.65), inset 0 -2px 6px rgba(120,90,20,0.45), 0 4px 14px rgba(201,162,39,0.28);
+    text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+    box-shadow: inset 0 1px 0 rgba(255,252,235,0.75), inset 0 -2px 6px rgba(150,120,50,0.3), 0 4px 14px rgba(201,162,39,0.22);
     transition: filter .12s, transform .05s;
   }
   .cta-primary:hover { filter: brightness(1.12); }
@@ -295,11 +297,11 @@
   <div id="menu" class="lobbyHome">
     <!-- 새 게임 카드 -->
     <section class="card newgame">
-      <div class="cardTitle">새 게임</div>
+      <div class="cardTitle">NEW GAME</div>
       <div class="section">
         <div class="sectionHead"><span class="stepNo">1</span>게임 모드</div>
         <div class="seg" id="segVersion">
-          <button data-v="basic" class="on">Basic</button><button data-v="plus">PLUS</button><button data-v="zion">Zion</button>
+          <button data-v="basic" class="on">BASIC</button><button data-v="plus">PLUS</button><button data-v="zion">ZION</button>
         </div>
         <div class="modeSummary">
           <span id="modeSummaryText"></span>
@@ -317,8 +319,8 @@
 
     <!-- 코드 입장 카드 -->
     <section class="card join">
-      <div class="cardTitle">코드 입장</div>
-      <div class="joinDesc">친구가 만든 방의<br />4자리 코드를 입력하세요</div>
+      <div class="cardTitle">초대 코드 입장</div>
+      <div class="joinDesc">호스트가 만든 방의<br /><b class="hl">4자리 코드</b>를 입력하세요</div>
       <div class="joinGroup">
         <input id="codeInput" maxlength="4" placeholder="방 코드 입력" autocomplete="off" />
         <button id="joinBtn" class="cta-secondary">입장</button>
