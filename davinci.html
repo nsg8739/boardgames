@@ -64,7 +64,8 @@
 
   /* board가 숨겨져도(메뉴/로비/결과 화면) 절대배치 패널이 채울 영역을 확보.
      board의 min-height(420, border-box)와 맞춘다. 안 그러면 stage 높이가 0이 돼 패널이 겹친다. */
-  #stage { position: relative; width: min(560px, 96vw); min-height: 420px; }
+  /* width는 body 패딩을 제외한 실제 콘텐츠 폭(100%) 기준 — 96vw는 패딩과 합쳐져 모바일에서 가로 넘침을 유발했음 */
+  #stage { position: relative; width: min(560px, 100%); min-height: 420px; }
 
   /* 게임 보드 */
   #board {
