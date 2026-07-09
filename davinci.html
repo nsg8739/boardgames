@@ -262,6 +262,36 @@
 
   const $ = (id) => document.getElementById(id);
 
+  // ===== 재접속용 세션/상태 저장 (sessionStorage: 새로고침엔 유지, 탭 닫으면 소멸) =====
+  let myCode = null, myToken = null;
+  const SESS_KEY = "davinci_session", STATE_KEY = "davinci_state";
+  function saveSession() {
+    try { sessionStorage.setItem(SESS_KEY, JSON.stringify({ code: myCode, index: myIndex, token: myToken, isHost })); } catch {}
+  }
+  function getSession() { try { return JSON.parse(sessionStorage.getItem(SESS_KEY) || "null"); } catch { return null; } }
+  function clearSession() { try { sessionStorage.removeItem(SESS_KEY); sessionStorage.removeItem(STATE_KEY); } catch {} }
+  function restoreConn() { $("conn").innerHTML = "<span class='ok'>● 서버 연결됨</span>"; }
+  // 호스트만: 권한 상태 G를 저장. drawn.tile은 손패 타일과 같은 객체라 복원 시 재연결 필요.
+  function saveState() {
+    if (!isHost || !G) return;
+    try {
+      const inHand = G.drawn ? G.players[G.drawn.owner].hand.includes(G.drawn.tile) : false;
+      sessionStorage.setItem(STATE_KEY, JSON.stringify({ g: G, drawnInHand: inHand }));
+    } catch {}
+  }
+  function loadState() {
+    try {
+      const raw = sessionStorage.getItem(STATE_KEY); if (!raw) return null;
+      const { g, drawnInHand } = JSON.parse(raw);
+      if (g && g.drawn && drawnInHand) {  // drawn.tile을 실제 손패 타일 객체로 재연결(참조 복원)
+        const t = g.players[g.drawn.owner].hand.find(
+          (x) => x.color === g.drawn.tile.color && x.value === g.drawn.tile.value && x.joker === g.drawn.tile.joker);
+        if (t) g.drawn.tile = t;
+      }
+      return g;
+    } catch { return null; }
+  }
+
   // ========================================================================
   //  게임 엔진 (호스트만 실행)
   // ========================================================================
@@ -560,6 +590,7 @@
   function broadcast() {
     for (let i = 1; i < G.count; i++) send({ type: "view", view: viewFor(i), to: i });  // 각 게스트에게 개인화 view
     renderView(viewFor(0));  // 호스트 로컬 렌더
+    saveState();             // 새로고침 대비 상태 저장(호스트)
   }
 
   // ========================================================================
@@ -782,7 +813,21 @@
     try { ws = new WebSocket(SERVER_URL); }
     catch (e) { $("conn").innerHTML = "<span class='bad'>서버 주소 오류</span>"; return; }
 
-    ws.addEventListener("open", () => { $("conn").innerHTML = "<span class='ok'>● 서버 연결됨</span>"; setScreen(SCREEN.MENU); });
+    ws.addEventListener("open", () => {
+      $("conn").innerHTML = "<span class='ok'>● 서버 연결됨</span>";
+      const sess = getSession();
+      if (sess && sess.code && sess.token != null) {
+        // 이전 세션이 있으면(새로고침) 자동 재접속 시도
+        isHost = sess.isHost; myIndex = sess.index; myCode = sess.code; myToken = sess.token;
+        $("lobbyTitle").textContent = "이전 게임에 재접속 중…";
+        $("lobbyCodeWrap").style.display = "none";
+        $("rosterInfo").textContent = "";
+        setScreen(SCREEN.LOBBY);
+        send({ type: "rejoin", code: sess.code, index: sess.index, token: sess.token });
+      } else {
+        setScreen(SCREEN.MENU);
+      }
+    });
     ws.addEventListener("close", () => {
       $("conn").innerHTML = "<span class='bad'>● 서버 연결 끊김</span> — 새로고침하세요";
       if (screen === SCREEN.PLAYING || screen === SCREEN.LOBBY) showMenuWithError("서버 연결이 끊겼습니다.");
@@ -794,19 +839,52 @@
   function onMessage(m) {
     switch (m.type) {
       case "created":
-        isHost = true; myIndex = 0;
+        isHost = true; myIndex = 0; myCode = m.code; myToken = m.token;
         cfg.count = m.capacity; cfg.jokers = JOKERS; cfg.version = optVersion;
+        saveSession();
         $("roomCode").textContent = m.code;
         $("lobbyTitle").textContent = "상대를 기다리는 중…";
         $("lobbyCodeWrap").style.display = "";
         setScreen(SCREEN.LOBBY);
         break;
       case "joined":
-        isHost = false; myIndex = m.index;
+        isHost = false; myIndex = m.index; myCode = m.code; myToken = m.token;
         cfg.count = m.capacity;
+        saveSession();
         $("lobbyTitle").textContent = "입장 완료! 시작 대기 중…";
         $("lobbyCodeWrap").style.display = "none";
         setScreen(SCREEN.LOBBY);
+        break;
+      case "rejoined": {   // 새로고침 후 재접속 성공
+        myIndex = m.index; myCode = m.code; myToken = m.token; isHost = (m.index === 0);
+        cfg.count = m.capacity; saveSession();
+        restoreConn();
+        resetSel();
+        if (isHost) {
+          const g = loadState();
+          if (g) { G = g; cfg.version = G.version; cfg.count = G.count; cfg.jokers = G.jokers; broadcast(); }
+          else {  // 게임 시작 전(로비)에 새로고침 → 로비로 복귀
+            $("roomCode").textContent = m.code; $("lobbyCodeWrap").style.display = "";
+            $("lobbyTitle").textContent = "상대를 기다리는 중…";
+            setScreen(SCREEN.LOBBY);
+          }
+        } else {
+          // 게스트: 호스트가 view를 다시 보내줄 때까지 대기(호스트는 peer-reconnected로 재전송)
+          $("lobbyTitle").textContent = "재접속됨 — 상태 동기화 중…";
+          setScreen(SCREEN.LOBBY);
+        }
+        break;
+      }
+      case "rejoin-failed":
+        clearSession(); isHost = false; myIndex = myCode = myToken = null;
+        showMenuWithError(m.message || "이전 게임에 재접속하지 못했습니다.");
+        break;
+      case "peer-reconnected":  // 다른 플레이어가 재접속함 → 호스트는 최신 view 재전송
+        restoreConn();
+        if (isHost && G) broadcast();
+        break;
+      case "peer-disconnected":  // 다른 플레이어 접속 끊김(유예 대기) — 비파괴적 안내
+        $("conn").innerHTML = "<span class='bad'>● 상대 접속 끊김 — 재접속 대기 중…</span>";
         break;
       case "roster":
         $("rosterInfo").textContent = `${m.count} / ${m.capacity}명 입장`;
@@ -829,6 +907,7 @@
         $("menuErr").textContent = m.message || "오류가 발생했습니다.";
         break;
       case "peer-left":
+        clearSession();
         showMenuWithError("상대가 나갔습니다. 새 방을 만들거나 다시 입장하세요.");
         break;
     }
@@ -882,7 +961,8 @@
 
   $("createBtn").addEventListener("click", () => {
     $("menuErr").textContent = "";
-    send({ type: "create", capacity: optPlayers });  // jokers는 호스트 로컬(cfg)에 보관
+    // reconnect:true → 서버가 끊겨도 유예 시간 동안 방 유지(새로고침 재접속 대비)
+    send({ type: "create", capacity: optPlayers, reconnect: true });  // jokers는 호스트 로컬(cfg)에 보관
   });
   $("joinBtn").addEventListener("click", () => {
     const code = $("codeInput").value.trim().toUpperCase();
@@ -897,8 +977,9 @@
     }).catch(() => {});
   });
   $("cancelBtn").addEventListener("click", () => {
+    clearSession();  // 명시적 나가기 → 재접속 세션 폐기
     if (ws) { try { ws.close(); } catch {} }
-    isHost = false; myIndex = null; connect();
+    isHost = false; myIndex = myCode = myToken = null; connect();
   });
   $("npCancel").addEventListener("click", () => { resetSel(); renderView(lastView); });
   $("decide").addEventListener("click", (e) => {
@@ -926,6 +1007,11 @@
     window.__view = () => lastView;
     window.__truth = () => (isHost ? G : null);  // 호스트만: 테스트가 정답을 알도록
   }
+
+  // 게임/로비 중 새로고침·창닫기 시 이탈 경고(브라우저 기본 확인창). 재접속으로 복원되지만 실수 방지.
+  window.addEventListener("beforeunload", (e) => {
+    if (screen === SCREEN.PLAYING || screen === SCREEN.LOBBY) { e.preventDefault(); e.returnValue = ""; }
+  });
 
   // ===== 시작 =====
   setScreen(SCREEN.CONNECTING);
