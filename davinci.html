@@ -87,6 +87,17 @@
   }
   #conn .ok { color: #3fb950; }
   #conn .bad { color: #f85149; }
+  /* 뒤로가기 잠금 등 안내용 토스트 */
+  #toast {
+    position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%) translateY(8px);
+    z-index: 60; max-width: min(90vw, 420px); text-align: center;
+    background: rgba(13, 10, 5, 0.96); color: var(--parchment);
+    border: 1px solid var(--gold-deep); border-radius: 999px;
+    padding: 10px 18px; font-size: 13px; letter-spacing: .3px; line-height: 1.4;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55);
+    opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
   /* board가 숨겨져도(메뉴/로비/결과 화면) 절대배치 패널이 채울 영역을 확보.
      board의 min-height(420, border-box)와 맞춘다. 안 그러면 stage 높이가 0이 돼 패널이 겹친다. */
@@ -103,10 +114,13 @@
     flex-direction: column;
     align-items: center;
   }
-  body.screen-playing #stage,
   body.screen-lobby #stage,
   body.screen-over #stage {
     padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+  /* 플레이 중엔 하단 여백을 줄여 '게임 규칙 보기'가 보드 바로 아래에 오게 한다 */
+  body.screen-playing #stage {
+    padding-bottom: 8px;
   }
 
   /* 게임 보드 */
@@ -125,11 +139,23 @@
   .gameMeta b { color: var(--gold-bright); font-weight: 800; }
   .gameMeta .time { color: var(--gold-soft); white-space: nowrap; }
   .poolInfo { text-align: center; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  /* 상대 이탈 안내 배너 */
+  #peerAlert {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 12px;
+    margin: 0 0 10px; padding: 8px 12px; border: 1px solid #a5562f; border-radius: 8px;
+    background: rgba(165, 86, 47, 0.16); color: #f0b48e; font-size: 12.5px; text-align: center; line-height: 1.4;
+  }
+  #peerAlert.hidden { display: none; }
+  #peerAlert button {
+    flex: none; font-family: var(--serif); cursor: pointer; border: 1px solid #f0883e; border-radius: 6px;
+    background: rgba(240, 136, 62, 0.18); color: #ffcda6; font-weight: 700; font-size: 12.5px; padding: 6px 12px;
+  }
+  #peerAlert button:hover { filter: brightness(1.15); }
 
   .side { margin: 8px 0; padding: 8px; border-radius: 8px; }
   .side.active { background: rgba(230, 192, 74, 0.07); box-shadow: inset 0 0 0 1px rgba(230, 192, 74, 0.4); }
   .side.eliminated { opacity: 0.45; }
-  .side .label { font-size: 13px; color: var(--muted); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .side .label { font-size: 13px; color: var(--muted); margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
   .side .label .turnDot { width: 9px; height: 9px; border-radius: 50%; background: #4a3d20; flex: none; }
   .side.active .label .turnDot { background: var(--gold-soft); box-shadow: 0 0 9px rgba(242, 204, 96, 0.9); }
   .side.active .label { color: var(--gold-bright); font-weight: 700; }
@@ -158,7 +184,13 @@
     border-radius: 50%; background: #f0883e; box-shadow: 0 0 5px rgba(240, 136, 62, 0.9);
   }
   .tile.drawn { transform: translateY(-8px); box-shadow: 0 0 0 2px #f2cc60, 0 4px 12px rgba(242, 204, 96, 0.4); }
-  .tile.drawn::before { content: "NEW"; position: absolute; top: -16px; font-size: 9px; letter-spacing: 1px; color: #f2cc60; font-weight: 700; }
+  /* NEW 배지: 배경 없는 금색 글자가 위쪽 플레이어 이름과 겹쳐 안 보이던 문제 →
+     불투명 배지(어두운 배경+테두리)로 중앙 정렬하고 z-index로 항상 위에 그린다. */
+  .tile.drawn::before {
+    content: "NEW"; position: absolute; top: -15px; left: 50%; transform: translateX(-50%); z-index: 4;
+    padding: 1px 4px; border: 1px solid #f2cc60; border-radius: 3px; background: #17110a;
+    font-size: 8px; letter-spacing: .5px; line-height: 1.3; color: #f2cc60; font-weight: 800; white-space: nowrap;
+  }
   .tile.guessable { cursor: pointer; }
   .tile.guessable:hover { box-shadow: 0 0 0 2px var(--gold-bright); }
   .tile.selected { box-shadow: 0 0 0 3px var(--gold-bright) !important; }
@@ -176,6 +208,27 @@
 
   #numpad { margin: 12px auto 0; max-width: 340px; }
   #numpad.hidden { display: none; }
+  /* 손패가 많아 보드가 길어져도 숫자패드는 항상 화면 하단에 고정 노출 → 스크롤 없이 선택 가능.
+     지목 대상(상대 타일)은 보드 상단이라 하단 시트에 가리지 않는다. 패드가 길면 내부 스크롤. */
+  #numpad:not(.hidden) {
+    position: fixed;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    z-index: 30;
+    width: min(360px, calc(100vw - 16px));
+    max-width: none;
+    margin: 0;
+    padding: 10px 12px calc(12px + env(safe-area-inset-bottom, 0px));
+    background: #1a130b;
+    border: 1px solid var(--warm-border);
+    border-bottom: none;
+    border-radius: 12px 12px 0 0;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.62);
+    max-height: 82svh;
+    overflow-y: auto;
+  }
+  #numpad:not(.hidden) .npCancel { margin-top: 10px; }
   #numpad .grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
   #numpad .np { font-family: inherit; font-size: 17px; font-weight: 600; padding: 10px 0; border: 1px solid var(--warm-border); border-radius: 6px; background: var(--warm-bg); color: var(--warm-text); cursor: pointer; }
   #numpad .np:hover { filter: brightness(1.35); border-color: var(--gold); }
@@ -331,6 +384,19 @@
     border-radius: 0 0 8px 8px;
     padding: 12px 14px 14px;
   }
+  /* 플레이 중: 규칙 보기를 보드 바로 아래에 두고, 펼치면 아래로 확장 → 페이지 스크롤로 전문 확인 */
+  body.screen-playing #hint {
+    margin: 10px auto calc(28px + env(safe-area-inset-bottom, 0px));
+    width: min(560px, calc(100vw - 32px));
+  }
+  body.screen-playing #hint[open] > summary { border-radius: 8px 8px 0 0; }
+  body.screen-playing #hint[open] > .hintBody {
+    background: rgba(20, 14, 7, 0.94);
+    border: 1px solid var(--warm-border);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    padding: 12px 14px 14px;
+  }
   @media (max-height: 760px) {
     #stage { margin-top: clamp(190px, 27svh, 245px); }
     .menu { top: clamp(190px, 27svh, 245px); }
@@ -443,6 +509,8 @@
         <span class="time">TIME <b id="gameElapsed">00:00</b></span>
       </div>
       <div class="poolInfo">남은 더미: <span id="poolCount">0</span>장</div>
+      <!-- 상대 이탈 안내 배너(+호스트 전용 게임 종료 버튼) -->
+      <div id="peerAlert" class="hidden"></div>
 
       <!-- 상대 플레이어들(동적 생성) -->
       <div id="oppArea"></div>
@@ -459,9 +527,9 @@
       <!-- 숫자 선택 패드 -->
       <div id="numpad" class="hidden">
         <div class="grid" id="numpadGrid"></div>
+        <div id="numpadHint" style="text-align:center;font-size:12px;color:var(--muted);margin-top:6px;"></div>
         <button class="btn npCancel" id="npCancel">취소</button>
       </div>
-      <div id="numpadHint" style="text-align:center;font-size:12px;color:var(--muted);margin-top:6px;"></div>
 
       <!-- 정답 후 계속/멈추기 -->
       <div id="decide" class="hidden">
@@ -536,6 +604,13 @@
     <div id="over" class="panel hidden">
       <h2 id="overTitle">🎉 승리!</h2>
       <div class="sub" id="overSub"></div>
+      <!-- 다시 하기 전 모드 변경(호스트 전용) — 새 방 없이 모드만 바꿔 재시작 -->
+      <div id="overModeWrap" class="section hidden" style="width:100%;">
+        <div class="sectionHead subtle">다시 하기 — 게임 모드</div>
+        <div class="seg" id="segVersionOver">
+          <button data-v="basic">BASIC</button><button data-v="plus">PLUS</button><button data-v="zion">ZION</button>
+        </div>
+      </div>
       <button id="againBtn" class="btn primary">다시 하기</button>
     </div>
   </div>
@@ -1234,10 +1309,12 @@
         break;
       case "peer-reconnected":  // 다른 플레이어가 재접속함 → 호스트는 최신 view 재전송
         restoreConn();
+        hidePeerAlert();
         if (isHost && G) broadcast();
         break;
       case "peer-disconnected":  // 다른 플레이어 접속 끊김(유예 대기) — 비파괴적 안내
         $("conn").innerHTML = "<span class='bad'>● 상대 접속 끊김 — 재접속 대기 중…</span>";
+        if (screen === SCREEN.PLAYING || screen === SCREEN.OVER) showPeerAlert();  // 호스트는 여기서 '게임 종료' 가능
         break;
       case "roster":
         $("rosterInfo").textContent = `${m.count} / ${m.capacity}명 입장`;
@@ -1259,8 +1336,17 @@
       case "error":
         $("menuErr").textContent = m.message || "오류가 발생했습니다.";
         break;
+      case "ended":  // 호스트가 상대 이탈 후 게임을 종료함 → 남은 모두 메뉴로
+        clearSession();
+        if (ws) { try { ws.close(); } catch {} }
+        isHost = false; myIndex = myCode = myToken = null;
+        hidePeerAlert();
+        showMenuWithError("호스트가 게임을 종료했습니다.");
+        connect();
+        break;
       case "peer-left":
         clearSession();
+        hidePeerAlert();
         showMenuWithError("상대가 나갔습니다. 새 방을 만들거나 다시 입장하세요.");
         break;
     }
@@ -1277,8 +1363,37 @@
     $("menu").classList.toggle("hidden", s !== SCREEN.MENU);
     $("lobby").classList.toggle("hidden", s !== SCREEN.LOBBY);
     $("over").classList.toggle("hidden", s !== SCREEN.OVER);
+    updateHistoryGuard(s);  // 게임/로비면 뒤로가기 잠금 arm, 아니면 해제
   }
   function showMenuWithError(text) { $("menuErr").textContent = text || ""; setScreen(SCREEN.MENU); }
+
+  // ===== 상대 이탈 배너 + 호스트 게임 종료 =====
+  function showPeerAlert() {
+    const el = $("peerAlert");
+    el.innerHTML = "<span>⚠ 상대 접속이 끊겼어요 — 재접속을 기다리는 중…</span>";
+    if (isHost) {  // 호스트만: 기다리지 않고 즉시 게임을 끝낼 수 있다
+      const b = document.createElement("button");
+      b.textContent = "게임 종료";
+      b.addEventListener("click", endGameByHost);
+      el.appendChild(b);
+    }
+    el.classList.remove("hidden");
+  }
+  function hidePeerAlert() { const el = $("peerAlert"); el.classList.add("hidden"); el.innerHTML = ""; }
+  function endGameByHost() {
+    send({ type: "ended" });  // 연결된 다른 피어들에게 종료 통지(서버가 중계)
+    clearSession();
+    if (ws) { try { ws.close(); } catch {} }
+    isHost = false; myIndex = myCode = myToken = null;
+    hidePeerAlert();
+    showMenuWithError("게임을 종료했습니다.");
+    connect();
+  }
+  // 세그먼트 버튼 중 data-v가 val인 것을 활성(on) 처리
+  function setSegActive(id, val) {
+    const seg = $(id); if (!seg) return;
+    [...seg.children].forEach((c) => c.classList.toggle("on", c.getAttribute("data-v") === String(val)));
+  }
 
   function showOver(v) {
     renderGameMeta(v);
@@ -1290,6 +1405,9 @@
       const w = v.winner;
       $("overSub").textContent = w != null ? `${labelFor(v, w)}가 승리했습니다.` : "게임 종료.";
     }
+    // 호스트는 다시 하기 전에 새 방 없이 모드를 바꿀 수 있다. 게스트는 숨김(호스트 설정을 따름).
+    if (isHost) { $("overModeWrap").classList.remove("hidden"); setSegActive("segVersionOver", cfg.version); }
+    else $("overModeWrap").classList.add("hidden");
     setScreen(SCREEN.OVER);
   }
 
@@ -1337,6 +1455,8 @@
   function closeRuleModal() { $("ruleModal").classList.add("hidden"); }
   initSeg("segPlayers", (v) => (optPlayers = Number(v)));
   initSeg("segVersion", (v) => { optVersion = v; updateModeSummary(); });
+  // 종료 화면의 모드 선택(호스트) — 새 방 없이 모드만 바꿔 재시작. cfg.version에 바로 반영.
+  initSeg("segVersionOver", (v) => { optVersion = v; cfg.version = v; setSegActive("segVersion", v); updateModeSummary(); });
   updateModeSummary();
   $("ruleMoreBtn").addEventListener("click", openRuleModal);
   $("ruleModalClose").addEventListener("click", closeRuleModal);
@@ -1391,10 +1511,52 @@
     window.__truth = () => (isHost ? G : null);  // 호스트만: 테스트가 정답을 알도록
   }
 
-  // 게임/로비 중 새로고침·창닫기 시 이탈 경고(브라우저 기본 확인창). 재접속으로 복원되지만 실수 방지.
+  // ===== 실수 이탈 방지 + 재접속 =====
+  // (1) 새로고침/창닫기: 브라우저 기본 확인창(재접속으로 복원되지만 실수 방지).
   window.addEventListener("beforeunload", (e) => {
     if (screen === SCREEN.PLAYING || screen === SCREEN.LOBBY) { e.preventDefault(); e.returnValue = ""; }
   });
+
+  // (2) 뒤로가기 잠금: 게임/로비 진입 시 히스토리 항목을 하나 밀어넣어 뒤로가기가 페이지를
+  //     떠나지 않고 popstate로 잡히게 한다. 실수로 한 번 누르면 머물고, 2.5초 안에 한 번 더
+  //     누르면 실제로 나간다(의도적 이탈).
+  let historyGuardArmed = false, lastBackAt = 0;
+  function updateHistoryGuard(s) {
+    const inGame = (s === SCREEN.PLAYING || s === SCREEN.LOBBY);
+    if (inGame && !historyGuardArmed) { history.pushState({ davinci: "guard" }, ""); historyGuardArmed = true; }
+    else if (!inGame) { historyGuardArmed = false; }  // 메뉴/결과면 잠금 해제(재진입 시 다시 arm)
+  }
+  window.addEventListener("popstate", () => {
+    if (!(screen === SCREEN.PLAYING || screen === SCREEN.LOBBY)) return;
+    const now = Date.now();
+    if (now - lastBackAt < 2500) {  // 두 번째 뒤로가기 → 실제 나가기
+      clearSession();
+      if (ws) { try { ws.close(); } catch {} }
+      historyGuardArmed = false;
+      history.back();               // 우리가 넣은 항목 이전(진짜 이전 페이지)으로
+      return;
+    }
+    lastBackAt = now;
+    history.pushState({ davinci: "guard" }, "");  // 다시 밀어넣어 현재 화면 유지(이탈 차단)
+    flashToast("한 번 더 ‘뒤로가기’를 누르면 게임에서 나갑니다");
+  });
+
+  // (3) bfcache 복원(뒤로/앞으로 이동으로 얼어붙었던 페이지가 되살아난 경우): 소켓이 죽어 있으면
+  //     재접속 → open 시 세션이 있으면 자동 rejoin.
+  window.addEventListener("pageshow", (e) => {
+    if (e.persisted && (!ws || ws.readyState > WebSocket.OPEN)) connect();
+  });
+
+  // 간단 토스트(자동 사라짐)
+  let toastTimer = null;
+  function flashToast(msg) {
+    let t = document.getElementById("toast");
+    if (!t) { t = document.createElement("div"); t.id = "toast"; document.body.appendChild(t); }
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove("show"), 2400);
+  }
 
   // ===== 시작 =====
   setScreen(SCREEN.MENU);
