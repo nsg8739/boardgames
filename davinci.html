@@ -5,21 +5,28 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>다빈치코드 — 온라인 대전 (2~4인)</title>
 <style>
-  /* 골드 팔레트 — 배경(브라운/골드)과 맞춘 인터랙티브 색상 */
+  /* 앤틱(양피지·황동·인장) 팔레트 */
   :root {
     --gold: #c9a227;         /* 기본 골드(버튼/선택) */
     --gold-bright: #e6c04a;  /* 밝은 골드(강조/호버) */
-    --gold-soft: #f2cc60;    /* 기존 밝은 강조(뽑은 타일/조커) */
-    --warm-bg: #241f16;      /* 따뜻한 어두운 버튼 바탕 */
-    --warm-border: #5a4a25;  /* 따뜻한 테두리 */
-    --warm-text: #ece0c4;    /* 따뜻한 밝은 글자 */
-    --ink: #1a1508;          /* 골드 위 어두운 글자 */
+    --gold-soft: #f2cc60;    /* 밝은 강조(뽑은 타일/조커) */
+    --gold-deep: #8a6d1f;    /* 깊은 황동(프레임 라인) */
+    --warm-bg: #2a2015;      /* 가죽/원목 버튼 바탕 */
+    --warm-bg2: #35291a;     /* 밝은 원목(그라데이션 상단) */
+    --warm-border: #6b5427;  /* 황동 테두리 */
+    --parchment: #efe3c7;    /* 양피지 크림(본문 글자) */
+    --warm-text: #efe3c7;    /* = parchment */
+    --muted: #b7a37a;        /* 바랜 세피아(보조 글자) */
+    --seal: #a6402f;         /* 밀랍 인장 붉은색(보조 강조) */
+    --ink: #201406;          /* 골드 위 짙은 잉크 글자 */
+    --card: rgba(28, 21, 13, 0.9);       /* 카드 바탕(짙은 원목) */
+    --serif: Georgia, "Nanum Myeongjo", "Batang", "Times New Roman", serif;  /* 앤틱 표제 */
   }
   html, body {
     margin: 0;
     min-height: 100%;
-    background: #0d1117;
-    color: #e6edf3;
+    background: #17110a;
+    color: var(--parchment);
     font-family: "Segoe UI", "Malgun Gothic", sans-serif;
     display: flex;
     flex-direction: column;
@@ -38,12 +45,20 @@
     inset: 0;
     z-index: -1;
     background:
-      linear-gradient(rgba(13, 17, 23, 0.32), rgba(13, 17, 23, 0.46)),
+      radial-gradient(ellipse at center, rgba(20, 14, 7, 0.18) 0%, rgba(15, 10, 5, 0.62) 100%),
       url("DA%20VINCI%20CODE_1.png") center center / cover no-repeat;
     pointer-events: none;
   }
-  h1 { font-weight: 600; font-size: clamp(15px, 5vw, 19px); margin: 0 0 10px; letter-spacing: 1px; text-align: center; }
-  #conn { font-size: 12px; color: #8b949e; margin-bottom: 8px; min-height: 16px; text-align: center; }
+  h1 {
+    font-family: var(--serif); font-weight: 700; font-size: clamp(24px, 7vw, 34px);
+    margin: 2px 0 2px; letter-spacing: 3px; text-align: center; color: var(--gold-bright);
+    text-shadow: 0 1px 0 #000, 0 0 16px rgba(230, 192, 74, 0.22);
+  }
+  h1 .tagline {
+    display: block; font-family: "Segoe UI", "Malgun Gothic", sans-serif; font-weight: 400;
+    font-size: 11px; letter-spacing: 5px; color: var(--muted); margin-top: 4px;
+  }
+  #conn { font-size: 12px; color: var(--muted); margin: 6px 0 10px; min-height: 16px; text-align: center; letter-spacing: .3px; }
   #conn .ok { color: #3fb950; }
   #conn .bad { color: #f85149; }
 
@@ -53,19 +68,20 @@
 
   /* 게임 보드 */
   #board {
-    background: rgba(18, 15, 10, 0.86); border: 2px solid var(--warm-border); border-radius: 10px;
-    padding: 16px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5); min-height: 420px; box-sizing: border-box;
+    background: var(--card); border: 2px solid var(--warm-border); border-radius: 10px;
+    padding: 18px; box-shadow: inset 0 0 0 1px rgba(230, 192, 74, 0.22), 0 10px 34px rgba(0, 0, 0, 0.6);
+    min-height: 420px; box-sizing: border-box;
   }
   #board.hidden { display: none; }
-  .poolInfo { text-align: center; font-size: 12px; color: #8b949e; margin-bottom: 8px; }
+  .poolInfo { text-align: center; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
 
   .side { margin: 8px 0; padding: 8px; border-radius: 8px; }
-  .side.active { background: rgba(63, 185, 80, 0.08); box-shadow: inset 0 0 0 1px rgba(63, 185, 80, 0.35); }
+  .side.active { background: rgba(230, 192, 74, 0.07); box-shadow: inset 0 0 0 1px rgba(230, 192, 74, 0.4); }
   .side.eliminated { opacity: 0.45; }
-  .side .label { font-size: 13px; color: #8b949e; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
-  .side .label .turnDot { width: 9px; height: 9px; border-radius: 50%; background: #30363d; flex: none; }
-  .side.active .label .turnDot { background: #3fb950; box-shadow: 0 0 8px #3fb950; }
-  .side.active .label { color: #e6edf3; font-weight: 600; }
+  .side .label { font-size: 13px; color: var(--muted); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .side .label .turnDot { width: 9px; height: 9px; border-radius: 50%; background: #4a3d20; flex: none; }
+  .side.active .label .turnDot { background: var(--gold-soft); box-shadow: 0 0 9px rgba(242, 204, 96, 0.9); }
+  .side.active .label { color: var(--gold-bright); font-weight: 700; }
   .side .label .badge { font-size: 11px; color: #f85149; border: 1px solid #f85149; border-radius: 4px; padding: 0 5px; }
 
   .tiles { display: flex; flex-wrap: wrap; gap: 6px; min-height: 62px; align-items: flex-end; }
@@ -105,7 +121,7 @@
   .gap:hover { background: rgba(242,204,96,0.28); }
 
   #status { text-align: center; font-size: 14px; margin: 14px 0 6px; min-height: 20px; line-height: 1.5; }
-  #feedback { text-align: center; font-size: 13px; color: #8b949e; min-height: 18px; }
+  #feedback { text-align: center; font-size: 13px; color: var(--muted); min-height: 18px; }
 
   #numpad { margin: 12px auto 0; max-width: 340px; }
   #numpad.hidden { display: none; }
@@ -120,38 +136,55 @@
 
   /* 패널 — 한 번에 하나만 표시되므로 절대배치 오버레이가 아니라 일반 흐름으로 두어
      stage가 내용 높이에 맞게 늘어나게 한다(내용이 길어져도 위/아래로 삐져나오지 않음). */
-  .panel { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; background: rgba(18, 15, 10, 0.86); border: 2px solid var(--warm-border); border-radius: 10px; padding: 20px 16px; box-sizing: border-box; text-align: center; min-height: 420px; }
+  .panel { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 13px; background: var(--card); border: 2px solid var(--warm-border); border-radius: 10px; padding: 24px 18px; box-sizing: border-box; text-align: center; min-height: 420px; box-shadow: inset 0 0 0 1px rgba(230, 192, 74, 0.22), 0 10px 34px rgba(0, 0, 0, 0.6); }
   .panel.hidden { display: none; }
-  .panel h2 { font-size: clamp(20px, 6vw, 28px); font-weight: 700; margin: 0; }
-  .panel .sub { font-size: 14px; color: #8b949e; margin-top: -4px; }
+  .panel h2 { font-family: var(--serif); font-size: clamp(21px, 6vw, 27px); font-weight: 700; margin: 0; color: var(--gold-bright); letter-spacing: 1px; text-shadow: 0 1px 0 #000; }
+  .panel .sub { font-size: 13.5px; color: var(--muted); margin-top: -2px; line-height: 1.5; }
   .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-  button.btn { font-family: inherit; cursor: pointer; border: 1px solid var(--warm-border); border-radius: 6px; background: var(--warm-bg); color: var(--warm-text); padding: 11px 22px; font-size: 15px; transition: filter 0.1s; }
-  button.btn:hover { filter: brightness(1.25); }
-  button.primary { background: var(--gold); border-color: var(--gold-bright); color: var(--ink); font-weight: 600; }
-  button.host { background: var(--gold-bright); border-color: var(--gold-soft); color: var(--ink); font-weight: 700; }
+  button.btn {
+    font-family: var(--serif); cursor: pointer; border: 1px solid var(--warm-border); border-radius: 7px;
+    background: linear-gradient(180deg, var(--warm-bg2), var(--warm-bg)); color: var(--parchment);
+    padding: 11px 24px; font-size: 15px; letter-spacing: .5px;
+    box-shadow: inset 0 1px 0 rgba(255, 240, 200, 0.08), 0 2px 6px rgba(0, 0, 0, 0.4);
+    transition: filter .12s, transform .05s;
+  }
+  button.btn:hover { filter: brightness(1.18); }
+  button.btn:active { transform: translateY(1px); }
+  /* 주요 CTA — 황동 엠보스 */
+  button.primary, button.host {
+    background: linear-gradient(180deg, var(--gold-bright), var(--gold) 55%, var(--gold-deep));
+    border-color: var(--gold-deep); color: var(--ink); font-weight: 700; letter-spacing: 1px;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.28);
+    box-shadow: inset 0 1px 0 rgba(255, 250, 220, 0.6), inset 0 -2px 5px rgba(120, 90, 20, 0.45), 0 3px 8px rgba(0, 0, 0, 0.45);
+  }
 
   /* 옵션 세그먼트 컨트롤 */
   .opt { display: flex; align-items: center; gap: 10px; }
-  .opt .optLabel { font-size: 13px; color: #8b949e; width: 42px; text-align: right; }
-  .seg { display: inline-flex; border: 1px solid var(--warm-border); border-radius: 6px; overflow: hidden; }
-  .seg button { font-family: inherit; cursor: pointer; border: none; background: var(--warm-bg); color: var(--warm-text); padding: 8px 14px; font-size: 14px; border-right: 1px solid var(--warm-border); }
+  .opt .optLabel { font-size: 13px; color: var(--muted); width: 42px; text-align: right; }
+  .seg { display: inline-flex; border: 1px solid var(--warm-border); border-radius: 7px; overflow: hidden; box-shadow: inset 0 1px 0 rgba(255, 240, 200, 0.06), 0 2px 6px rgba(0, 0, 0, 0.35); }
+  .seg button { font-family: var(--serif); cursor: pointer; border: none; background: linear-gradient(180deg, var(--warm-bg2), var(--warm-bg)); color: var(--parchment); padding: 9px 16px; font-size: 14px; letter-spacing: .5px; border-right: 1px solid var(--warm-border); transition: filter .1s; }
+  .seg button:hover { filter: brightness(1.15); }
   .seg button:last-child { border-right: none; }
-  .seg button.on { background: var(--gold); color: var(--ink); font-weight: 700; }
-  #ruleNote { font-size: 12px; color: #8b949e; max-width: 440px; line-height: 1.5; margin-top: -2px; }
+  .seg button.on { background: linear-gradient(180deg, var(--gold-bright), var(--gold-deep)); color: var(--ink); font-weight: 700; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.28); }
+  #ruleNote { font-size: 12px; color: var(--muted); max-width: 440px; line-height: 1.5; margin-top: -2px; }
   #numpad .npDouble { grid-column: span 6; margin-top: 2px; border: 1px solid var(--gold-soft); border-radius: 6px; background: var(--warm-bg); color: var(--gold-soft); font-family: inherit; font-size: 13px; padding: 8px 0; cursor: pointer; }
   #numpad .npDouble.on { background: var(--gold-soft); color: var(--ink); font-weight: 700; }
 
-  #codeInput { font-family: inherit; font-size: 22px; letter-spacing: 6px; text-align: center; text-transform: uppercase; width: 150px; padding: 10px; border-radius: 6px; border: 1px solid var(--warm-border); background: #0d0b07; color: var(--warm-text); }
-  #roomCode { font-size: clamp(34px, 12vw, 52px); font-weight: 800; letter-spacing: 10px; color: #f2cc60; margin: 4px 0; }
-  #rosterInfo { font-size: 14px; color: #8b949e; }
+  #codeInput { font-family: var(--serif); font-size: 22px; letter-spacing: 6px; text-align: center; text-transform: uppercase; width: 150px; padding: 10px; border-radius: 7px; border: 1px solid var(--warm-border); background: #0d0b05; color: var(--gold-bright); box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5); }
+  #codeInput::placeholder { color: #6b5c3a; letter-spacing: 3px; }
+  #roomCode { font-family: var(--serif); font-size: clamp(34px, 12vw, 52px); font-weight: 800; letter-spacing: 10px; color: var(--gold-soft); margin: 6px 0; text-shadow: 0 2px 3px #000, 0 0 18px rgba(242, 204, 96, 0.3); }
+  #rosterInfo { font-size: 14px; color: var(--muted); }
   .err { color: #f85149; font-size: 13px; min-height: 16px; }
-  .divider { width: 80%; border-top: 1px solid var(--warm-border); margin: 4px 0; }
-  #hint { margin-top: 12px; font-size: 12px; color: #8b949e; text-align: center; line-height: 1.7; max-width: 560px; }
+  /* 양끝이 사라지는 황동 장식선(가운데 마름모) */
+  .divider { width: 82%; height: 14px; border: 0; margin: 6px 0; position: relative; }
+  .divider::before { content: ""; position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--gold-deep) 20%, var(--gold) 50%, var(--gold-deep) 80%, transparent); }
+  .divider::after { content: "◆"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--gold); font-size: 10px; background: var(--card); padding: 0 8px; }
+  #hint { margin-top: 14px; font-size: 12.5px; color: var(--muted); text-align: center; line-height: 1.75; max-width: 560px; }
   a { color: var(--gold-bright); }
 </style>
 </head>
 <body>
-  <h1>🔎 다빈치코드 온라인 대전</h1>
+  <h1>다빈치코드<span class="tagline">ONLINE · 온라인 추리 대전</span></h1>
   <div id="conn">서버 연결 중…</div>
 
   <div id="stage">
@@ -175,7 +208,7 @@
         <div class="grid" id="numpadGrid"></div>
         <button class="btn npCancel" id="npCancel">취소</button>
       </div>
-      <div id="numpadHint" style="text-align:center;font-size:12px;color:#8b949e;margin-top:6px;"></div>
+      <div id="numpadHint" style="text-align:center;font-size:12px;color:var(--muted);margin-top:6px;"></div>
 
       <!-- 정답 후 계속/멈추기 -->
       <div id="decide" class="hidden">
@@ -186,8 +219,8 @@
 
     <!-- 메뉴 -->
     <div id="menu" class="panel">
-      <h2>다빈치코드 온라인</h2>
-      <div class="sub">방을 만들 때 버전과 인원을 설정하세요</div>
+      <h2>새 게임</h2>
+      <div class="sub">버전과 인원을 고른 뒤 방을 만드세요</div>
       <div class="opt">
         <div class="optLabel">버전</div>
         <div class="seg" id="segVersion">
@@ -232,13 +265,9 @@
   </div>
 
   <div id="hint">
-    <b>공통</b> — 흑·백 0~11 타일을 오름차순(같은 숫자는 검정이 왼쪽)으로 세웁니다.
-    상대 가림 타일의 숫자를 맞혀 공개시키고, 타일이 모두 공개된 사람은 탈락 · <b>최후의 1인</b>이 승리! (조커 🃏 2개 포함)<br />
-    <b>Basic</b>: 매 턴 1장 뽑아 추리 → 맞히면 공개+턴 넘김, 틀리면 벌칙 없이 턴 넘김.
-    <b>PLUS</b>: 뽑아 추리 → 맞히면 계속/멈추기, 틀리면 뽑은 타일 공개.
-    <b>Zion</b>: 흑2·백2 시작(뽑기 없음) → 맞히면 턴 넘김, 틀리면 1장 받기, 같은 숫자 인접이면 '더블' 지목.<br />
-    <b style="color:#f2cc60">조커(🃏)</b>는 숫자가 없어 아무 위치에나 놓을 수 있고, 추리할 땐 "조커"로 지목 ·
-    탁구 게임으로 가려면 <a href="./index.html">여기</a>
+    흑·백 0~11 타일을 오름차순(같은 숫자는 검정이 왼쪽)으로 세우고, 상대의 가림 타일 숫자를 맞혀 공개시킵니다.
+    타일이 모두 공개된 사람은 탈락 — <b style="color:var(--gold-bright)">최후의 1인</b>이 승리! (조커 🃏 2개 포함)<br />
+    버전별 상세 규칙은 방 만들기의 <b>‘버전’</b> 선택 시 안내됩니다 · <a href="./index.html">탁구 게임으로</a>
   </div>
 
 <script>
@@ -729,7 +758,7 @@
       const lead = zion ? "벌칙으로 받은" : "뽑은";
       st.innerHTML = `🃏 ${lead} <b style="color:#f2cc60">${colorName(d.color)} 조커</b> — 손패에서 놓을 위치를 고르세요`;
     } else if (v.phase === "guess" && zion) {
-      st.innerHTML = `🔎 <b>내 차례</b> — 상대 타일의 숫자를 맞혀보세요 <span style="color:#8b949e">(틀리면 더미에서 1장을 가림으로 받고 턴 종료)</span>`;
+      st.innerHTML = `🔎 <b>내 차례</b> — 상대 타일의 숫자를 맞혀보세요 <span style="color:var(--muted)">(틀리면 더미에서 1장을 가림으로 받고 턴 종료)</span>`;
     } else if (v.phase === "guess") {
       const d = v.drawnMine;
       const drawnTxt = d
@@ -816,7 +845,7 @@
   function send(obj) { if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj)); }
 
   function connect() {
-    $("conn").innerHTML = "서버 연결 중… <span style='color:#8b949e'>(무료 서버는 첫 접속에 30~60초 걸릴 수 있어요)</span>";
+    $("conn").innerHTML = "서버 연결 중… <span style='color:var(--muted)'>(무료 서버는 첫 접속에 30~60초 걸릴 수 있어요)</span>";
     try { ws = new WebSocket(SERVER_URL); }
     catch (e) { $("conn").innerHTML = "<span class='bad'>서버 주소 오류</span>"; return; }
 
