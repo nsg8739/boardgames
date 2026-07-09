@@ -40,7 +40,8 @@
   html { width: 100%; }
   body { width: 100%; max-width: 100%; }
   body.screen-menu {
-    overflow-y: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
   body.screen-playing,
   body.screen-lobby,
@@ -210,11 +211,6 @@
 
   /* ===== 메뉴(런처) 레이아웃 ===== */
   .menu {
-    position: fixed;
-    left: 50%;
-    top: clamp(220px, 29svh, 305px);
-    z-index: 10;
-    transform: translateX(-50%);
     gap: 16px;
     width: min(400px, calc(100vw - 32px));
     max-width: 100%;
@@ -315,52 +311,25 @@
   #hint[open] > summary .arrow { transform: rotate(180deg); }
   #hint > summary:hover { background: rgba(201,162,39,0.12); }
   .hintBody { font-size: 12.5px; color: var(--parchment); text-align: center; line-height: 1.8; padding: 12px 6px 4px; }
+  /* 메뉴 화면에서도 #stage는 런처 높이에 맞게 축소만(고정 오버레이 아님) */
   #stage:has(#menu:not(.hidden)) {
-    width: 0;
-    max-width: 0;
     min-height: 0;
-    margin-top: 0;
   }
+  /* 규칙은 런처 바로 아래 흐름(flow)에 배치 — 펼치면 아래로 확장되고 페이지가 스크롤됨(팝업 아님) */
   #stage:has(#menu:not(.hidden)) + #hint {
-    position: fixed;
-    left: 50%;
-    bottom: 12px;
-    z-index: 11;
-    width: min(560px, calc(100vw - 32px));
-    margin: 0;
-    transform: translateX(-50%);
-  }
-  /* 펼친 규칙이 뒤의 메뉴(코드 입력창)와 투명하게 겹쳐 보이던 문제 해결:
-     불투명 카드 + 화면 딤 백드롭으로 명확한 팝오버 처리하고, 길면 내부 스크롤. */
-  #stage:has(#menu:not(.hidden)) + #hint[open] {
-    top: 50%;
-    bottom: auto;
-    z-index: 40;
-    width: min(420px, calc(100vw - 32px));
-    background: #1a130b;
-    border: 1px solid var(--warm-border);
-    border-radius: 12px;
-    box-shadow: inset 0 0 0 1px rgba(230, 192, 74, 0.2), 0 18px 54px rgba(0, 0, 0, 0.82);
-    max-height: min(72svh, 520px);
-    overflow-y: auto;
-    transform: translate(-50%, -50%);
-  }
-  #stage:has(#menu:not(.hidden)) + #hint[open]::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    background: rgba(8, 5, 2, 0.6);
-    -webkit-backdrop-filter: blur(2px);
-    backdrop-filter: blur(2px);
+    width: min(400px, calc(100vw - 32px));
+    margin: 12px auto 24px;
   }
   #stage:has(#menu:not(.hidden)) + #hint[open] > summary {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    border-color: rgba(201, 162, 39, 0.5);
-    border-radius: 10px 10px 0 0;
-    background: #130d07;
+    border-radius: 8px 8px 0 0;
+  }
+  /* 펼친 본문은 배경 아트 위에서도 읽히도록 불투명 카드로 */
+  #stage:has(#menu:not(.hidden)) + #hint[open] > .hintBody {
+    background: rgba(20, 14, 7, 0.94);
+    border: 1px solid var(--warm-border);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    padding: 12px 14px 14px;
   }
   @media (max-height: 760px) {
     #stage { margin-top: clamp(190px, 27svh, 245px); }
@@ -387,20 +356,13 @@
     #stage {
       width: calc(100vw - 32px);
       max-width: calc(100vw - 32px);
-      margin-top: clamp(125px, 18svh, 165px);
+      margin-top: clamp(105px, 15svh, 145px);
     }
     .menu {
-      left: 50%;
-      right: auto;
-      top: clamp(125px, 18svh, 165px);
       width: calc(100vw - 64px);
       max-width: 340px;
-      margin-left: 0;
-      margin-right: 0;
-      transform: translateX(-50%);
     }
     #stage:has(#menu:not(.hidden)) + #hint {
-      bottom: 8px;
       width: calc(100vw - 32px);
     }
     .modeSummary { gap: 8px; }
