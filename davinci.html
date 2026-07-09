@@ -47,11 +47,15 @@
     content: "";
     position: fixed;
     inset: 0;
-    z-index: -1;
+    z-index: 0;
     background:
-      radial-gradient(ellipse at center, rgba(20, 14, 7, 0.04) 0%, rgba(15, 10, 5, 0.34) 100%),
-      url("DA%20VINCI%20CODE_1.png") center top / cover no-repeat;
+      linear-gradient(180deg, rgba(10, 6, 3, 0) 0%, rgba(10, 6, 3, 0.08) 52%, rgba(10, 6, 3, 0.22) 100%),
+      url("DA%20VINCI%20CODE_1.png") center top / min(100vw, 1536px) auto no-repeat;
     pointer-events: none;
+  }
+  body > * {
+    position: relative;
+    z-index: 1;
   }
   h1 {
     position: absolute;
@@ -81,7 +85,7 @@
     position: relative;
     width: min(560px, 100%);
     min-height: 420px;
-    margin-top: clamp(210px, 29vh, 310px);
+    margin-top: clamp(260px, 34vh, 350px);
   }
 
   /* 게임 보드 */
@@ -182,7 +186,7 @@
     width: min(360px, 92vw);
     padding: 18px 16px 16px;
     min-height: 0;
-    background: rgba(23, 15, 8, 0.54);
+    background: rgba(23, 15, 8, 0.44);
     border: 1px solid rgba(201, 162, 39, 0.36);
     -webkit-backdrop-filter: blur(3px);
     backdrop-filter: blur(3px);
@@ -274,7 +278,7 @@
   #hint > summary:hover { background: rgba(201,162,39,0.12); }
   .hintBody { font-size: 12.5px; color: var(--parchment); text-align: center; line-height: 1.8; padding: 12px 6px 4px; }
   @media (max-height: 760px) {
-    #stage { margin-top: clamp(160px, 24vh, 230px); }
+    #stage { margin-top: clamp(220px, 31vh, 270px); }
     .menu { gap: 12px; padding: 14px; }
     .menu h2 { font-size: 21px; }
     .sectionHead { font-size: 15px; }
@@ -284,10 +288,10 @@
   @media (max-width: 520px) {
     body::before {
       background:
-        radial-gradient(ellipse at center, rgba(20, 14, 7, 0.04) 0%, rgba(15, 10, 5, 0.34) 100%),
-        url("DA%20VINCI%20CODE_1.png") center top / auto 100svh no-repeat;
+        linear-gradient(180deg, rgba(10, 6, 3, 0) 0%, rgba(10, 6, 3, 0.08) 52%, rgba(10, 6, 3, 0.22) 100%),
+        url("DA%20VINCI%20CODE_1.png") center top / auto 65svh no-repeat;
     }
-    #stage { margin-top: clamp(180px, 25vh, 260px); }
+    #stage { margin-top: clamp(230px, 35vh, 285px); }
   }
   /* Final button normalization: 버튼 크기와 문구를 안정적으로 고정 */
   .menu button,
@@ -337,6 +341,19 @@
     .seg button { height: 42px; padding: 0 6px; }
     .cta-primary { height: 52px; min-height: 52px; padding: 0 20px; }
   }
+  /* Background lock: 원본 보드 상단의 DaVinci code 타이틀을 반드시 노출 */
+  body::before {
+    background:
+      linear-gradient(180deg, rgba(10, 6, 3, 0) 0%, rgba(10, 6, 3, 0.08) 52%, rgba(10, 6, 3, 0.22) 100%),
+      url("DA%20VINCI%20CODE_1.png") center top / min(100vw, 1536px) auto no-repeat !important;
+  }
+  @media (max-width: 520px) {
+    body::before {
+      background:
+        linear-gradient(180deg, rgba(10, 6, 3, 0) 0%, rgba(10, 6, 3, 0.08) 52%, rgba(10, 6, 3, 0.22) 100%),
+        url("DA%20VINCI%20CODE_1.png") center top / auto 65svh no-repeat !important;
+    }
+  }
   a { color: var(--gold-bright); }
 </style>
 </head>
@@ -382,7 +399,7 @@
       <div class="section">
         <div class="sectionHead"><span class="stepNo">1</span>게임 모드</div>
         <div class="seg" id="segVersion">
-          <button data-v="basic" class="on">Basic</button><button data-v="plus">PLUS</button><button data-v="zion">Zion</button>
+          <button data-v="basic" class="on">BASIC</button><button data-v="plus">PLUS</button><button data-v="zion">ZION</button>
         </div>
         <div class="modeSummary">
           <span id="modeSummaryText"></span>
@@ -1169,7 +1186,7 @@
     });
   }
   const RULE_NOTES = {
-    basic: { title: "Basic 규칙", summary: "가장 단순한 입문용 — 틀려도 벌칙 없음.", points: [
+    basic: { title: "BASIC 규칙", summary: "가장 단순한 입문용 — 틀려도 벌칙 없음.", points: [
       "매 턴 더미에서 1장 뽑아 상대 숫자 추리",
       "맞히면 그 타일 공개 후 턴 넘김",
       "틀려도 벌칙 없이 턴 넘김",
@@ -1179,7 +1196,7 @@
       "맞히면 ‘계속 추리 / 멈추기’ 선택",
       "틀리면 방금 뽑은 내 타일 공개",
     ] },
-    zion: { title: "Zion 규칙", summary: "흑2·백2 고정 시작 — ‘더블’ 지목 규칙 추가.", points: [
+    zion: { title: "ZION 규칙", summary: "흑2·백2 고정 시작 — ‘더블’ 지목 규칙 추가.", points: [
       "흑2·백2로 시작 (턴마다 뽑기 없음)",
       "맞히면 턴 넘김, 틀리면 더미에서 1장 받기",
       "같은 숫자가 나란히 있으면 ‘더블’로 지목",
