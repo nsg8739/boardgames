@@ -16,10 +16,10 @@
     --warm-border: #6b5427;  /* 황동 테두리 */
     --parchment: #efe3c7;    /* 양피지 크림(본문 글자) */
     --warm-text: #efe3c7;    /* = parchment */
-    --muted: #b7a37a;        /* 바랜 세피아(보조 글자) */
+    --muted: #cbb78d;        /* 바랜 세피아(보조 글자, 대비 강화) */
     --seal: #a6402f;         /* 밀랍 인장 붉은색(보조 강조) */
     --ink: #201406;          /* 골드 위 짙은 잉크 글자 */
-    --card: rgba(28, 21, 13, 0.9);       /* 카드 바탕(짙은 원목) */
+    --card: rgba(26, 19, 11, 0.94);      /* 카드 바탕(짙은 원목, 대비 위해 더 불투명) */
     --serif: Georgia, "Nanum Myeongjo", "Batang", "Times New Roman", serif;  /* 앤틱 표제 */
   }
   html, body {
@@ -158,15 +158,21 @@
     box-shadow: inset 0 1px 0 rgba(255, 250, 220, 0.6), inset 0 -2px 5px rgba(120, 90, 20, 0.45), 0 3px 8px rgba(0, 0, 0, 0.45);
   }
 
-  /* 옵션 세그먼트 컨트롤 */
-  .opt { display: flex; align-items: center; gap: 10px; }
-  .opt .optLabel { font-size: 13px; color: var(--muted); width: 42px; text-align: right; }
-  .seg { display: inline-flex; border: 1px solid var(--warm-border); border-radius: 7px; overflow: hidden; box-shadow: inset 0 1px 0 rgba(255, 240, 200, 0.06), 0 2px 6px rgba(0, 0, 0, 0.35); }
-  .seg button { font-family: var(--serif); cursor: pointer; border: none; background: linear-gradient(180deg, var(--warm-bg2), var(--warm-bg)); color: var(--parchment); padding: 9px 16px; font-size: 14px; letter-spacing: .5px; border-right: 1px solid var(--warm-border); transition: filter .1s; }
+  /* 옵션: 라벨 | 선택지 2열 그리드로 정렬, 세그먼트는 가로 꽉 채워 균등 분할 */
+  .opts { display: grid; grid-template-columns: auto 1fr; gap: 11px 14px; width: min(380px, 100%); align-items: center; }
+  .optLabel { font-family: var(--serif); font-size: 14px; color: var(--gold-bright); text-align: right; letter-spacing: .5px; }
+  .seg { display: flex; width: 100%; border: 1px solid var(--warm-border); border-radius: 7px; overflow: hidden; box-shadow: inset 0 1px 0 rgba(255, 240, 200, 0.06), 0 2px 6px rgba(0, 0, 0, 0.35); }
+  .seg button { flex: 1 1 0; font-family: var(--serif); cursor: pointer; border: none; background: linear-gradient(180deg, var(--warm-bg2), var(--warm-bg)); color: var(--parchment); padding: 10px 6px; font-size: 14px; letter-spacing: .5px; border-right: 1px solid var(--warm-border); transition: filter .1s; }
   .seg button:hover { filter: brightness(1.15); }
   .seg button:last-child { border-right: none; }
   .seg button.on { background: linear-gradient(180deg, var(--gold-bright), var(--gold-deep)); color: var(--ink); font-weight: 700; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.28); }
-  #ruleNote { font-size: 12px; color: var(--muted); max-width: 440px; line-height: 1.5; margin-top: -2px; }
+  /* 규칙 안내 — 제목 + 불릿, 왼쪽 골드 라인의 별도 박스로 가독성 확보 */
+  #ruleNote { width: min(380px, 100%); text-align: left; background: rgba(0, 0, 0, 0.26); border: 1px solid var(--warm-border); border-left: 3px solid var(--gold); border-radius: 6px; padding: 10px 14px; box-sizing: border-box; }
+  #ruleNote:empty { display: none; }
+  .ruleTitle { font-family: var(--serif); color: var(--gold-bright); font-size: 14px; font-weight: 700; letter-spacing: .5px; margin-bottom: 6px; }
+  .ruleList { margin: 0; padding-left: 16px; }
+  .ruleList li { color: var(--parchment); font-size: 12.5px; line-height: 1.65; margin: 3px 0; }
+  .ruleList li::marker { color: var(--gold); }
   #numpad .npDouble { grid-column: span 6; margin-top: 2px; border: 1px solid var(--gold-soft); border-radius: 6px; background: var(--warm-bg); color: var(--gold-soft); font-family: inherit; font-size: 13px; padding: 8px 0; cursor: pointer; }
   #numpad .npDouble.on { background: var(--gold-soft); color: var(--ink); font-weight: 700; }
 
@@ -219,22 +225,20 @@
 
     <!-- 메뉴 -->
     <div id="menu" class="panel">
-      <h2>새 게임</h2>
+      <h2>NEW GAME</h2>
       <div class="sub">버전과 인원을 고른 뒤 방을 만드세요</div>
-      <div class="opt">
+      <div class="opts">
         <div class="optLabel">버전</div>
         <div class="seg" id="segVersion">
           <button data-v="basic" class="on">Basic</button><button data-v="plus">PLUS</button><button data-v="zion">Zion</button>
         </div>
-      </div>
-      <div id="ruleNote"></div>
-      <div class="opt">
         <div class="optLabel">인원</div>
         <div class="seg" id="segPlayers">
           <button data-v="2" class="on">2명</button><button data-v="3">3명</button><button data-v="4">4명</button>
         </div>
       </div>
-      <div class="row"><button id="createBtn" class="btn host">방 만들기</button></div>
+      <div id="ruleNote"></div>
+      <button id="createBtn" class="btn host">방 만들기</button>
       <div class="divider"></div>
       <div class="sub">받은 코드로 입장</div>
       <div class="row">
@@ -986,11 +990,28 @@
     });
   }
   const RULE_NOTES = {
-    basic: "Basic: 매 턴 더미에서 1장 뽑아(가림) 상대 숫자 추리 · 맞히면 그 타일 공개 후 턴 넘김, 틀리면 벌칙 없이 턴 넘김.",
-    plus: "PLUS: 매 턴 1장 뽑고 상대 숫자 추리 · 맞히면 계속/멈추기, 틀리면 뽑은 타일 공개 후 턴 종료.",
-    zion: "Zion: 각자 검정2·흰색2로 시작(뽑기 없음) · 상대 숫자 추리 → 맞히면 턴 넘김, 틀리면 더미에서 1장 받기 · 같은 숫자가 나란히 있으면 '더블'로 지목해야 인정.",
+    basic: { title: "Basic 규칙", points: [
+      "매 턴 더미에서 1장 뽑아 상대 숫자 추리",
+      "맞히면 그 타일 공개 후 턴 넘김",
+      "틀려도 벌칙 없이 턴 넘김",
+    ] },
+    plus: { title: "PLUS 규칙", points: [
+      "매 턴 1장 뽑아 상대 숫자 추리",
+      "맞히면 ‘계속 추리 / 멈추기’ 선택",
+      "틀리면 방금 뽑은 내 타일 공개",
+    ] },
+    zion: { title: "Zion 규칙", points: [
+      "흑2·백2로 시작 (턴마다 뽑기 없음)",
+      "맞히면 턴 넘김, 틀리면 더미에서 1장 받기",
+      "같은 숫자가 나란히 있으면 ‘더블’로 지목",
+    ] },
   };
-  function updateRuleNote() { $("ruleNote").textContent = RULE_NOTES[optVersion] || ""; }
+  function updateRuleNote() {
+    const r = RULE_NOTES[optVersion], el = $("ruleNote");
+    if (!r) { el.innerHTML = ""; return; }
+    el.innerHTML = `<div class="ruleTitle">${r.title}</div><ul class="ruleList">` +
+      r.points.map((p) => `<li>${p}</li>`).join("") + "</ul>";
+  }
   initSeg("segPlayers", (v) => (optPlayers = Number(v)));
   initSeg("segVersion", (v) => { optVersion = v; updateRuleNote(); });
   updateRuleNote();
