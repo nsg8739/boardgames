@@ -114,13 +114,10 @@
     flex-direction: column;
     align-items: center;
   }
+  body.screen-playing #stage,
   body.screen-lobby #stage,
   body.screen-over #stage {
     padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
-  }
-  /* 플레이 중엔 하단 여백을 줄여 '게임 규칙 보기'가 보드 바로 아래에 오게 한다 */
-  body.screen-playing #stage {
-    padding-bottom: 8px;
   }
 
   /* 게임 보드 */
@@ -229,6 +226,8 @@
     overflow-y: auto;
   }
   #numpad:not(.hidden) .npCancel { margin-top: 10px; }
+  /* 숫자패드가 열리면 그 높이만큼 아래 여백 확보 → 패드 뒤에 가리던 보드 하단까지 스크롤로 볼 수 있게 */
+  body.numpad-open #stage { padding-bottom: var(--numpad-space, 320px); }
   #numpad .grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
   #numpad .np { font-family: inherit; font-size: 17px; font-weight: 600; padding: 10px 0; border: 1px solid var(--warm-border); border-radius: 6px; background: var(--warm-bg); color: var(--warm-text); cursor: pointer; }
   #numpad .np:hover { filter: brightness(1.35); border-color: var(--gold); }
@@ -351,51 +350,9 @@
   .divider { width: 82%; height: 14px; border: 0; margin: 6px 0; position: relative; }
   .divider::before { content: ""; position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--gold-deep) 20%, var(--gold) 50%, var(--gold-deep) 80%, transparent); }
   .divider::after { content: "◆"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--gold); font-size: 10px; background: var(--card); padding: 0 8px; }
-  /* 하단 게임 설명 — 접기/펼치기(accordion)로 기본은 접어둠 */
-  #hint { margin: 16px auto 0; width: min(560px, calc(100vw - 32px)); box-sizing: border-box; }
-  #hint > summary {
-    list-style: none; cursor: pointer; text-align: center; font-family: var(--serif);
-    font-size: 13px; font-weight: 700; color: var(--gold-bright); letter-spacing: .5px;
-    padding: 9px 14px; border: 1px solid var(--warm-border); border-radius: 8px;
-    background: rgba(13, 10, 5, 0.55);
-  }
-  #hint > summary::-webkit-details-marker { display: none; }
-  #hint > summary .arrow { display: inline-block; transition: transform .18s; }
-  #hint[open] > summary .arrow { transform: rotate(180deg); }
-  #hint > summary:hover { background: rgba(201,162,39,0.12); }
-  .hintBody { font-size: 12.5px; color: var(--parchment); text-align: center; line-height: 1.8; padding: 12px 6px 4px; }
   /* 메뉴 화면에서도 #stage는 런처 높이에 맞게 축소만(고정 오버레이 아님) */
   #stage:has(#menu:not(.hidden)) {
     min-height: 0;
-  }
-  /* 규칙은 런처 바로 아래 흐름(flow)에 배치 — 펼치면 아래로 확장되고 페이지가 스크롤됨(팝업 아님) */
-  #stage:has(#menu:not(.hidden)) + #hint {
-    width: min(400px, calc(100vw - 32px));
-    margin: 12px auto 24px;
-  }
-  #stage:has(#menu:not(.hidden)) + #hint[open] > summary {
-    border-radius: 8px 8px 0 0;
-  }
-  /* 펼친 본문은 배경 아트 위에서도 읽히도록 불투명 카드로 */
-  #stage:has(#menu:not(.hidden)) + #hint[open] > .hintBody {
-    background: rgba(20, 14, 7, 0.94);
-    border: 1px solid var(--warm-border);
-    border-top: none;
-    border-radius: 0 0 8px 8px;
-    padding: 12px 14px 14px;
-  }
-  /* 플레이 중: 규칙 보기를 보드 바로 아래에 두고, 펼치면 아래로 확장 → 페이지 스크롤로 전문 확인 */
-  body.screen-playing #hint {
-    margin: 10px auto calc(28px + env(safe-area-inset-bottom, 0px));
-    width: min(560px, calc(100vw - 32px));
-  }
-  body.screen-playing #hint[open] > summary { border-radius: 8px 8px 0 0; }
-  body.screen-playing #hint[open] > .hintBody {
-    background: rgba(20, 14, 7, 0.94);
-    border: 1px solid var(--warm-border);
-    border-top: none;
-    border-radius: 0 0 8px 8px;
-    padding: 12px 14px 14px;
   }
   @media (max-height: 760px) {
     #stage { margin-top: clamp(190px, 27svh, 245px); }
@@ -427,9 +384,6 @@
     .menu {
       width: calc(100vw - 64px);
       max-width: 340px;
-    }
-    #stage:has(#menu:not(.hidden)) + #hint {
-      width: calc(100vw - 32px);
     }
     .modeSummary { gap: 8px; }
     .linkBtn { font-size: 12px; }
@@ -558,7 +512,7 @@
       <div class="section">
         <div class="sectionHead"><span class="stepNo">2</span>인원</div>
         <div class="seg" id="segPlayers">
-          <button data-v="2" class="on">2명</button><button data-v="3">3명</button><button data-v="4">4명</button>
+          <button data-v="1">1명</button><button data-v="2" class="on">2명</button><button data-v="3">3명</button><button data-v="4">4명</button>
         </div>
       </div>
 
@@ -615,15 +569,6 @@
     </div>
   </div>
 
-  <details id="hint">
-    <summary>게임 규칙 보기 <span class="arrow">▼</span></summary>
-    <div class="hintBody">
-      흑·백 0~11 타일을 오름차순(같은 숫자는 검정이 왼쪽)으로 세우고, 상대의 가림 타일 숫자를 맞혀 공개시킵니다.
-      타일이 모두 공개된 사람은 탈락 — <b style="color:var(--gold-bright)">최후의 1인</b>이 승리! (조커 🃏 2개 포함)<br />
-      모드별 상세 규칙은 <b>‘게임 모드’</b> 선택 후 <b>‘규칙 자세히 ⓘ’</b>에서 확인하세요 · <a href="./index.html">탁구 게임으로</a>
-    </div>
-  </details>
-
 <script>
 (() => {
   "use strict";
@@ -641,6 +586,8 @@
   const JOKERS = 2;  // 조커는 옵션에서 제외 — 모든 버전 고정 2개(더미에 포함, 뽑기로 등장)
   const cfg = { count: 2, jokers: JOKERS, version: "basic" };  // 호스트가 방 만들 때 선택 → 게임 초기화에 사용
   let optPlayers = 2, optVersion = "basic";  // 메뉴 세그먼트 선택값
+  let soloMode = false, aiTimer = null;       // 1명(솔로) = 나 vs 컴퓨터(AI). 서버 없이 로컬 진행
+  const AI_INDEX = 1;
 
   const SCREEN = { CONNECTING: "connecting", MENU: "menu", LOBBY: "lobby", PLAYING: "playing", OVER: "over" };
   let screen = SCREEN.CONNECTING;
@@ -980,9 +927,118 @@
   }
 
   function broadcast() {
-    for (let i = 1; i < G.count; i++) send({ type: "view", view: viewFor(i), to: i });  // 각 게스트에게 개인화 view
-    renderView(viewFor(0));  // 호스트 로컬 렌더
+    if (!soloMode) for (let i = 1; i < G.count; i++) send({ type: "view", view: viewFor(i), to: i });  // 각 게스트에게 개인화 view
+    renderView(viewFor(0));  // 호스트(솔로에선 사람) 로컬 렌더
     saveState();             // 새로고침 대비 상태 저장(호스트)
+    if (soloMode) maybeAI();  // 솔로: 컴퓨터 차례면 두게 한다
+  }
+
+  // ========================================================================
+  //  솔로(1명) — 나 vs 컴퓨터. 서버 없이 호스트 엔진을 로컬에서 돌린다.
+  //  AI는 '공개된 정보'(공개 타일·타일 색·오름차순 제약)와 내 손패만으로 추리한다(정답 안 봄).
+  // ========================================================================
+  function startSolo() {
+    soloMode = true; isHost = true; myIndex = 0; myCode = myToken = null;
+    cfg.count = 2; cfg.jokers = JOKERS; cfg.version = optVersion;
+    resetSel();
+    newGame();  // broadcast → 화면 전환(PLAYING) + 컴퓨터 선공이면 자동 진행
+  }
+  function updateCreateLabel() {
+    $("createBtn").textContent = optPlayers === 1 ? "혼자 시작 (vs 컴퓨터)" : "방 만들기";
+  }
+  function maybeAI() {  // 컴퓨터 차례면 잠깐 뒤 두게 한다(사람처럼 딜레이)
+    if (aiTimer) { clearTimeout(aiTimer); aiTimer = null; }
+    if (!soloMode || !G || G.winner != null || G.turn !== AI_INDEX) return;
+    if (!["guess", "decide", "penalty", "placeJoker"].includes(G.phase)) return;
+    aiTimer = setTimeout(aiAct, G.phase === "placeJoker" ? 450 : 800);
+  }
+  function aiAct() {
+    aiTimer = null;
+    if (!soloMode || !G || G.winner != null || G.turn !== AI_INDEX) return;
+    const hand = G.players[AI_INDEX].hand;
+    if (G.phase === "placeJoker") {  // 조커는 어디든 합법 → 임의 위치
+      applyAction({ from: AI_INDEX, action: "placeJoker", slot: Math.floor(Math.random() * (hand.length + 1)) });
+      return;
+    }
+    if (G.phase === "penalty") {  // PLUS: 더미 없을 때 오답 벌칙 → 내 가림 타일 하나 공개
+      const idx = hand.findIndex((t) => !t.faceUp);
+      applyAction({ from: AI_INDEX, action: "penalty", index: idx < 0 ? 0 : idx });
+      return;
+    }
+    const plan = aiPlanGuess();
+    if (G.phase === "decide") {  // PLUS 정답 후: 확실한 지목이 더 있으면 계속, 아니면 멈춤
+      applyAction({ from: AI_INDEX, action: "decide", choice: plan && plan.certain ? "continue" : "stop" });
+      return;
+    }
+    if (G.phase === "guess") {
+      if (!plan) {  // 안전장치(거의 도달 안 함)
+        const i = G.players[0].hand.findIndex((t) => !t.faceUp);
+        applyAction({ from: AI_INDEX, action: "guess", target: 0, index: i < 0 ? 0 : i, number: 0 });
+      } else {
+        applyAction(Object.assign({ from: AI_INDEX, action: "guess" }, plan.action));
+      }
+    }
+  }
+  // 상대(사람, 0) 가림 타일 후보를 공개 정보만으로 추린다.
+  function aiPlanGuess() {
+    const opp = G.players[0]; if (!opp || opp.eliminated) return null;
+    const me = G.players[AI_INDEX];
+    const keyCV = (c, v) => v * 2 + (c === "w" ? 1 : 0);
+    // taken: 이미 세상에 드러난 (색,값) — 내 손패 전부 + 그 외엔 공개된 것만(히든 값은 절대 안 봄)
+    const taken = new Set();
+    for (const p of G.players) for (const t of p.hand) {
+      const known = (p === me) || t.faceUp;
+      if (!known || t.joker) continue;
+      taken.add(t.color + ":" + t.value);
+    }
+    const tiles = opp.hand;
+    const leftKey = (k) => { for (let i = k - 1; i >= 0; i--) { const t = tiles[i]; if (t.faceUp && !t.joker) return keyCV(t.color, t.value); } return -1; };
+    const rightKey = (k) => { for (let i = k + 1; i < tiles.length; i++) { const t = tiles[i]; if (t.faceUp && !t.joker) return keyCV(t.color, t.value); } return 24; };
+    // 각 가림 타일(색만 공개)의 가능 숫자: taken 제외 + 공개 이웃 사이 오름차순 경계
+    const cands = tiles.map((t, k) => {
+      if (t.faceUp) return null;
+      const lo = leftKey(k), hi = rightKey(k), out = [];
+      for (let v = 0; v <= 11; v++) {
+        if (taken.has(t.color + ":" + v)) continue;
+        const key = keyCV(t.color, v);
+        if (key <= lo || key >= hi) continue;
+        out.push(v);
+      }
+      return out;
+    });
+    const isDblPair = (k) => {  // 공개 정보만: 인접 흑(왼)-백(오) 가림쌍
+      const t = tiles[k]; if (!t || t.faceUp) return false;
+      const R = tiles[k + 1], L = tiles[k - 1];
+      if (t.color === "b" && R && !R.faceUp && R.color === "w") return true;
+      if (t.color === "w" && L && !L.faceUp && L.color === "b") return true;
+      return false;
+    };
+    const rnd = (a) => a[Math.floor(Math.random() * a.length)];
+    function bestSingle(excludeDoubles) {
+      let best = null;
+      for (let k = 0; k < tiles.length; k++) {
+        const list = cands[k]; if (!list || !list.length) continue;
+        if (excludeDoubles && isDblPair(k)) continue;
+        if (!best || list.length < best.count) best = { k, v: rnd(list), count: list.length, certain: list.length === 1 };
+      }
+      return best;
+    }
+    if (G.version === "zion") {
+      // 실제 더블(흑·백 같은 숫자)은 드물다 → '확실한 더블'(양쪽 후보가 동일 단일값)만 더블로 지목,
+      // 나머지는 일반 단일 지목(대부분의 인접 흑·백쌍은 더블이 아니므로 단일이 유효).
+      for (let k = 0; k + 1 < tiles.length; k++) {
+        const a = tiles[k], b = tiles[k + 1];
+        if (a.faceUp || b.faceUp || a.color !== "b" || b.color !== "w") continue;
+        const ca = cands[k] || [], cb = cands[k + 1] || [];
+        if (ca.length === 1 && cb.length === 1 && ca[0] === cb[0])
+          return { action: { target: 0, index: k, number: ca[0], double: true }, certain: true };
+      }
+    }
+    const single = bestSingle(false);
+    if (single) return { action: { target: 0, index: single.k, number: single.v }, certain: single.certain };
+    const jk = tiles.findIndex((t) => !t.faceUp);  // 숫자 후보 소진 → 조커로 추정
+    if (jk >= 0) return { action: { target: 0, index: jk, joker: true }, certain: false };
+    return null;
   }
 
   // ========================================================================
@@ -1014,7 +1070,10 @@
     return el;
   }
 
-  function labelFor(v, idx) { return v.count === 2 ? "상대" : `플레이어 ${idx + 1}`; }
+  function labelFor(v, idx) {
+    if (soloMode && idx === AI_INDEX) return "컴퓨터";
+    return v.count === 2 ? "상대" : `플레이어 ${idx + 1}`;
+  }
 
   function modeLabel(version) {
     return ({ basic: "BASIC", plus: "PLUS", zion: "ZION" })[version] || String(version || "").toUpperCase();
@@ -1106,7 +1165,19 @@
 
     const showNumpad = v.myTurn && v.phase === "guess" && selTarget != null && selIndex != null;
     $("numpad").classList.toggle("hidden", !showNumpad);
-    if (showNumpad) renderNumpad(v); else $("numpadHint").textContent = "";
+    document.body.classList.toggle("numpad-open", showNumpad);
+    if (showNumpad) {
+      renderNumpad(v);
+      // 고정 숫자패드가 하단을 가리므로, 그 높이만큼 아래 여백을 확보하고(스크롤로 보드 전체 접근) 선택 타일을 보이게 스크롤
+      requestAnimationFrame(() => {
+        const npH = $("numpad").offsetHeight;
+        document.documentElement.style.setProperty("--numpad-space", (npH + 28) + "px");
+        const sel = document.querySelector("#oppArea .tile.selected");
+        if (sel) sel.scrollIntoView({ block: "center", behavior: "smooth" });
+      });
+    } else {
+      $("numpadHint").textContent = "";
+    }
     $("decide").classList.toggle("hidden", !(v.myTurn && v.phase === "decide"));
 
     renderStatus(v);
@@ -1357,6 +1428,7 @@
   // ========================================================================
   function setScreen(s) {
     screen = s;
+    if (s === SCREEN.MENU) { soloMode = false; if (aiTimer) { clearTimeout(aiTimer); aiTimer = null; } }  // 메뉴로 나가면 솔로 종료
     document.body.classList.remove("screen-connecting", "screen-menu", "screen-lobby", "screen-playing", "screen-over");
     document.body.classList.add(`screen-${s}`);
     $("board").classList.toggle("hidden", !(s === SCREEN.PLAYING || s === SCREEN.OVER));
@@ -1453,17 +1525,19 @@
     $("ruleModal").classList.remove("hidden");
   }
   function closeRuleModal() { $("ruleModal").classList.add("hidden"); }
-  initSeg("segPlayers", (v) => (optPlayers = Number(v)));
+  initSeg("segPlayers", (v) => { optPlayers = Number(v); updateCreateLabel(); });
   initSeg("segVersion", (v) => { optVersion = v; updateModeSummary(); });
   // 종료 화면의 모드 선택(호스트) — 새 방 없이 모드만 바꿔 재시작. cfg.version에 바로 반영.
   initSeg("segVersionOver", (v) => { optVersion = v; cfg.version = v; setSegActive("segVersion", v); updateModeSummary(); });
   updateModeSummary();
+  updateCreateLabel();
   $("ruleMoreBtn").addEventListener("click", openRuleModal);
   $("ruleModalClose").addEventListener("click", closeRuleModal);
   $("ruleModal").addEventListener("click", (e) => { if (e.target === $("ruleModal")) closeRuleModal(); });
 
   $("createBtn").addEventListener("click", () => {
     $("menuErr").textContent = "";
+    if (optPlayers === 1) { startSolo(); return; }  // 1명 = 서버 없이 즉시 솔로(vs 컴퓨터)
     // reconnect:true → 서버가 끊겨도 유예 시간 동안 방 유지(새로고침 재접속 대비)
     send({ type: "create", capacity: optPlayers, reconnect: true });  // jokers는 호스트 로컬(cfg)에 보관
   });
