@@ -115,6 +115,14 @@
     min-height: 420px; box-sizing: border-box;
   }
   #board.hidden { display: none; }
+  .gameMeta {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    margin: -2px 0 10px; padding: 8px 10px; border: 1px solid rgba(201, 162, 39, 0.35);
+    border-radius: 8px; background: rgba(13, 10, 5, 0.46);
+    color: var(--parchment); font-family: var(--serif); font-size: 12px; letter-spacing: .4px;
+  }
+  .gameMeta b { color: var(--gold-bright); font-weight: 800; }
+  .gameMeta .time { color: var(--gold-soft); white-space: nowrap; }
   .poolInfo { text-align: center; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
 
   .side { margin: 8px 0; padding: 8px; border-radius: 8px; }
@@ -468,6 +476,10 @@
 
   <div id="stage">
     <div id="board" class="hidden">
+      <div class="gameMeta">
+        <span>MODE <b id="gameModeLabel">BASIC</b></span>
+        <span class="time">TIME <b id="gameElapsed">00:00</b></span>
+      </div>
       <div class="poolInfo">남은 더미: <span id="poolCount">0</span>장</div>
 
       <!-- 상대 플레이어들(동적 생성) -->
@@ -599,6 +611,7 @@
   let lastView = null;
   let selTarget = null, selIndex = null;  // 추리 중 선택된 (상대 인덱스, 타일 인덱스)
   let candDoubleLeft = null, dblOn = false; // Zion: 인접 동일숫자 '더블' 후보(왼쪽 인덱스)와 토글 상태
+  let elapsedTimer = null;
 
   const $ = (id) => document.getElementById(id);
 
@@ -699,6 +712,7 @@
 
     G = {
       pool, players, count, jokers, version,
+      startedAt: Date.now(),
       turn: Math.floor(Math.random() * count),  // 선공 랜덤
       phase: "guess", drawn: null, drawReason: null, winner: null, lastGuess: null,
     };
@@ -918,6 +932,7 @@
     }
     return {
       myIndex: pi, count: G.count, hasJokers: G.jokers > 0, version: G.version,
+      startedAt: G.startedAt || Date.now(),
       turn: G.turn, myTurn: G.turn === pi,
       phase: G.phase, poolCount: G.pool.length,
       winner: G.winner, iWon: G.winner === pi,
@@ -964,11 +979,37 @@
 
   function labelFor(v, idx) { return v.count === 2 ? "상대" : `플레이어 ${idx + 1}`; }
 
+  function modeLabel(version) {
+    return ({ basic: "BASIC", plus: "PLUS", zion: "ZION" })[version] || String(version || "").toUpperCase();
+  }
+
+  function formatElapsed(startedAt) {
+    const start = Number(startedAt) || Date.now();
+    const total = Math.max(0, Math.floor((Date.now() - start) / 1000));
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    const mm = String(m).padStart(2, "0");
+    const ss = String(s).padStart(2, "0");
+    return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+  }
+
+  function renderGameMeta(v) {
+    if (!v) return;
+    $("gameModeLabel").textContent = modeLabel(v.version);
+    $("gameElapsed").textContent = formatElapsed(v.startedAt);
+  }
+
+  elapsedTimer = setInterval(() => {
+    if ((screen === SCREEN.PLAYING || screen === SCREEN.OVER) && lastView) renderGameMeta(lastView);
+  }, 1000);
+
   function renderView(v) {
     lastView = v;
     if (v.winner != null) { showOver(v); return; }
     if (screen !== SCREEN.PLAYING) setScreen(SCREEN.PLAYING);
 
+    renderGameMeta(v);
     $("poolCount").textContent = v.poolCount;
     $("myLabel").textContent = v.count === 2 ? "나" : `나 (플레이어 ${v.myIndex + 1})`;
 
@@ -1278,6 +1319,7 @@
   function showMenuWithError(text) { $("menuErr").textContent = text || ""; setScreen(SCREEN.MENU); }
 
   function showOver(v) {
+    renderGameMeta(v);
     if (v.iWon) {
       $("overTitle").textContent = "🎉 승리!";
       $("overSub").textContent = "최후의 1인으로 살아남았습니다!";
