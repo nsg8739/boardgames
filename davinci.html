@@ -39,6 +39,7 @@
      shrink-to-fit로 부풀리는 flex 피드백 루프를 차단(모바일 가로 넘침 방지). */
   html { width: 100%; }
   body { width: 100%; max-width: 100%; }
+  .hidden { display: none !important; }
   /* 게임 배경 이미지(파일명 공백은 %20). 어두운 오버레이를 얹어 전경 텍스트 가독성 확보.
      뷰포트 전체를 덮는 고정 레이어(::before)로 깔아, 창 크기·스크롤과 무관하게 항상 빈틈없이 채운다.
      (body 배경+attachment:fixed 방식은 일부 환경에서 가장자리가 안 채워지는 문제가 있어 이 방식으로.) */
@@ -48,15 +49,17 @@
     position: fixed;
     inset: 0;
     z-index: -1;
+    /* 오버레이를 옅게 — 배경(다빈치 스케치·DRAW/DISCARD PILE·소품)을 적극적으로 드러냄.
+       살짝의 비네트만 남겨 깊이감 유지. UI는 카드로 분리돼 배경 위에 떠 있는 구성. */
     background:
-      radial-gradient(ellipse at center, rgba(20, 14, 7, 0.18) 0%, rgba(15, 10, 5, 0.62) 100%),
+      radial-gradient(ellipse at center, rgba(18, 12, 6, 0.08) 0%, rgba(10, 6, 3, 0.46) 100%),
       url("DA%20VINCI%20CODE_1.png") center center / cover no-repeat;
     pointer-events: none;
   }
   h1 {
-    font-family: var(--serif); font-weight: 800; font-size: clamp(28px, 8vw, 40px);
-    margin: 8px 0 14px; letter-spacing: 3px; text-align: center; color: var(--gold-bright);
-    text-shadow: 0 1px 0 #000, 0 0 18px rgba(230, 192, 74, 0.28);
+    font-family: var(--serif); font-weight: 800; font-size: clamp(30px, 8.5vw, 44px);
+    margin: 10px 0 20px; letter-spacing: 3px; text-align: center; color: var(--gold-bright);
+    text-shadow: 0 2px 6px rgba(0,0,0,0.8), 0 0 26px rgba(230, 192, 74, 0.4);
   }
   h1 .tagline {
     display: block; font-family: "Segoe UI", "Malgun Gothic", sans-serif; font-weight: 500;
@@ -148,7 +151,8 @@
 
   /* 패널 — 한 번에 하나만 표시되므로 절대배치 오버레이가 아니라 일반 흐름으로 두어
      stage가 내용 높이에 맞게 늘어나게 한다(내용이 길어져도 위/아래로 삐져나오지 않음). */
-  .panel { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 13px; background: var(--card); border: 2px solid var(--warm-border); border-radius: 10px; padding: 24px 18px; box-sizing: border-box; text-align: center; min-height: 420px; box-shadow: inset 0 0 0 1px rgba(230, 192, 74, 0.22), 0 10px 34px rgba(0, 0, 0, 0.6); }
+  /* 로비/결과 패널 — 반투명(배경 은은히 비침) + 얇은 골드 테두리 + 떠 있는 카드 느낌 */
+  .panel { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 13px; background: rgba(26, 18, 10, 0.78); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); border: 1px solid rgba(201, 162, 39, 0.45); border-radius: 16px; padding: 26px 20px; box-sizing: border-box; text-align: center; min-height: 380px; box-shadow: 0 18px 46px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 240, 200, 0.07), 0 0 26px rgba(230, 192, 74, 0.07); }
   .panel.hidden { display: none; }
   .panel h2 { font-family: var(--serif); font-size: clamp(24px, 7vw, 30px); font-weight: 800; margin: 0; color: var(--gold-bright); letter-spacing: 1.5px; text-shadow: 0 1px 0 #000, 0 0 14px rgba(230, 192, 74, 0.2); }
   .panel .sub { font-size: 14px; color: var(--parchment); margin-top: -2px; line-height: 1.55; }
@@ -170,9 +174,31 @@
     box-shadow: inset 0 1px 0 rgba(255, 250, 220, 0.6), inset 0 -2px 5px rgba(120, 90, 20, 0.45), 0 3px 8px rgba(0, 0, 0, 0.45);
   }
 
-  /* ===== 메뉴(런처) 레이아웃 ===== */
-  .menu { gap: 20px; width: min(400px, 100%); padding: 26px 20px 22px; }
-  .menu .section { width: 100%; display: flex; flex-direction: column; gap: 9px; }
+  /* ===== 게임 로비 홈: 로고(위) + 새 게임 카드(좌) + 코드 입장 카드(우) =====
+     큰 중앙 패널을 없애고 작은 카드로 분리 → 배경이 화면 대부분을 채운다. */
+  .lobbyHome {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.82fr);
+    gap: 22px; width: min(720px, 100%); align-items: start;
+  }
+  /* 반투명 카드 — 배경이 은은히 비치고, 그림자+약한 glow로 배경 위에 떠 있는 느낌 */
+  .card {
+    min-width: 0;
+    background: rgba(30, 21, 11, 0.72);
+    -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+    border: 1px solid rgba(201, 162, 39, 0.42); border-radius: 15px;
+    padding: 20px 18px; box-sizing: border-box;
+    display: flex; flex-direction: column; gap: 15px;
+    box-shadow: 0 16px 42px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 240, 200, 0.07), 0 0 22px rgba(230, 192, 74, 0.06);
+  }
+  .card.join { align-self: center; gap: 16px; }
+  .cardTitle { font-family: var(--serif); font-size: 19px; font-weight: 800; color: var(--gold-bright); letter-spacing: .8px; text-shadow: 0 1px 0 #000, 0 0 12px rgba(230, 192, 74, 0.25); text-align: center; }
+  .joinDesc { font-size: 13px; color: var(--parchment); line-height: 1.6; text-align: center; }
+  .card .section { display: flex; flex-direction: column; gap: 9px; }
+  /* 좁은 화면: 세로로 쌓기 */
+  @media (max-width: 680px) {
+    .lobbyHome { grid-template-columns: minmax(0, 1fr); width: min(400px, 100%); gap: 14px; }
+    .card.join { align-self: stretch; }
+  }
   /* 단계 제목: 번호 배지 + 큰 골드 텍스트 → '무엇을 할지' 한눈에 */
   .sectionHead { display: flex; align-items: center; gap: 9px; font-family: var(--serif); font-size: 17px; font-weight: 700; color: var(--gold-bright); letter-spacing: .5px; text-align: left; }
   .sectionHead.subtle { font-size: 15px; color: var(--parchment); font-weight: 600; }
@@ -227,7 +253,7 @@
   /* 규칙 상세 모달(팝업) */
   .modalOverlay { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 18px; background: rgba(8, 5, 2, 0.72); backdrop-filter: blur(3px); }
   .modalOverlay.hidden { display: none; }
-  .modalCard { width: min(360px, 100%); background: var(--card); border: 2px solid var(--warm-border); border-radius: 12px; padding: 22px 22px 18px; box-shadow: inset 0 0 0 1px rgba(230,192,74,0.22), 0 16px 44px rgba(0,0,0,0.7); text-align: left; }
+  .modalCard { width: min(360px, 100%); background: rgba(26, 18, 10, 0.94); border: 1px solid rgba(201, 162, 39, 0.5); border-radius: 14px; padding: 22px 22px 18px; box-shadow: 0 20px 48px rgba(0,0,0,0.7), 0 0 24px rgba(230,192,74,0.08); text-align: left; }
   .modalTitle { font-family: var(--serif); font-size: 19px; font-weight: 800; color: var(--gold-bright); letter-spacing: .5px; margin-bottom: 12px; }
   .ruleList { margin: 0 0 16px; padding-left: 18px; }
   .ruleList li { color: var(--parchment); font-size: 14px; line-height: 1.7; margin: 5px 0; }
@@ -265,6 +291,51 @@
   <h1>다빈치코드<span class="tagline">ONLINE · 온라인 추리 대전</span></h1>
   <div id="conn">서버 연결 중…</div>
 
+  <!-- 게임 로비 홈: 로고(위) + 새 게임 카드(좌) + 코드 입장 카드(우) -->
+  <div id="menu" class="lobbyHome">
+    <!-- 새 게임 카드 -->
+    <section class="card newgame">
+      <div class="cardTitle">새 게임</div>
+      <div class="section">
+        <div class="sectionHead"><span class="stepNo">1</span>게임 모드</div>
+        <div class="seg" id="segVersion">
+          <button data-v="basic" class="on">Basic</button><button data-v="plus">PLUS</button><button data-v="zion">Zion</button>
+        </div>
+        <div class="modeSummary">
+          <span id="modeSummaryText"></span>
+          <button type="button" id="ruleMoreBtn" class="linkBtn">규칙 자세히 ⓘ</button>
+        </div>
+      </div>
+      <div class="section">
+        <div class="sectionHead"><span class="stepNo">2</span>인원</div>
+        <div class="seg" id="segPlayers">
+          <button data-v="2" class="on">2명</button><button data-v="3">3명</button><button data-v="4">4명</button>
+        </div>
+      </div>
+      <button id="createBtn" class="cta-primary">방 만들기</button>
+    </section>
+
+    <!-- 코드 입장 카드 -->
+    <section class="card join">
+      <div class="cardTitle">코드 입장</div>
+      <div class="joinDesc">친구가 만든 방의<br />4자리 코드를 입력하세요</div>
+      <div class="joinGroup">
+        <input id="codeInput" maxlength="4" placeholder="방 코드 입력" autocomplete="off" />
+        <button id="joinBtn" class="cta-secondary">입장</button>
+      </div>
+      <div id="menuErr" class="err"></div>
+    </section>
+  </div>
+
+  <!-- 규칙 상세 팝업 -->
+  <div id="ruleModal" class="modalOverlay hidden">
+    <div class="modalCard">
+      <div class="modalTitle" id="ruleModalTitle">규칙</div>
+      <ul class="ruleList" id="ruleModalList"></ul>
+      <button id="ruleModalClose" class="btn">닫기</button>
+    </div>
+  </div>
+
   <div id="stage">
     <div id="board" class="hidden">
       <div class="poolInfo">남은 더미: <span id="poolCount">0</span>장</div>
@@ -292,56 +363,6 @@
       <div id="decide" class="hidden">
         <button class="btn primary" data-choice="continue">계속 추리 ▶</button>
         <button class="btn" data-choice="stop">멈추기(턴 종료)</button>
-      </div>
-    </div>
-
-    <!-- 메뉴 -->
-    <div id="menu" class="panel menu">
-      <h2>NEW GAME</h2>
-
-      <!-- 1단계: 게임 모드 -->
-      <div class="section">
-        <div class="sectionHead"><span class="stepNo">1</span>게임 모드</div>
-        <div class="seg" id="segVersion">
-          <button data-v="basic" class="on">Basic</button><button data-v="plus">PLUS</button><button data-v="zion">Zion</button>
-        </div>
-        <div class="modeSummary">
-          <span id="modeSummaryText"></span>
-          <button type="button" id="ruleMoreBtn" class="linkBtn">규칙 자세히 ⓘ</button>
-        </div>
-      </div>
-
-      <!-- 2단계: 인원 -->
-      <div class="section">
-        <div class="sectionHead"><span class="stepNo">2</span>인원</div>
-        <div class="seg" id="segPlayers">
-          <button data-v="2" class="on">2명</button><button data-v="3">3명</button><button data-v="4">4명</button>
-        </div>
-      </div>
-
-      <!-- 3단계: 방 만들기 (핵심 CTA) -->
-      <button id="createBtn" class="cta-primary">방 만들기</button>
-
-      <div class="orDivider"><span>또는</span></div>
-
-      <!-- 코드로 입장 -->
-      <div class="section">
-        <div class="sectionHead subtle">받은 코드로 입장</div>
-        <div class="joinGroup">
-          <input id="codeInput" maxlength="4" placeholder="방 코드 입력" autocomplete="off" />
-          <button id="joinBtn" class="cta-secondary">입장</button>
-        </div>
-      </div>
-
-      <div id="menuErr" class="err"></div>
-    </div>
-
-    <!-- 규칙 상세 팝업 -->
-    <div id="ruleModal" class="modalOverlay hidden">
-      <div class="modalCard">
-        <div class="modalTitle" id="ruleModalTitle">규칙</div>
-        <ul class="ruleList" id="ruleModalList"></ul>
-        <button id="ruleModalClose" class="btn">닫기</button>
       </div>
     </div>
 
@@ -1058,6 +1079,9 @@
   // ========================================================================
   function setScreen(s) {
     screen = s;
+    // #stage(board/lobby/over 컨테이너)는 게임 진행 화면에서만 표시. 메뉴에선 숨겨
+    // 배경이 온전히 드러나고 로비 카드만 떠 있게 한다.
+    $("stage").classList.toggle("hidden", !(s === SCREEN.PLAYING || s === SCREEN.OVER || s === SCREEN.LOBBY));
     $("board").classList.toggle("hidden", !(s === SCREEN.PLAYING || s === SCREEN.OVER));
     $("menu").classList.toggle("hidden", s !== SCREEN.MENU);
     $("lobby").classList.toggle("hidden", s !== SCREEN.LOBBY);
