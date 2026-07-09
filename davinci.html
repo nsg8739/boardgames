@@ -310,12 +310,17 @@
   /* 펼친 규칙이 뒤의 메뉴(코드 입력창)와 투명하게 겹쳐 보이던 문제 해결:
      불투명 카드 + 화면 딤 백드롭으로 명확한 팝오버 처리하고, 길면 내부 스크롤. */
   #stage:has(#menu:not(.hidden)) + #hint[open] {
-    background: var(--card);
+    top: 50%;
+    bottom: auto;
+    z-index: 40;
+    width: min(420px, calc(100vw - 32px));
+    background: #1a130b;
     border: 1px solid var(--warm-border);
-    border-radius: 10px;
-    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.66);
-    max-height: min(64svh, 460px);
+    border-radius: 12px;
+    box-shadow: inset 0 0 0 1px rgba(230, 192, 74, 0.2), 0 18px 54px rgba(0, 0, 0, 0.82);
+    max-height: min(72svh, 520px);
     overflow-y: auto;
+    transform: translate(-50%, -50%);
   }
   #stage:has(#menu:not(.hidden)) + #hint[open]::before {
     content: "";
@@ -330,6 +335,9 @@
     position: sticky;
     top: 0;
     z-index: 1;
+    border-color: rgba(201, 162, 39, 0.5);
+    border-radius: 10px 10px 0 0;
+    background: #130d07;
   }
   @media (max-height: 760px) {
     #stage { margin-top: clamp(190px, 27svh, 245px); }
