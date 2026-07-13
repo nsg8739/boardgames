@@ -4,6 +4,14 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>보드게임 모음 — 가족 온라인 대전</title>
+<link rel="manifest" href="./manifest.json" />
+<meta name="theme-color" content="#17110a" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="보드게임" />
+<link rel="apple-touch-icon" href="./icon.svg" />
+<link rel="icon" href="./icon.svg" />
 <style>
   :root {
     --bg: #17110a; --bg2: #1e160c;
@@ -120,7 +128,23 @@
       <div class="divider"></div>
       온라인 대전은 방장이 <b>방 만들기</b> 후 표시되는 <b>초대 코드</b>를 가족에게 공유하면 됩니다.<br />
       무료 서버는 첫 접속에 30~60초 걸릴 수 있어요.
+      <div id="srvStatus" style="margin-top:10px; font-size:12px; color:var(--muted);"></div>
     </footer>
   </div>
+  <script>
+    // PWA: 서비스워커 등록(폰 홈 화면 설치 + 오프라인 폴백)
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function () { navigator.serviceWorker.register("./sw.js").catch(function () {}); });
+    }
+    // 온라인 서버 미리 깨우기(무료 서버 콜드스타트 완화) — 허브를 보는 동안 백그라운드로 워밍업
+    (function () {
+      var el = document.getElementById("srvStatus");
+      if (el) el.textContent = "🟠 온라인 서버 깨우는 중…";
+      var t0 = Date.now();
+      fetch("https://pingpong-server-hgl2.onrender.com/", { mode: "no-cors", cache: "no-store" })
+        .then(function () { if (el) el.textContent = "🟢 온라인 서버 준비됨 (" + Math.round((Date.now() - t0) / 1000) + "초)"; })
+        .catch(function () { if (el) el.textContent = "🔴 온라인 서버 응답 없음 — 게임 입장 시 다시 시도됩니다"; });
+    })();
+  </script>
 </body>
 </html>

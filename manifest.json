@@ -1,0 +1,15 @@
+{
+  "name": "보드게임 모음",
+  "short_name": "보드게임",
+  "description": "가족과 함께 온라인으로 즐기는 보드게임 모음 (다빈치코드·숫자야구·러브레터·도블·탁구)",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#17110a",
+  "theme_color": "#17110a",
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

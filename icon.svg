@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="보드게임 주사위">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f2cc60"/>
+      <stop offset="0.55" stop-color="#c9a227"/>
+      <stop offset="1" stop-color="#6b5417"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#17110a"/>
+  <rect x="118" y="118" width="276" height="276" rx="56" fill="url(#g)" stroke="#3a2c15" stroke-width="6"/>
+  <g fill="#201607">
+    <circle cx="188" cy="188" r="26"/><circle cx="324" cy="188" r="26"/>
+    <circle cx="256" cy="256" r="26"/>
+    <circle cx="188" cy="324" r="26"/><circle cx="324" cy="324" r="26"/>
+  </g>
+</svg>
