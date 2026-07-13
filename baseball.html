@@ -38,9 +38,13 @@
   .panel h2 { font-family: var(--serif); font-size: 20px; font-weight: 800; color: var(--gold-bright); margin: 0; text-align: center; }
   .sub { font-size: 13px; color: var(--parchment); text-align: center; line-height: 1.5; }
   .seg { display: flex; width: 100%; border: 1px solid var(--warm-border); border-radius: 8px; overflow: hidden; }
-  .seg button { flex: 1; font-family: var(--serif); cursor: pointer; border: none; background: linear-gradient(180deg, var(--warm-bg2), var(--warm-bg)); color: var(--muted); padding: 12px 6px; font-size: 15px; border-right: 1px solid var(--warm-border); }
+  .seg button { flex: 1; font-family: var(--serif); cursor: pointer; border: none; background: linear-gradient(180deg, var(--warm-bg2), var(--warm-bg)); color: var(--muted); padding: 12px 6px; font-size: 15px; border-right: 1px solid var(--warm-border); white-space: nowrap; }
   .seg button:last-child { border-right: none; }
   .seg button.on { background: linear-gradient(180deg, var(--gold-bright), var(--gold-deep)); color: var(--ink); font-weight: 800; }
+  .optRow { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .optLabel { font-size: 13px; color: var(--parchment); font-weight: 700; }
+  .seg.small { width: auto; flex: none; }
+  .seg.small button { padding: 8px 16px; font-size: 13px; }
   .cta { width: 100%; font-family: var(--serif); cursor: pointer; border: 1px solid #7b2419; border-radius: 9px;
     background: linear-gradient(180deg, #d46a45, var(--seal) 55%, #5b1712); color: #fff1d2; font-weight: 800; font-size: 17px; letter-spacing: 1px; padding: 14px; }
   .cta:disabled { opacity: .5; cursor: default; }
@@ -114,6 +118,10 @@
       <div class="seg" id="segMode">
         <button data-v="solo" class="on">혼자 (vs 컴퓨터)</button><button data-v="online">온라인 2인</button>
       </div>
+      <div class="optRow"><span class="optLabel">자리수</span>
+        <div class="seg small" id="segDigits"><button data-v="3" class="on">3자리</button><button data-v="4">4자리</button></div></div>
+      <div class="optRow" id="diffRow"><span class="optLabel">컴퓨터 난이도</span>
+        <div class="seg small" id="segDiff"><button data-v="easy">쉬움</button><button data-v="normal" class="on">보통</button></div></div>
       <button id="startSoloBtn" class="cta">게임 시작</button>
       <div id="onlineBox" class="hidden" style="display:flex;flex-direction:column;gap:12px;">
         <button id="createBtn" class="cta">방 만들기</button>
@@ -150,7 +158,7 @@
         <div class="hcol"><h3>내 추측</h3><div class="hlist" id="meList"></div></div>
         <div class="hcol"><h3 id="oppColTitle">컴퓨터 추측</h3><div class="hlist" id="oppListEl"></div></div>
       </div>
-      <div class="entry"><div class="slot" data-i="0"></div><div class="slot" data-i="1"></div><div class="slot" data-i="2"></div></div>
+      <div class="entry" id="entry"></div>
       <div class="pad" id="pad"></div>
       <div class="actions"><button id="clearBtn">지우기</button><button id="submitBtn" disabled>확인 ▶</button></div>
     </div>
@@ -168,7 +176,8 @@
 (() => {
   "use strict";
   const $ = (id) => document.getElementById(id);
-  const N = 3, AI_DELAY = 650;
+  let N = 3; const AI_DELAY = 650;
+  let optDigits = 3, optDiff = "normal";  // 자리수(3/4), 컴퓨터 난이도(쉬움/보통)
 
   // ===== 서버 주소 (davinci/versus와 동일 릴레이) =====
   const RENDER_URL = "wss://pingpong-server-hgl2.onrender.com";
@@ -220,7 +229,8 @@
   //  온라인 엔진 (호스트 권한)
   // ========================================================================
   function newOnlineGame() {
-    G = { secrets: [randSecret(), randSecret()], guesses: [[], []], turn: 0, winner: null, count: 2 };
+    N = optDigits;  // 방장이 정한 자리수로 게임 생성
+    G = { N, secrets: [randSecret(), randSecret()], guesses: [[], []], turn: 0, winner: null, count: 2 };
     broadcast();
   }
   function applyAction(a) {
@@ -238,7 +248,7 @@
   function viewFor(pi) {
     const opp = 1 - pi;
     return {
-      online: true, myIndex: pi, turn: G.turn, myTurn: G.turn === pi && G.winner == null,
+      online: true, digits: G.N, myIndex: pi, turn: G.turn, myTurn: G.turn === pi && G.winner == null,
       winner: G.winner, iWon: G.winner === pi,
       mySecret: G.secrets[pi], myGuesses: G.guesses[pi], oppGuesses: G.guesses[opp],
       oppReveal: G.winner != null ? G.secrets[opp] : null,
@@ -256,14 +266,15 @@
   // ========================================================================
   function soloView() {
     return {
-      online: false, myTurn: solo.myTurn && solo.winner == null, winner: solo.winner, iWon: solo.winner === 0,
+      online: false, digits: solo.N, myTurn: solo.myTurn && solo.winner == null, winner: solo.winner, iWon: solo.winner === 0,
       mySecret: solo.mySecret, myGuesses: solo.my, oppGuesses: solo.ai,
       oppReveal: solo.winner != null ? solo.aiSecret : null,
     };
   }
   function startSolo() {
     onlineMode = false;
-    solo = { mySecret: randSecret(), aiSecret: randSecret(), my: [], ai: [], myTurn: true, winner: null, cands: allCodes() };
+    N = optDigits;  // 선택한 자리수로 솔로 시작
+    solo = { N, diff: optDiff, mySecret: randSecret(), aiSecret: randSecret(), my: [], ai: [], myTurn: true, winner: null, cands: allCodes() };
     entry = [];
     renderView(soloView());
   }
@@ -277,10 +288,17 @@
   }
   function soloAI() {
     aiTimer = null; if (!solo || solo.winner != null) return;
-    const guess = solo.cands.length ? solo.cands[Math.floor(Math.random() * solo.cands.length)] : randSecret();
+    let guess;
+    if (solo.diff === "easy") {
+      // 쉬움: 추리 없이 무작위 유효 코드(과거 추측 중복 회피) → 약한 상대(사람이 이기기 쉬움)
+      const past = new Set(solo.ai.map((x) => x.g.join(",")));
+      let t = 0; do { guess = randSecret(); } while (past.has(guess.join(",")) && ++t < 80);
+    } else {
+      guess = solo.cands.length ? solo.cands[Math.floor(Math.random() * solo.cands.length)] : randSecret();
+    }
     const r = judge(guess, solo.mySecret);
     solo.ai.push({ g: guess, s: r.s, b: r.b });
-    solo.cands = solo.cands.filter((c) => { const j = judge(guess, c); return j.s === r.s && j.b === r.b; });
+    if (solo.diff !== "easy") solo.cands = solo.cands.filter((c) => { const j = judge(guess, c); return j.s === r.s && j.b === r.b; });
     if (r.s === N) { solo.winner = 1; renderView(soloView()); return; }
     solo.myTurn = true; renderView(soloView());
   }
@@ -290,6 +308,7 @@
   // ========================================================================
   function renderView(v) {
     lastView = v;
+    if (v.digits) N = v.digits;  // 현재 게임의 자리수에 맞춰 입력칸/판정 동기화
     if (screen !== SCREEN.PLAYING && screen !== SCREEN.OVER) setScreen(SCREEN.PLAYING);
     if (v.winner != null) { showOver(v); }
     else if (screen === SCREEN.OVER) setScreen(SCREEN.PLAYING);
@@ -305,7 +324,11 @@
 
     renderList("meList", v.myGuesses);
     renderList("oppListEl", v.oppGuesses);
-    renderPad(); renderEntry();
+    renderSlots(); renderPad(); renderEntry();
+  }
+  function renderSlots() {
+    const e = $("entry");
+    if (e.children.length !== N) { e.innerHTML = ""; for (let i = 0; i < N; i++) { const d = document.createElement("div"); d.className = "slot"; e.appendChild(d); } }
   }
   function renderList(id, arr) {
     const el = $(id); el.innerHTML = "";
@@ -416,12 +439,18 @@
   // ========================================================================
   //  메뉴/입력 이벤트
   // ========================================================================
+  function initSeg(id, cb) {
+    $(id).addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; [...$(id).children].forEach((c) => c.classList.remove("on")); b.classList.add("on"); cb(b.getAttribute("data-v")); });
+  }
+  initSeg("segDigits", (v) => { optDigits = Number(v); });
+  initSeg("segDiff", (v) => { optDiff = v; });
   $("segMode").addEventListener("click", (e) => {
     const b = e.target.closest("button"); if (!b) return;
     [...$("segMode").children].forEach((c) => c.classList.remove("on")); b.classList.add("on");
     optMode = b.getAttribute("data-v");
     $("startSoloBtn").classList.toggle("hidden", optMode !== "solo");
     $("onlineBox").classList.toggle("hidden", optMode !== "online");
+    $("diffRow").classList.toggle("hidden", optMode !== "solo");  // 난이도는 솔로 전용
     $("menuErr").textContent = "";
     if (optMode === "online" && (!ws || ws.readyState !== WebSocket.OPEN)) connect();
   });
