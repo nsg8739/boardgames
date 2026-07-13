@@ -132,6 +132,7 @@
         <div class="seg small" id="segDiff"><button data-v="easy">쉬움</button><button data-v="normal" class="on">보통</button></div></div>
       <button id="startSoloBtn" class="cta">게임 시작</button>
       <div id="onlineBox" class="hidden" style="display:flex;flex-direction:column;gap:12px;">
+        <input id="nickInput" maxlength="8" placeholder="닉네임 (예: 아빠)" autocomplete="off" style="width:100%;font-family:var(--serif);font-size:15px;text-align:center;padding:11px;border-radius:8px;border:1px solid var(--warm-border);background:#0d0b05;color:var(--gold-bright);box-sizing:border-box;" />
         <button id="createBtn" class="cta">방 만들기</button>
         <div class="orDivider"><span>또는</span></div>
         <div class="joinGroup">
@@ -200,6 +201,8 @@
   let lastView = null, entry = [];
   let G = null;                 // 호스트 권한 상태(온라인)
   let solo = null, aiTimer = null;  // 솔로 로컬 상태
+  let myNick = ""; try { myNick = (localStorage.getItem("bg_nick") || "").trim().slice(0, 8); } catch (e) {}
+  let hostNames = {};  // 호스트: 슬롯 index → 닉네임
 
   // ===== 세션(재접속) — davinci와 키 분리 =====
   const SESS_KEY = "baseball_session", STATE_KEY = "baseball_state", REJOIN_WINDOW_MS = 300000;
@@ -207,8 +210,8 @@
   function touchSession() { try { const s = JSON.parse(localStorage.getItem(SESS_KEY) || "null"); if (s) { s.ts = Date.now(); localStorage.setItem(SESS_KEY, JSON.stringify(s)); } } catch {} }
   function getSession() { try { return JSON.parse(localStorage.getItem(SESS_KEY) || "null"); } catch { return null; } }
   function sessionFresh(s) { return !!(s && s.ts && Date.now() - s.ts < REJOIN_WINDOW_MS); }
-  function clearSession() { try { localStorage.removeItem(SESS_KEY); localStorage.removeItem(STATE_KEY); } catch {} }
-  function saveState() { if (isHost && G) { try { localStorage.setItem(STATE_KEY, JSON.stringify(G)); } catch {} } }
+  function clearSession() { try { localStorage.removeItem(SESS_KEY); localStorage.removeItem(STATE_KEY); localStorage.removeItem(STATE_KEY + "_n"); } catch {} }
+  function saveState() { if (isHost && G) { try { localStorage.setItem(STATE_KEY, JSON.stringify(G)); localStorage.setItem(STATE_KEY + "_n", JSON.stringify(hostNames)); } catch {} } }
   function loadState() { try { return JSON.parse(localStorage.getItem(STATE_KEY) || "null"); } catch { return null; } }
   function restoreConn() { $("conn").innerHTML = "<span class='ok'>● 서버 연결됨</span>"; }
 
@@ -260,6 +263,7 @@
       winner: G.winner, iWon: G.winner === pi,
       mySecret: G.secrets[pi], myGuesses: G.guesses[pi], oppGuesses: G.guesses[opp],
       oppReveal: G.winner != null ? G.secrets[opp] : null,
+      oppNick: hostNames[opp] || null,
     };
   }
   function broadcast() {
@@ -268,6 +272,7 @@
     saveState(); touchSession();
   }
   function dispatch(a) { a.from = myIndex; if (isHost) applyAction(a); else send({ type: "act", to: 0, a }); }
+  function sendNick() { if (isHost) { if (myIndex != null) hostNames[myIndex] = myNick; if (G) broadcast(); } else if (myNick) { send({ type: "nick", name: myNick, to: 0 }); } }
 
   // ========================================================================
   //  솔로 (vs 컴퓨터, 로컬)
@@ -321,14 +326,15 @@
     if (v.winner != null) { showOver(v); }
     else if (screen === SCREEN.OVER) setScreen(SCREEN.PLAYING);
 
+    const oppL = v.online ? (v.oppNick || "상대") : "컴퓨터";
     $("modeLabel").textContent = v.online ? "온라인 2인" : "혼자";
-    $("oppName").textContent = v.online ? "상대" : "컴퓨터";
-    $("oppColTitle").textContent = (v.online ? "상대" : "컴퓨터") + " 추측";
+    $("oppName").textContent = oppL;
+    $("oppColTitle").textContent = oppL + " 추측";
     $("mySecret").textContent = fmt(v.mySecret);
     $("codeWrap").classList.toggle("hidden", !(v.online && myCode));
     if (v.online && myCode) $("codeLabel").textContent = myCode;
 
-    $("status").textContent = v.winner != null ? "게임 종료" : (v.myTurn ? `내 차례 — ${v.online ? "상대" : "컴퓨터"}의 숫자를 추측하세요` : `${v.online ? "상대" : "컴퓨터"} 차례…`);
+    $("status").textContent = v.winner != null ? "게임 종료" : (v.myTurn ? `내 차례 — ${oppL}의 숫자를 추측하세요` : `${oppL} 차례…`);
 
     renderList("meList", v.myGuesses);
     renderList("oppListEl", v.oppGuesses);
@@ -361,7 +367,7 @@
   }
   function showOver(v) {
     $("overTitle").textContent = v.iWon ? "🎉 승리!" : "😢 패배";
-    const who = v.online ? "상대" : "컴퓨터";
+    const who = v.online ? (v.oppNick || "상대") : "컴퓨터";
     $("overSub").innerHTML = v.iWon
       ? `${who}의 숫자 <span class="reveal">${fmt(v.oppReveal)}</span> 를 먼저 맞혔어요!`
       : `${who}가 내 숫자 <span class="reveal">${fmt(v.mySecret)}</span> 를 먼저 맞혔어요.`;
@@ -400,20 +406,21 @@
       case "created":
         onlineMode = true; isHost = true; myIndex = 0; myCode = m.code; myToken = m.token; saveSession();
         $("roomCode").textContent = m.code; $("lobbyTitle").textContent = "상대를 기다리는 중…"; $("lobbyCodeWrap").style.display = "";
-        setScreen(SCREEN.LOBBY); break;
+        setScreen(SCREEN.LOBBY); sendNick(); break;
       case "joined":
         onlineMode = true; isHost = false; myIndex = m.index; myCode = m.code; myToken = m.token; saveSession();
-        $("lobbyTitle").textContent = "입장 완료! 시작 대기 중…"; $("lobbyCodeWrap").style.display = "none"; setScreen(SCREEN.LOBBY); break;
+        $("lobbyTitle").textContent = "입장 완료! 시작 대기 중…"; $("lobbyCodeWrap").style.display = "none"; setScreen(SCREEN.LOBBY); sendNick(); break;
       case "rejoined":
         onlineMode = true; myIndex = m.index; myCode = m.code; myToken = m.token; isHost = (m.index === 0); saveSession(); restoreConn();
-        if (isHost) { const g = loadState(); if (g) { G = g; broadcast(); } else { $("roomCode").textContent = m.code; $("lobbyCodeWrap").style.display = ""; $("lobbyTitle").textContent = "상대를 기다리는 중…"; setScreen(SCREEN.LOBBY); } }
+        if (isHost) { try { hostNames = JSON.parse(localStorage.getItem(STATE_KEY + "_n") || "{}"); } catch { hostNames = {}; } const g = loadState(); if (g) { G = g; broadcast(); } else { $("roomCode").textContent = m.code; $("lobbyCodeWrap").style.display = ""; $("lobbyTitle").textContent = "상대를 기다리는 중…"; setScreen(SCREEN.LOBBY); } }
         else { $("lobbyTitle").textContent = "재접속됨 — 동기화 중…"; setScreen(SCREEN.LOBBY); }
-        break;
+        sendNick(); break;
       case "rejoin-failed": clearSession(); onlineMode = false; isHost = false; myIndex = myCode = myToken = null; showMenuWithError(m.message || "재접속하지 못했습니다."); break;
-      case "peer-reconnected": restoreConn(); if (isHost && G) broadcast(); break;
+      case "peer-reconnected": restoreConn(); sendNick(); if (isHost && G) broadcast(); break;
       case "peer-disconnected": $("conn").innerHTML = "<span class='bad'>● 상대 접속 끊김 — 대기 중…</span>"; break;
       case "roster": $("rosterInfo").textContent = `${m.count} / ${m.capacity}명 입장`; break;
-      case "peer-joined": if (isHost) newOnlineGame(); else setScreen(SCREEN.PLAYING); break;
+      case "nick": if (isHost) { hostNames[m.from] = (m.name || "").toString().trim().slice(0, 8); if (G) broadcast(); } break;
+      case "peer-joined": if (isHost) newOnlineGame(); else setScreen(SCREEN.PLAYING); sendNick(); break;
       case "view": if (!isHost) { entry = []; renderView(m.view); touchSession(); } break;
       case "act": if (isHost) applyAction(m.a); break;
       case "restart": if (isHost) newOnlineGame(); break;
@@ -478,6 +485,8 @@
     else send({ type: "join", code });
   });
   $("codeInput").addEventListener("keydown", (e) => { if (e.code === "Enter") $("joinBtn").click(); });
+  $("nickInput").value = myNick;
+  $("nickInput").addEventListener("input", () => { myNick = $("nickInput").value.trim().slice(0, 8); try { localStorage.setItem("bg_nick", myNick); } catch {} });
   $("copyBtn").addEventListener("click", () => { navigator.clipboard?.writeText($("roomCode").textContent).then(() => { const b = $("copyBtn"), o = b.textContent; b.textContent = "복사됨!"; setTimeout(() => (b.textContent = o), 1200); }).catch(() => {}); });
   $("cancelBtn").addEventListener("click", () => { clearSession(); if (ws) { try { ws.close(); } catch {} } onlineMode = false; isHost = false; myIndex = myCode = myToken = null; setScreen(SCREEN.MENU); connect(); });
   $("codeWrap").addEventListener("click", () => { if (myCode) navigator.clipboard?.writeText(myCode).then(() => { const b = $("codeLabel"), o = b.textContent; b.textContent = "복사됨"; setTimeout(() => (b.textContent = myCode), 1000); }).catch(() => {}); });

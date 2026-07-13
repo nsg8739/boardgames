@@ -542,6 +542,9 @@
         </div>
       </div>
 
+      <!-- 닉네임(온라인에서 상대에게 표시) -->
+      <input id="nickInput" maxlength="8" placeholder="닉네임 (예: 아빠)" autocomplete="off" style="width:100%;font-family:var(--serif);font-size:15px;text-align:center;padding:11px;border-radius:8px;border:1px solid var(--warm-border);background:#0d0b05;color:var(--gold-bright);box-sizing:border-box;" />
+
       <!-- 3단계: 방 만들기 (핵심 CTA) -->
       <button id="createBtn" class="cta-primary">방 만들기</button>
 
@@ -617,6 +620,8 @@
   const cfg = { count: 2, jokers: JOKERS, version: "basic" };  // 호스트가 방 만들 때 선택 → 게임 초기화에 사용
   let optPlayers = 2, optVersion = "basic";  // 메뉴 세그먼트 선택값
   let soloMode = false, aiTimer = null;       // 1명(솔로) = 나 vs 컴퓨터(AI). 서버 없이 로컬 진행
+  let myNick = ""; try { myNick = (localStorage.getItem("bg_nick") || "").trim().slice(0, 8); } catch (e) {}
+  let hostNames = {};  // 호스트: 슬롯 index → 닉네임
   const AI_INDEX = 1;
 
   const SCREEN = { CONNECTING: "connecting", MENU: "menu", LOBBY: "lobby", PLAYING: "playing", OVER: "over" };
@@ -641,7 +646,7 @@
   }
   function getSession() { try { return JSON.parse(localStorage.getItem(SESS_KEY) || "null"); } catch { return null; } }
   function sessionFresh(s) { return !!(s && s.ts && Date.now() - s.ts < REJOIN_WINDOW_MS); }
-  function clearSession() { try { localStorage.removeItem(SESS_KEY); localStorage.removeItem(STATE_KEY); } catch {} }
+  function clearSession() { try { localStorage.removeItem(SESS_KEY); localStorage.removeItem(STATE_KEY); localStorage.removeItem(STATE_KEY + "_n"); } catch {} }
   function restoreConn() { $("conn").innerHTML = "<span class='ok'>● 서버 연결됨</span>"; }
   // 호스트만: 권한 상태 G를 저장. drawn.tile은 손패 타일과 같은 객체라 복원 시 재연결 필요.
   function saveState() {
@@ -649,6 +654,7 @@
     try {
       const inHand = G.drawn ? G.players[G.drawn.owner].hand.includes(G.drawn.tile) : false;
       localStorage.setItem(STATE_KEY, JSON.stringify({ g: G, drawnInHand: inHand }));
+      localStorage.setItem(STATE_KEY + "_n", JSON.stringify(hostNames));
     } catch {}
   }
   function loadState() {
@@ -958,6 +964,7 @@
       drawnMine: G.drawn && G.drawn.owner === pi ? { color: G.drawn.tile.color, joker: !!G.drawn.tile.joker, value: G.drawn.tile.joker ? null : G.drawn.tile.value } : null,
       my: me.hand.map((t) => ({ color: t.color, joker: !!t.joker, value: t.joker ? null : t.value, faceUp: t.faceUp, drawn: t === drawnTile })),
       others, lastGuess: lg,
+      names: Array.from({ length: G.count }, (_, i) => hostNames[i] || null),
     };
   }
 
@@ -1088,6 +1095,7 @@
     if (isHost) applyAction(a);
     else send({ type: "act", to: 0, a });
   }
+  function sendNick() { if (isHost) { if (myIndex != null) hostNames[myIndex] = myNick; if (G) broadcast(); } else if (myNick) { send({ type: "nick", name: myNick, to: 0 }); } }
 
   // ========================================================================
   //  렌더링
@@ -1111,6 +1119,7 @@
 
   function labelFor(v, idx) {
     if (soloMode && idx === AI_INDEX) return "컴퓨터";
+    if (v.names && v.names[idx]) return v.names[idx];
     return v.count === 2 ? "상대" : `플레이어 ${idx + 1}`;
   }
 
@@ -1388,6 +1397,7 @@
         $("lobbyTitle").textContent = "상대를 기다리는 중…";
         $("lobbyCodeWrap").style.display = "";
         setScreen(SCREEN.LOBBY);
+        sendNick();
         break;
       case "joined":
         isHost = false; myIndex = m.index; myCode = m.code; myToken = m.token;
@@ -1396,6 +1406,7 @@
         $("lobbyTitle").textContent = "입장 완료! 시작 대기 중…";
         $("lobbyCodeWrap").style.display = "none";
         setScreen(SCREEN.LOBBY);
+        sendNick();
         break;
       case "rejoined": {   // 새로고침 후 재접속 성공
         myIndex = m.index; myCode = m.code; myToken = m.token; isHost = (m.index === 0);
@@ -1403,6 +1414,7 @@
         restoreConn();
         resetSel();
         if (isHost) {
+          try { hostNames = JSON.parse(localStorage.getItem(STATE_KEY + "_n") || "{}"); } catch { hostNames = {}; }
           const g = loadState();
           if (g) { G = g; cfg.version = G.version; cfg.count = G.count; cfg.jokers = G.jokers; broadcast(); }
           else {  // 게임 시작 전(로비)에 새로고침 → 로비로 복귀
@@ -1415,6 +1427,7 @@
           $("lobbyTitle").textContent = "재접속됨 — 상태 동기화 중…";
           setScreen(SCREEN.LOBBY);
         }
+        sendNick();
         break;
       }
       case "rejoin-failed":
@@ -1424,6 +1437,7 @@
       case "peer-reconnected":  // 다른 플레이어가 재접속함 → 호스트는 최신 view 재전송
         restoreConn();
         hidePeerAlert();
+        sendNick();
         if (isHost && G) broadcast();
         break;
       case "peer-disconnected":  // 다른 플레이어 접속 끊김(유예 대기) — 비파괴적 안내
@@ -1433,10 +1447,14 @@
       case "roster":
         $("rosterInfo").textContent = `${m.count} / ${m.capacity}명 입장`;
         break;
+      case "nick":
+        if (isHost) { hostNames[m.from] = (m.name || "").toString().trim().slice(0, 8); if (G) broadcast(); }
+        break;
       case "peer-joined":  // 정원 참 → 시작
         resetSel();
         if (isHost) newGame();          // 호스트가 게임 초기화 후 broadcast
         else setScreen(SCREEN.PLAYING); // 게스트는 첫 view 대기
+        sendNick();
         break;
       case "view":
         if (!isHost) { resetSel(); renderView(m.view); touchSession(); }
@@ -1574,6 +1592,8 @@
   initSeg("segVersionOver", (v) => { optVersion = v; cfg.version = v; setSegActive("segVersion", v); updateModeSummary(); });
   updateModeSummary();
   updateCreateLabel();
+  $("nickInput").value = myNick;
+  $("nickInput").addEventListener("input", () => { myNick = $("nickInput").value.trim().slice(0, 8); try { localStorage.setItem("bg_nick", myNick); } catch {} });
   $("ruleMoreBtn").addEventListener("click", openRuleModal);
   $("ruleModalClose").addEventListener("click", closeRuleModal);
   $("ruleModal").addEventListener("click", (e) => { if (e.target === $("ruleModal")) closeRuleModal(); });
