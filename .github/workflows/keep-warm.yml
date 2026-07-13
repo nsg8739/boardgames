@@ -1,0 +1,17 @@
+name: keep-warm
+
+# 무료 Render 서버(중계)는 15분 미사용 시 슬립 → 첫 접속 30~60초 지연.
+# 주기적으로 핑을 보내 깨어있게 유지(베스트 에포트 — GitHub 예약은 다소 지연될 수 있음).
+on:
+  schedule:
+    - cron: "*/10 * * * *" # 10분마다
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping relay server
+        run: |
+          code=$(curl -s -m 60 -o /dev/null -w "%{http_code}" https://pingpong-server-hgl2.onrender.com/ || echo "000")
+          echo "server responded: $code"
