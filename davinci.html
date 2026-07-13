@@ -613,6 +613,9 @@
           </div>
         </div>
         <button id="againBtn" class="btn primary">다시 하기</button>
+        <!-- 방 유지: 같은 방에서 다른 게임으로 이동(방장·온라인 전용) -->
+        <button id="otherGameBtn" class="btn hidden" style="margin-top:8px;">🔀 다른 게임</button>
+        <div id="gamePicker" class="hidden" style="width:100%;display:flex;flex-direction:column;gap:8px;margin-top:8px;"></div>
       </div>
     </div>
   </div>
@@ -658,6 +661,9 @@
 
   // ===== 재접속용 세션/상태 저장 (localStorage: 새로고침·탭 닫기에도 유지 → 실수로 나가도 코드로 복귀) =====
   let myCode = null, myToken = null;
+  let handoffMode = false;   // 방 유지로 이 게임에 도착(?room=1) → 메뉴 대신 같은 방에 재접속
+  let handoffCap = 0;        // 방 유지 시 방 정원(전원 복귀 판단용)
+  let intentionalNav = false; // 방 유지 이동 등 의도적 페이지 이동(beforeunload 확인창 억제)
   const SESS_KEY = "davinci_session", STATE_KEY = "davinci_state";
   const REJOIN_WINDOW_MS = 300000;  // 최근 이 시간 내 활동한 세션만 자동 재접속 시도(서버 유예 5분과 맞춤)
   function saveSession() {
@@ -991,6 +997,7 @@
   }
 
   function broadcast() {
+    if (intentionalNav) return;  // 방 유지 이동 중인 호스트는 이전 게임 view를 더 보내지 않는다(다른 게임 페이지 오염 방지)
     if (!soloMode) for (let i = 1; i < G.count; i++) send({ type: "view", view: viewFor(i), to: i });  // 각 게스트에게 개인화 view
     renderView(viewFor(0));  // 호스트(솔로에선 사람) 로컬 렌더
     saveState();             // 새로고침 대비 상태 저장(호스트)
@@ -1175,6 +1182,7 @@
   }, 1000);
 
   function renderView(v) {
+    if (!v || !Array.isArray(v.others)) return;  // 다른 게임에서 넘어온 잔여 view 방어
     lastView = v;
     if (v.winner != null) { showOver(v); return; }
     if (screen !== SCREEN.PLAYING) setScreen(SCREEN.PLAYING);
@@ -1388,6 +1396,20 @@
 
     ws.addEventListener("open", () => {
       $("conn").innerHTML = "<span class='ok'>● 서버 연결됨</span>";
+      // 방 유지 이동(?room=1): bg_room에 남긴 재접속 정보로 같은 방에 복귀
+      const wantRoom = new URLSearchParams(location.search).get("room");
+      const ho = wantRoom ? getRoomHandoff() : null;
+      if (ho) {
+        clearRoomHandoff();
+        handoffMode = true; handoffCap = ho.cap || 0;
+        isHost = (ho.index === 0); myIndex = ho.index; myCode = ho.code; myToken = ho.token;
+        $("lobbyTitle").textContent = "방 유지 — 다른 플레이어 대기 중…";
+        $("lobbyCodeWrap").style.display = "none";
+        $("rosterInfo").textContent = "";
+        setScreen(SCREEN.LOBBY);
+        send({ type: "rejoin", code: ho.code, index: ho.index, token: ho.token });
+        return;
+      }
       const sess = getSession();
       if (sess && sess.code && sess.token != null && sessionFresh(sess)) {
         // 최근 활동 세션이 있으면(새로고침·탭 닫았다 다시 옴) 자동 재접속 시도
@@ -1435,6 +1457,14 @@
         cfg.count = m.capacity; saveSession();
         restoreConn();
         resetSel();
+        if (handoffMode) {
+          // 방 유지로 도착 → 이전 게임 상태 복원하지 않고, 전원 모이면 새 게임 시작
+          handoffCap = m.capacity;
+          if (isHost) { $("lobbyTitle").textContent = "방 유지 — 다른 플레이어 대기 중…"; setScreen(SCREEN.LOBBY); maybeStartHandoff(m.count); }
+          else { $("lobbyTitle").textContent = "방 유지됨 — 방장이 곧 새 게임을 시작합니다…"; setScreen(SCREEN.LOBBY); }
+          sendNick();
+          break;
+        }
         if (isHost) {
           try { hostNames = JSON.parse(localStorage.getItem(STATE_KEY + "_n") || "{}"); } catch { hostNames = {}; }
           const g = loadState();
@@ -1468,6 +1498,7 @@
         break;
       case "roster":
         $("rosterInfo").textContent = `${m.count} / ${m.capacity}명 입장`;
+        if (handoffMode && isHost) maybeStartHandoff(m.count);
         break;
       case "nick":
         if (isHost) { hostNames[m.from] = (m.name || "").toString().trim().slice(0, 8); if (G) broadcast(); }
@@ -1475,6 +1506,11 @@
       case "chat":
         addChatMsg(m.name, m.text, false);
         break;
+      case "goto": {  // 방장이 다른 게임으로 이동 → 같은 방 정보를 들고 함께 이동
+        const g = ROOM_GAMES.find((x) => x.key === m.game);
+        if (g) { saveRoomHandoff(); intentionalNav = true; setTimeout(() => { location.href = handoffUrl(g.file); }, 60); }
+        break;
+      }
       case "peer-joined":  // 정원 참 → 시작
         resetSel();
         if (isHost) newGame();          // 호스트가 게임 초기화 후 broadcast
@@ -1482,7 +1518,7 @@
         sendNick();
         break;
       case "view":
-        if (!isHost) { resetSel(); renderView(m.view); touchSession(); }
+        if (!isHost) { handoffMode = false; resetSel(); renderView(m.view); touchSession(); }
         break;
       case "act":
         if (isHost) applyAction(m.a);
@@ -1570,6 +1606,10 @@
     // 호스트는 다시 하기 전에 새 방 없이 모드를 바꿀 수 있다. 게스트는 숨김(호스트 설정을 따름).
     if (isHost) { $("overModeWrap").classList.remove("hidden"); setSegActive("segVersionOver", cfg.version); }
     else $("overModeWrap").classList.add("hidden");
+    // 방 유지: 방장·온라인에서만 '다른 게임' 노출(피커는 접어둔 상태로 초기화)
+    $("gamePicker").classList.add("hidden");
+    $("againBtn").classList.remove("hidden");
+    $("otherGameBtn").classList.toggle("hidden", !(isHost && isOnlineRoom()));
     setScreen(SCREEN.OVER);
   }
 
@@ -1692,11 +1732,14 @@
     window.__act = (a) => dispatch(a);
     window.__view = () => lastView;
     window.__truth = () => (isHost ? G : null);  // 호스트만: 테스트가 정답을 알도록
+    window.__goto = (k) => gotoGame(k);           // 방 유지 이동 테스트용
+    window.__st = () => ({ screen, isHost, myIndex, myCode, handoffMode, count: cfg.count });
   }
 
   // ===== 실수 이탈 방지 + 재접속 =====
   // (1) 새로고침/창닫기: 브라우저 기본 확인창(재접속으로 복원되지만 실수 방지).
   window.addEventListener("beforeunload", (e) => {
+    if (intentionalNav) return;  // 방 유지 이동 등 의도적 이동은 확인창 없이 진행
     if (screen === SCREEN.PLAYING || screen === SCREEN.LOBBY) { e.preventDefault(); e.returnValue = ""; }
   });
 
@@ -1758,6 +1801,65 @@
     $("chatSend").addEventListener("click", () => { sendChat($("chatInput").value); $("chatInput").value = ""; });
     $("chatInput").addEventListener("keydown", (e) => { if (e.key === "Enter") { sendChat($("chatInput").value); $("chatInput").value = ""; } });
   })();
+
+  // ── 방 유지: 게임을 마친 뒤 같은 서버 방을 유지한 채 다른 게임으로 이동 ──
+  const THIS_GAME = "davinci";
+  const ROOM_GAMES = [
+    { key: "davinci",    file: "davinci.html",    label: "🎲 다빈치코드", min: 2, max: 4 },
+    { key: "loveletter", file: "loveletter.html", label: "💌 러브레터",   min: 2, max: 4 },
+    { key: "baseball",   file: "baseball.html",   label: "⚾ 숫자야구",   min: 2, max: 2 },
+  ];
+  const ROOM_HANDOFF_MS = 90 * 1000;  // 이동 후 도착까지 유효 시간(핸드오프 전용)
+  function roomCap() { return cfg.count || handoffCap || 2; }
+  function isOnlineRoom() { return !soloMode && !!myCode && myIndex != null && myToken != null; }
+  function saveRoomHandoff() {
+    if (!isOnlineRoom()) return;
+    try { localStorage.setItem("bg_room", JSON.stringify({ code: myCode, index: myIndex, token: myToken, cap: roomCap(), ts: Date.now() })); } catch {}
+  }
+  function getRoomHandoff() {
+    try { const r = JSON.parse(localStorage.getItem("bg_room") || "null");
+      if (r && r.code && r.token != null && (Date.now() - r.ts) < ROOM_HANDOFF_MS) return r; } catch {}
+    return null;
+  }
+  function clearRoomHandoff() { try { localStorage.removeItem("bg_room"); } catch {} }
+  function handoffUrl(file) {  // ?room=1 + 기존 server/debug 파라미터 이어받기(커스텀 서버·테스트 유지)
+    const cur = new URLSearchParams(location.search); const q = new URLSearchParams(); q.set("room", "1");
+    if (cur.get("server")) q.set("server", cur.get("server"));
+    if (cur.has("debug")) q.set("debug", cur.get("debug") || "1");
+    return file + "?" + q.toString();
+  }
+  function gotoGame(key) {
+    const g = ROOM_GAMES.find((x) => x.key === key); if (!g) return;
+    saveRoomHandoff();
+    send({ type: "goto", game: key });   // 방 전체에 이동 알림(브로드캐스트)
+    intentionalNav = true;
+    setTimeout(() => { location.href = handoffUrl(g.file); }, 150);  // 메시지 전송 보장 후 이동
+  }
+  function maybeStartHandoff(count) {  // 호스트: 전원 복귀 시 새 게임 시작
+    if (!handoffMode || !isHost) return;
+    if (count >= (handoffCap || cfg.count)) {
+      handoffMode = false;
+      resetSel();
+      cfg.count = handoffCap || cfg.count; cfg.version = optVersion; cfg.jokers = JOKERS;
+      newGame();     // G 생성 + broadcast → 호스트 PLAYING, 게스트는 view 수신
+      sendNick();
+    }
+  }
+  function openGamePicker() {
+    const cap = roomCap();
+    const list = ROOM_GAMES.filter((g) => g.key !== THIS_GAME && cap >= g.min && cap <= g.max);
+    const box = $("gamePicker"); box.innerHTML = "";
+    list.forEach((g) => {
+      const b = document.createElement("button"); b.className = "btn"; b.textContent = g.label;
+      b.addEventListener("click", () => gotoGame(g.key)); box.appendChild(b);
+    });
+    const cancel = document.createElement("button"); cancel.className = "btn"; cancel.textContent = "취소"; cancel.style.opacity = ".8";
+    cancel.addEventListener("click", () => { box.classList.add("hidden"); $("otherGameBtn").classList.remove("hidden"); $("againBtn").classList.remove("hidden"); });
+    box.appendChild(cancel);
+    box.classList.remove("hidden");
+    $("otherGameBtn").classList.add("hidden"); $("againBtn").classList.add("hidden");
+  }
+  $("otherGameBtn").addEventListener("click", openGamePicker);
 
   // ===== 시작 =====
   setScreen(SCREEN.MENU);
