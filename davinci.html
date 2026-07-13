@@ -664,6 +664,7 @@
   let handoffMode = false;   // 방 유지로 이 게임에 도착(?room=1) → 메뉴 대신 같은 방에 재접속
   let handoffCap = 0;        // 방 유지 시 방 정원(전원 복귀 판단용)
   let intentionalNav = false; // 방 유지 이동 등 의도적 페이지 이동(beforeunload 확인창 억제)
+  const missingPeers = new Set();  // 현재 접속이 끊긴 슬롯(방 유지 이동 가능 여부 판단)
   const SESS_KEY = "davinci_session", STATE_KEY = "davinci_state";
   const REJOIN_WINDOW_MS = 300000;  // 최근 이 시간 내 활동한 세션만 자동 재접속 시도(서버 유예 5분과 맞춤)
   function saveSession() {
@@ -1487,12 +1488,14 @@
         showMenuWithError(m.message || "이전 게임에 재접속하지 못했습니다.");
         break;
       case "peer-reconnected":  // 다른 플레이어가 재접속함 → 호스트는 최신 view 재전송
+        if (m.index != null) missingPeers.delete(m.index);
         restoreConn();
         hidePeerAlert();
         sendNick();
         if (isHost && G) broadcast();
         break;
       case "peer-disconnected":  // 다른 플레이어 접속 끊김(유예 대기) — 비파괴적 안내
+        if (m.index != null) missingPeers.add(m.index);
         $("conn").innerHTML = "<span class='bad'>● 상대 접속 끊김 — 재접속 대기 중…</span>";
         if (screen === SCREEN.PLAYING || screen === SCREEN.OVER) showPeerAlert();  // 호스트는 여기서 '게임 종료' 가능
         break;
@@ -1733,7 +1736,7 @@
     window.__view = () => lastView;
     window.__truth = () => (isHost ? G : null);  // 호스트만: 테스트가 정답을 알도록
     window.__goto = (k) => gotoGame(k);           // 방 유지 이동 테스트용
-    window.__st = () => ({ screen, isHost, myIndex, myCode, handoffMode, count: cfg.count });
+    window.__st = () => ({ screen, isHost, myIndex, myCode, handoffMode, count: cfg.count, missing: missingPeers.size });
   }
 
   // ===== 실수 이탈 방지 + 재접속 =====
@@ -1830,6 +1833,7 @@
   }
   function gotoGame(key) {
     const g = ROOM_GAMES.find((x) => x.key === key); if (!g) return;
+    if (missingPeers.size > 0) { flashToast("접속이 끊긴 사람이 있어 방을 유지할 수 없어요. 새 방을 만들어 주세요."); return; }
     saveRoomHandoff();
     send({ type: "goto", game: key });   // 방 전체에 이동 알림(브로드캐스트)
     intentionalNav = true;
@@ -1846,6 +1850,11 @@
     }
   }
   function openGamePicker() {
+    // 접속이 끊긴 사람이 있으면 방 유지로 새 게임을 시작할 수 없다(정원이 다 모여야 시작되므로).
+    if (missingPeers.size > 0) {
+      flashToast("접속이 끊긴 사람이 있어 방을 유지한 채 다른 게임을 시작할 수 없어요. 재접속을 기다리거나 새 방을 만들어 주세요.");
+      return;
+    }
     const cap = roomCap();
     const list = ROOM_GAMES.filter((g) => g.key !== THIS_GAME && cap >= g.min && cap <= g.max);
     const box = $("gamePicker"); box.innerHTML = "";

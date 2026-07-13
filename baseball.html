@@ -222,6 +222,7 @@
   let ws = null, myIndex = null, isHost = false, myCode = null, myToken = null;
   let optMode = "solo", onlineMode = false;
   let handoffMode = false, handoffCap = 0, intentionalNav = false;  // 방 유지(게임 간 이동)
+  const missingPeers = new Set();  // 접속이 끊긴 슬롯(방 유지 이동 가능 여부 판단)
   let lastView = null, entry = [];
   let G = null;                 // 호스트 권한 상태(온라인)
   let solo = null, aiTimer = null;  // 솔로 로컬 상태
@@ -466,8 +467,8 @@
         else { $("lobbyTitle").textContent = "재접속됨 — 동기화 중…"; setScreen(SCREEN.LOBBY); }
         sendNick(); break;
       case "rejoin-failed": clearSession(); onlineMode = false; isHost = false; myIndex = myCode = myToken = null; showMenuWithError(m.message || "재접속하지 못했습니다."); break;
-      case "peer-reconnected": restoreConn(); sendNick(); if (isHost && G) broadcast(); break;
-      case "peer-disconnected": $("conn").innerHTML = "<span class='bad'>● 상대 접속 끊김 — 대기 중…</span>"; break;
+      case "peer-reconnected": if (m.index != null) missingPeers.delete(m.index); restoreConn(); sendNick(); if (isHost && G) broadcast(); break;
+      case "peer-disconnected": if (m.index != null) missingPeers.add(m.index); $("conn").innerHTML = "<span class='bad'>● 상대 접속 끊김 — 대기 중…</span>"; break;
       case "roster": $("rosterInfo").textContent = `${m.count} / ${m.capacity}명 입장`; if (handoffMode && isHost) maybeStartHandoff(m.count); break;
       case "nick": if (isHost) { hostNames[m.from] = (m.name || "").toString().trim().slice(0, 8); if (G) broadcast(); } break;
       case "chat": addChatMsg(m.name, m.text, false); break;
@@ -600,6 +601,7 @@
   }
   function gotoGame(key) {
     const g = ROOM_GAMES.find((x) => x.key === key); if (!g) return;
+    if (missingPeers.size > 0) { flashToast("접속이 끊긴 사람이 있어 방을 유지할 수 없어요. 새 방을 만들어 주세요."); return; }
     saveRoomHandoff(); send({ type: "goto", game: key }); intentionalNav = true;
     setTimeout(() => { location.href = handoffUrl(g.file); }, 150);
   }
@@ -608,6 +610,10 @@
     if (count >= (handoffCap || 2)) { handoffMode = false; newOnlineGame(); sendNick(); }
   }
   function openGamePicker() {
+    if (missingPeers.size > 0) {
+      flashToast("접속이 끊긴 사람이 있어 방을 유지한 채 다른 게임을 시작할 수 없어요. 재접속을 기다리거나 새 방을 만들어 주세요.");
+      return;
+    }
     const cap = roomCap();
     const list = ROOM_GAMES.filter((g) => g.key !== THIS_GAME && cap >= g.min && cap <= g.max);
     const box = $("gamePicker"); box.innerHTML = "";

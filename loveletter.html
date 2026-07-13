@@ -171,6 +171,7 @@
   let ws = null, myIndex = null, isHost = false, myCode = null, myToken = null, onlineMode = false;
   let optCount = 2, optTarget = 3, lastView = null, G = null;
   let handoffMode = false, handoffCap = 0, intentionalNav = false;  // 방 유지(게임 간 이동)
+  const missingPeers = new Set();  // 접속이 끊긴 슬롯(방 유지 이동 가능 여부 판단)
   let sel = null;  // 카드 선택 상태
   let myNick = ""; try { myNick = (localStorage.getItem("bg_nick") || "").trim().slice(0, 8); } catch (e) {}
   let hostNames = {};  // 호스트: 슬롯 index → 닉네임
@@ -438,8 +439,8 @@
         if(isHost){ try{ hostNames=JSON.parse(localStorage.getItem(STATE_KEY+"_n")||"{}"); }catch{ hostNames={}; } const g=loadState(); if(g){ G=g; optCount=G.count; broadcast(); } else { $("roomCode").textContent=m.code; $("lobbyCodeWrap").style.display=""; $("lobbyTitle").textContent="상대를 기다리는 중…"; setScreen(SCREEN.LOBBY); } }
         else { $("lobbyTitle").textContent="재접속됨 — 동기화 중…"; setScreen(SCREEN.LOBBY); } sendNick(); break;
       case "rejoin-failed": clearSession(); onlineMode=false; isHost=false; myIndex=myCode=myToken=null; showMenuWithError(m.message||"재접속하지 못했습니다."); break;
-      case "peer-reconnected": restoreConn(); sendNick(); if(isHost&&G) broadcast(); break;
-      case "peer-disconnected": $("conn").innerHTML="<span class='bad'>● 상대 접속 끊김 — 대기 중…</span>"; break;
+      case "peer-reconnected": if(m.index!=null) missingPeers.delete(m.index); restoreConn(); sendNick(); if(isHost&&G) broadcast(); break;
+      case "peer-disconnected": if(m.index!=null) missingPeers.add(m.index); $("conn").innerHTML="<span class='bad'>● 상대 접속 끊김 — 대기 중…</span>"; break;
       case "roster": $("rosterInfo").textContent=`${m.count} / ${m.capacity}명 입장`; if(handoffMode&&isHost) maybeStartHandoff(m.count); break;
       case "nick": if(isHost){ hostNames[m.from]=(m.name||"").toString().trim().slice(0,8); if(G) broadcast(); } break;
       case "goto": { const g=ROOM_GAMES.find(x=>x.key===m.game); if(g){ saveRoomHandoff(); intentionalNav=true; setTimeout(()=>{ location.href=handoffUrl(g.file); },60); } break; }
@@ -513,9 +514,10 @@
   function getRoomHandoff(){ try{ const r=JSON.parse(localStorage.getItem("bg_room")||"null"); if(r&&r.code&&r.token!=null&&(Date.now()-r.ts)<ROOM_HANDOFF_MS) return r; }catch{} return null; }
   function clearRoomHandoff(){ try{ localStorage.removeItem("bg_room"); }catch{} }
   function handoffUrl(file){ const cur=new URLSearchParams(location.search); const q=new URLSearchParams(); q.set("room","1"); if(cur.get("server")) q.set("server",cur.get("server")); if(cur.has("debug")) q.set("debug",cur.get("debug")||"1"); return file+"?"+q.toString(); }
-  function gotoGame(key){ const g=ROOM_GAMES.find(x=>x.key===key); if(!g) return; saveRoomHandoff(); send({type:"goto",game:key}); intentionalNav=true; setTimeout(()=>{ location.href=handoffUrl(g.file); },150); }
+  function gotoGame(key){ const g=ROOM_GAMES.find(x=>x.key===key); if(!g) return; if(missingPeers.size>0){ toast("접속이 끊긴 사람이 있어 방을 유지할 수 없어요. 새 방을 만들어 주세요."); return; } saveRoomHandoff(); send({type:"goto",game:key}); intentionalNav=true; setTimeout(()=>{ location.href=handoffUrl(g.file); },150); }
   function maybeStartHandoff(count){ if(!handoffMode||!isHost) return; if(count>=(handoffCap||optCount||2)){ handoffMode=false; optCount=handoffCap||optCount; startGame(optCount, null, null, optTarget); sendNick(); } }
   function openGamePicker(){
+    if(missingPeers.size>0){ toast("접속이 끊긴 사람이 있어 방을 유지한 채 다른 게임을 시작할 수 없어요. 재접속을 기다리거나 새 방을 만들어 주세요."); return; }
     const cap=roomCap();
     const list=ROOM_GAMES.filter(g=>g.key!==THIS_GAME && cap>=g.min && cap<=g.max);
     const box=$("gamePicker"); box.innerHTML="";
