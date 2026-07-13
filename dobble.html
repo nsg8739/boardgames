@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>도블 — 보드게임 모음</title>
+<style>
+  :root { --bg: #17110a; --warm-border: #3a2c15; --gold-bright: #e6c04a; --parchment: #e9dcc0; --muted: #9c8a63; --serif: "Georgia", "Nanum Myeongjo", serif; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--parchment); font-family: "Segoe UI", "Malgun Gothic", sans-serif; }
+  body { display: flex; flex-direction: column; }
+  .bar { display: flex; align-items: center; gap: 12px; padding: 8px 14px; background: linear-gradient(180deg, #241a0e, #1a130b); border-bottom: 1px solid var(--warm-border); }
+  .bar a { color: var(--gold-bright); text-decoration: none; font-weight: 700; font-size: 14px; }
+  .bar a:hover { color: #f2cc60; }
+  .bar .title { font-family: var(--serif); font-weight: 800; color: var(--gold-bright); letter-spacing: .5px; }
+  .bar .ext { margin-left: auto; font-size: 12px; }
+  .frameWrap { position: relative; flex: 1; min-height: 0; }
+  iframe { border: 0; width: 100%; height: 100%; display: block; background: #0d0b05; }
+  #loading { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; padding: 24px; color: var(--parchment); }
+  #loading.hidden { display: none; }
+  #loading .big { font-family: var(--serif); font-size: 20px; color: var(--gold-bright); }
+  #loading .small { font-size: 13px; color: var(--muted); line-height: 1.6; }
+</style>
+</head>
+<body>
+  <div class="bar">
+    <a href="./index.html">🎲 메인</a>
+    <span class="title">🃏 도블</span>
+    <a class="ext" href="https://web-dobble.onrender.com/" target="_blank" rel="noopener">새 창 ↗</a>
+  </div>
+  <div class="frameWrap">
+    <div id="loading">
+      <div class="big">도블 불러오는 중…</div>
+      <div class="small">외부 서버(무료 플랜)라 첫 접속에 30~60초 걸릴 수 있어요.<br />오래 걸리면 ‘새 창 ↗’으로 직접 열어보세요.</div>
+    </div>
+    <iframe id="frame" src="https://web-dobble.onrender.com/" title="도블 게임" allow="fullscreen; accelerometer; gyroscope"></iframe>
+  </div>
+  <script>
+    var f = document.getElementById("frame"), l = document.getElementById("loading");
+    f.addEventListener("load", function () { l.classList.add("hidden"); });
+    // 혹시 load 이벤트가 늦거나 놓쳐도 일정 시간 뒤 오버레이 제거
+    setTimeout(function () { l.classList.add("hidden"); }, 65000);
+  </script>
+</body>
+</html>
