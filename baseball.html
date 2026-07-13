@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>숫자야구 — vs 컴퓨터</title>
+<title>숫자야구 — 혼자·온라인 2인</title>
 <style>
   :root {
     --bg: #17110a; --bg2: #1e160c;
     --card: rgba(26, 19, 11, 0.94); --warm-bg: #241a0e; --warm-bg2: #2e2211;
     --warm-border: #3a2c15; --gold: #c9a227; --gold-bright: #e6c04a; --gold-soft: #f2cc60; --gold-deep: #6b5417;
-    --parchment: #e9dcc0; --muted: #9c8a63; --ink: #201607;
+    --parchment: #e9dcc0; --muted: #9c8a63; --ink: #201607; --seal: #a6402f;
     --serif: "Georgia", "Nanum Myeongjo", serif;
     --strike: #f0883e; --ball: #e6c04a;
   }
@@ -22,83 +22,137 @@
     -webkit-font-smoothing: antialiased;
   }
   .wrap { width: 100%; max-width: 460px; margin: 0 auto; }
-  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
-  .home { text-decoration: none; color: var(--gold-bright); font-size: 13px; font-weight: 700; }
-  .home:hover { color: var(--gold-soft); }
+  #conn { position: fixed; top: 8px; right: 10px; z-index: 20; font-size: 11px; color: var(--muted);
+    background: rgba(13,10,5,0.72); border: 1px solid var(--warm-border); border-radius: 999px; padding: 4px 10px; max-width: 62vw; text-align: right; }
+  #conn .ok { color: #3fb950; } #conn .bad { color: #f85149; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 4px 0 8px; }
+  .home { text-decoration: none; color: var(--gold-bright); font-size: 13px; font-weight: 700; } .home:hover { color: var(--gold-soft); }
   h1 { font-family: var(--serif); font-size: clamp(20px, 6vw, 26px); font-weight: 800; margin: 0; color: var(--gold-bright); text-align: center; letter-spacing: .5px; }
   .rules { font-size: 12px; color: var(--muted); text-align: center; line-height: 1.6; margin: 2px 0 12px; }
   .rules b { color: var(--gold-soft); }
+  .hidden { display: none !important; }
 
-  .secret { text-align: center; background: var(--card); border: 1px solid var(--warm-border); border-radius: 10px; padding: 10px; margin-bottom: 10px; font-size: 13px; color: var(--parchment); }
+  /* 패널(메뉴/로비/결과) */
+  .panel { background: var(--card); border: 1px solid var(--warm-border); border-radius: 12px; padding: 20px 18px; margin-top: 6px;
+    display: flex; flex-direction: column; gap: 12px; box-shadow: inset 0 0 0 1px rgba(230,192,74,0.10), 0 8px 26px rgba(0,0,0,0.45); }
+  .panel h2 { font-family: var(--serif); font-size: 20px; font-weight: 800; color: var(--gold-bright); margin: 0; text-align: center; }
+  .sub { font-size: 13px; color: var(--parchment); text-align: center; line-height: 1.5; }
+  .seg { display: flex; width: 100%; border: 1px solid var(--warm-border); border-radius: 8px; overflow: hidden; }
+  .seg button { flex: 1; font-family: var(--serif); cursor: pointer; border: none; background: linear-gradient(180deg, var(--warm-bg2), var(--warm-bg)); color: var(--muted); padding: 12px 6px; font-size: 15px; border-right: 1px solid var(--warm-border); }
+  .seg button:last-child { border-right: none; }
+  .seg button.on { background: linear-gradient(180deg, var(--gold-bright), var(--gold-deep)); color: var(--ink); font-weight: 800; }
+  .cta { width: 100%; font-family: var(--serif); cursor: pointer; border: 1px solid #7b2419; border-radius: 9px;
+    background: linear-gradient(180deg, #d46a45, var(--seal) 55%, #5b1712); color: #fff1d2; font-weight: 800; font-size: 17px; letter-spacing: 1px; padding: 14px; }
+  .cta:disabled { opacity: .5; cursor: default; }
+  .orDivider { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 12px; letter-spacing: 2px; }
+  .orDivider::before, .orDivider::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--gold-deep), transparent); }
+  .joinGroup { display: flex; gap: 0; }
+  .joinGroup input { flex: 1; min-width: 0; font-family: var(--serif); font-size: 20px; letter-spacing: 6px; text-align: center; text-transform: uppercase;
+    padding: 12px; border-radius: 8px 0 0 8px; border: 1px solid var(--warm-border); border-right: none; background: #0d0b05; color: var(--gold-bright); }
+  .joinGroup input::placeholder { color: #8a7648; font-size: 14px; letter-spacing: 1px; text-transform: none; }
+  .cta2 { flex: none; font-family: var(--serif); cursor: pointer; border: 1.5px solid var(--gold); border-radius: 0 8px 8px 0; background: rgba(201,162,39,0.12); color: var(--gold-bright); font-weight: 700; padding: 0 18px; }
+  .btn { font-family: var(--serif); cursor: pointer; border: 1px solid var(--warm-border); border-radius: 8px; background: linear-gradient(180deg, var(--warm-bg2), var(--warm-bg)); color: var(--parchment); padding: 11px 18px; font-size: 15px; }
+  #roomCode { font-family: var(--serif); font-size: clamp(34px, 12vw, 52px); font-weight: 800; letter-spacing: 10px; color: var(--gold-soft); text-align: center; margin: 4px 0; text-shadow: 0 2px 3px #000; }
+  .err { color: #f85149; font-size: 13px; min-height: 16px; text-align: center; }
+  .menuHome { text-align: center; }
+  .menuHome a { color: var(--gold-bright); font-size: 13px; font-weight: 700; text-decoration: none; }
+
+  /* 게임 보드 */
+  .gameMeta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px;
+    margin: 2px 0 10px; padding: 8px 10px; border: 1px solid rgba(201,162,39,0.35); border-radius: 8px; background: rgba(13,10,5,0.46); font-size: 12px; }
+  .gameMeta b { color: var(--gold-bright); font-weight: 800; }
+  #codeWrap { cursor: pointer; } #codeWrap b { letter-spacing: 2px; }
+  .secret { text-align: center; background: var(--card); border: 1px solid var(--warm-border); border-radius: 10px; padding: 10px; margin-bottom: 10px; font-size: 13px; }
   .secret .digits { font-family: var(--serif); font-size: 26px; font-weight: 800; letter-spacing: 8px; color: var(--gold-soft); }
-  .secret small { color: var(--muted); }
-
   #status { text-align: center; font-size: 14px; min-height: 20px; margin: 4px 0 10px; color: var(--gold-bright); font-weight: 700; }
-
   .histories { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
   .hcol { background: var(--card); border: 1px solid var(--warm-border); border-radius: 10px; padding: 8px; min-height: 90px; }
-  .hcol h3 { margin: 0 0 6px; font-size: 12.5px; text-align: center; color: var(--gold-bright); font-weight: 800; letter-spacing: .5px; }
+  .hcol h3 { margin: 0 0 6px; font-size: 12.5px; text-align: center; color: var(--gold-bright); font-weight: 800; }
   .hlist { display: flex; flex-direction: column; gap: 4px; max-height: 190px; overflow-y: auto; }
   .hrow { display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: 13px; padding: 3px 6px; border-radius: 6px; background: rgba(13,10,5,0.4); }
   .hrow .g { font-family: var(--serif); letter-spacing: 3px; font-weight: 700; }
   .hrow .r { font-size: 12px; font-weight: 800; white-space: nowrap; }
   .r .s { color: var(--strike); } .r .b { color: var(--ball); } .r .o { color: var(--muted); }
-
   .entry { display: flex; justify-content: center; gap: 8px; margin-bottom: 10px; }
   .slot { width: 52px; height: 58px; border-radius: 10px; border: 2px solid var(--warm-border); background: var(--warm-bg);
     display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-size: 30px; font-weight: 800; color: var(--gold-soft); }
   .slot.filled { border-color: var(--gold); }
-
   .pad { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
   .pad button { font-family: var(--serif); font-size: 19px; font-weight: 700; padding: 12px 0; border: 1px solid var(--warm-border); border-radius: 8px;
     background: linear-gradient(180deg, var(--warm-bg2), var(--warm-bg)); color: var(--parchment); cursor: pointer; }
   .pad button:hover:not(:disabled) { filter: brightness(1.25); border-color: var(--gold); }
   .pad button:disabled { opacity: .32; cursor: default; }
-  .pad .used { opacity: .32; }
   .actions { display: flex; gap: 8px; margin-top: 8px; }
   .actions button { flex: 1; font-family: var(--serif); font-size: 15px; font-weight: 700; padding: 12px 0; border-radius: 8px; cursor: pointer; border: 1px solid var(--warm-border); }
   #clearBtn { background: transparent; color: var(--parchment); }
   #submitBtn { border: 1px solid #7b2419; background: linear-gradient(180deg, #d46a45, #7a2016); color: #fff1d2; font-weight: 800; letter-spacing: 1px; }
   #submitBtn:disabled { opacity: .4; cursor: default; }
 
-  /* 결과 모달 */
   #over { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 18px;
     background: rgba(8,5,2,0.74); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
-  #over.hidden { display: none; }
   .overCard { width: min(340px, 100%); background: var(--card); border: 2px solid var(--warm-border); border-radius: 12px; padding: 24px 22px;
     display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; box-shadow: 0 18px 54px rgba(0,0,0,0.7); }
   .overCard h2 { font-family: var(--serif); font-size: 26px; margin: 0; color: var(--gold-bright); }
-  .overCard .sub { font-size: 14px; color: var(--parchment); line-height: 1.6; }
   .overCard .sub .reveal { font-family: var(--serif); letter-spacing: 4px; color: var(--gold-soft); font-weight: 800; }
   .overCard button { width: 100%; font-family: var(--serif); font-size: 16px; font-weight: 800; padding: 13px 0; border-radius: 9px; cursor: pointer;
     border: 1px solid var(--gold-deep); background: linear-gradient(180deg, var(--gold-bright), var(--gold) 55%, var(--gold-deep)); color: var(--ink); }
 </style>
 </head>
 <body>
+  <div id="conn"></div>
   <div class="wrap">
     <div class="topbar">
       <a class="home" href="./index.html">🎲 메인</a>
       <h1>🔢 숫자야구</h1>
       <span style="width:44px"></span>
     </div>
-    <div class="rules">중복 없는 <b>세 자리</b> 숫자를 서로 맞히기 · <b class="" style="color:var(--strike)">S</b>=자리·숫자 일치, <b style="color:var(--ball)">B</b>=숫자만 일치 · 먼저 <b>3S</b>면 승리</div>
+    <div class="rules">중복 없는 <b>세 자리</b> 숫자 맞히기 · <b style="color:var(--strike)">S</b>=자리·숫자 일치, <b style="color:var(--ball)">B</b>=숫자만 · 먼저 <b>3S</b> 승리</div>
 
-    <div class="secret">내 비밀번호(컴퓨터가 맞혀야 함) <span class="digits" id="mySecret">· · ·</span></div>
-
-    <div id="status">내 차례 — 컴퓨터의 숫자를 추측하세요</div>
-
-    <div class="histories">
-      <div class="hcol"><h3>내 추측</h3><div class="hlist" id="meList"></div></div>
-      <div class="hcol"><h3>컴퓨터 추측</h3><div class="hlist" id="aiList"></div></div>
+    <!-- 메뉴 -->
+    <div id="menu" class="panel hidden">
+      <h2>새 게임</h2>
+      <div class="seg" id="segMode">
+        <button data-v="solo" class="on">혼자 (vs 컴퓨터)</button><button data-v="online">온라인 2인</button>
+      </div>
+      <button id="startSoloBtn" class="cta">게임 시작</button>
+      <div id="onlineBox" class="hidden" style="display:flex;flex-direction:column;gap:12px;">
+        <button id="createBtn" class="cta">방 만들기</button>
+        <div class="orDivider"><span>또는</span></div>
+        <div class="joinGroup">
+          <input id="codeInput" maxlength="4" placeholder="방 코드 입력" autocomplete="off" />
+          <button id="joinBtn" class="cta2">입장</button>
+        </div>
+      </div>
+      <div id="menuErr" class="err"></div>
     </div>
 
-    <div class="entry" id="entry">
-      <div class="slot" data-i="0"></div><div class="slot" data-i="1"></div><div class="slot" data-i="2"></div>
+    <!-- 로비 -->
+    <div id="lobby" class="panel hidden">
+      <h2 id="lobbyTitle">상대를 기다리는 중…</h2>
+      <div id="lobbyCodeWrap">
+        <div class="sub">이 코드를 상대에게 알려주세요</div>
+        <div id="roomCode">----</div>
+        <button id="copyBtn" class="btn" style="align-self:center;">코드 복사</button>
+      </div>
+      <div id="rosterInfo" class="sub"></div>
+      <button id="cancelBtn" class="btn" style="align-self:center;">취소</button>
     </div>
-    <div class="pad" id="pad"></div>
-    <div class="actions">
-      <button id="clearBtn">지우기</button>
-      <button id="submitBtn" disabled>확인 ▶</button>
+
+    <!-- 게임판 -->
+    <div id="board" class="hidden">
+      <div class="gameMeta">
+        <span>모드 <b id="modeLabel">혼자</b></span>
+        <span id="codeWrap" class="hidden" title="탭하면 코드 복사">코드 <b id="codeLabel">----</b></span>
+      </div>
+      <div class="secret">내 비밀번호(<span id="oppName">컴퓨터</span>가 맞혀야 함) <span class="digits" id="mySecret">· · ·</span></div>
+      <div id="status"></div>
+      <div class="histories">
+        <div class="hcol"><h3>내 추측</h3><div class="hlist" id="meList"></div></div>
+        <div class="hcol"><h3 id="oppColTitle">컴퓨터 추측</h3><div class="hlist" id="oppListEl"></div></div>
+      </div>
+      <div class="entry"><div class="slot" data-i="0"></div><div class="slot" data-i="1"></div><div class="slot" data-i="2"></div></div>
+      <div class="pad" id="pad"></div>
+      <div class="actions"><button id="clearBtn">지우기</button><button id="submitBtn" disabled>확인 ▶</button></div>
     </div>
   </div>
 
@@ -113,132 +167,299 @@
 <script>
 (() => {
   "use strict";
-  const $ = (s) => document.querySelector(s);
-  const N = 3;               // 자리수
-  const AI_DELAY = 650;
+  const $ = (id) => document.getElementById(id);
+  const N = 3, AI_DELAY = 650;
 
-  // ── 유틸 ──
-  function randSecret() {
-    const d = [0,1,2,3,4,5,6,7,8,9];
-    for (let i = d.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [d[i], d[j]] = [d[j], d[i]]; }
-    return d.slice(0, N);
+  // ===== 서버 주소 (davinci/versus와 동일 릴레이) =====
+  const RENDER_URL = "wss://pingpong-server-hgl2.onrender.com";
+  const override = new URLSearchParams(location.search).get("server");
+  const isLocal = ["localhost", "127.0.0.1"].includes(location.hostname) || location.protocol === "file:";
+  const SERVER_URL = override || (isLocal ? "ws://localhost:8080" : RENDER_URL);
+
+  const SCREEN = { MENU: "menu", LOBBY: "lobby", PLAYING: "playing", OVER: "over" };
+  let screen = SCREEN.MENU;
+  let ws = null, myIndex = null, isHost = false, myCode = null, myToken = null;
+  let optMode = "solo", onlineMode = false;
+  let lastView = null, entry = [];
+  let G = null;                 // 호스트 권한 상태(온라인)
+  let solo = null, aiTimer = null;  // 솔로 로컬 상태
+
+  // ===== 세션(재접속) — davinci와 키 분리 =====
+  const SESS_KEY = "baseball_session", STATE_KEY = "baseball_state", REJOIN_WINDOW_MS = 300000;
+  function saveSession() { try { localStorage.setItem(SESS_KEY, JSON.stringify({ code: myCode, index: myIndex, token: myToken, isHost, ts: Date.now() })); } catch {} }
+  function touchSession() { try { const s = JSON.parse(localStorage.getItem(SESS_KEY) || "null"); if (s) { s.ts = Date.now(); localStorage.setItem(SESS_KEY, JSON.stringify(s)); } } catch {} }
+  function getSession() { try { return JSON.parse(localStorage.getItem(SESS_KEY) || "null"); } catch { return null; } }
+  function sessionFresh(s) { return !!(s && s.ts && Date.now() - s.ts < REJOIN_WINDOW_MS); }
+  function clearSession() { try { localStorage.removeItem(SESS_KEY); localStorage.removeItem(STATE_KEY); } catch {} }
+  function saveState() { if (isHost && G) { try { localStorage.setItem(STATE_KEY, JSON.stringify(G)); } catch {} } }
+  function loadState() { try { return JSON.parse(localStorage.getItem(STATE_KEY) || "null"); } catch { return null; } }
+  function restoreConn() { $("conn").innerHTML = "<span class='ok'>● 서버 연결됨</span>"; }
+
+  // ===== 공통 유틸 =====
+  function randSecret() { const d = [0,1,2,3,4,5,6,7,8,9]; for (let i = d.length-1; i>0; i--){ const j = Math.floor(Math.random()*(i+1)); [d[i],d[j]]=[d[j],d[i]]; } return d.slice(0, N); }
+  function judge(g, s) { let st = 0, c = 0; for (let i=0;i<N;i++) if (g[i]===s[i]) st++; for (const x of g) if (s.includes(x)) c++; return { s: st, b: c - st }; }
+  const fmt = (a) => a.join(" ");
+  const resHTML = (r) => (r.s===0 && r.b===0) ? `<span class="o">아웃</span>` : `${r.s?`<span class="s">${r.s}S</span> `:""}${r.b?`<span class="b">${r.b}B</span>`:""}`.trim();
+  function allCodes() { const out=[], dg=[0,1,2,3,4,5,6,7,8,9]; (function rec(p,u){ if(p.length===N){out.push(p.slice());return;} for(const d of dg) if(!u.has(d)){u.add(d);p.push(d);rec(p,u);p.pop();u.delete(d);} })([], new Set()); return out; }
+
+  // ========================================================================
+  //  화면 전환
+  // ========================================================================
+  function setScreen(s) {
+    screen = s;
+    document.body.classList.toggle("screen-playing", s === SCREEN.PLAYING);
+    $("menu").classList.toggle("hidden", s !== SCREEN.MENU);
+    $("lobby").classList.toggle("hidden", s !== SCREEN.LOBBY);
+    $("board").classList.toggle("hidden", !(s === SCREEN.PLAYING || s === SCREEN.OVER));
+    if (s !== SCREEN.OVER) $("over").classList.add("hidden");
+    updateHistoryGuard(s);
   }
-  // guess/secret: 숫자 배열. {s: 스트라이크, b: 볼}
-  function judge(guess, secret) {
-    let s = 0, common = 0;
-    for (let i = 0; i < N; i++) if (guess[i] === secret[i]) s++;
-    for (const g of guess) if (secret.includes(g)) common++;
-    return { s, b: common - s };
+  function showMenuWithError(msg) { $("menuErr").textContent = msg || ""; onlineMode = false; setScreen(SCREEN.MENU); }
+
+  // ========================================================================
+  //  온라인 엔진 (호스트 권한)
+  // ========================================================================
+  function newOnlineGame() {
+    G = { secrets: [randSecret(), randSecret()], guesses: [[], []], turn: 0, winner: null, count: 2 };
+    broadcast();
   }
-  const fmt = (arr) => arr.join(" ");
-  const resultHTML = (r) => r.s === 0 && r.b === 0
-    ? `<span class="o">아웃</span>`
-    : `${r.s ? `<span class="s">${r.s}S</span> ` : ""}${r.b ? `<span class="b">${r.b}B</span>` : ""}`.trim();
-
-  // ── 상태 ──
-  let mySecret, aiSecret, myTurn, over;
-  let aiCandidates;   // 컴퓨터가 아직 가능하다고 보는 후보(내 비밀번호에 대한)
-  let entry = [];     // 현재 입력 중인 숫자들
-
-  // 모든 후보(중복 없는 N자리) 생성
-  function allCodes() {
-    const out = [];
-    const digits = [0,1,2,3,4,5,6,7,8,9];
-    (function rec(prefix, used) {
-      if (prefix.length === N) { out.push(prefix.slice()); return; }
-      for (const d of digits) if (!used.has(d)) { used.add(d); prefix.push(d); rec(prefix, used); prefix.pop(); used.delete(d); }
-    })([], new Set());
-    return out;
+  function applyAction(a) {
+    if (!G || G.winner != null) return;
+    if (a.action !== "guess" || a.from !== G.turn) return;
+    const d = a.digits;
+    if (!Array.isArray(d) || d.length !== N || new Set(d).size !== N || d.some((x) => x < 0 || x > 9)) return;
+    const opp = 1 - a.from;
+    const r = judge(d, G.secrets[opp]);
+    G.guesses[a.from].push({ g: d, s: r.s, b: r.b });
+    if (r.s === N) G.winner = a.from;
+    else G.turn = opp;
+    broadcast();
   }
+  function viewFor(pi) {
+    const opp = 1 - pi;
+    return {
+      online: true, myIndex: pi, turn: G.turn, myTurn: G.turn === pi && G.winner == null,
+      winner: G.winner, iWon: G.winner === pi,
+      mySecret: G.secrets[pi], myGuesses: G.guesses[pi], oppGuesses: G.guesses[opp],
+      oppReveal: G.winner != null ? G.secrets[opp] : null,
+    };
+  }
+  function broadcast() {
+    if (G.count > 1) send({ type: "view", view: viewFor(1), to: 1 });
+    renderView(viewFor(0));
+    saveState(); touchSession();
+  }
+  function dispatch(a) { a.from = myIndex; if (isHost) applyAction(a); else send({ type: "act", to: 0, a }); }
 
-  function newGame() {
-    mySecret = randSecret();
-    aiSecret = randSecret();
-    myTurn = true; over = false;
-    aiCandidates = allCodes();
+  // ========================================================================
+  //  솔로 (vs 컴퓨터, 로컬)
+  // ========================================================================
+  function soloView() {
+    return {
+      online: false, myTurn: solo.myTurn && solo.winner == null, winner: solo.winner, iWon: solo.winner === 0,
+      mySecret: solo.mySecret, myGuesses: solo.my, oppGuesses: solo.ai,
+      oppReveal: solo.winner != null ? solo.aiSecret : null,
+    };
+  }
+  function startSolo() {
+    onlineMode = false;
+    solo = { mySecret: randSecret(), aiSecret: randSecret(), my: [], ai: [], myTurn: true, winner: null, cands: allCodes() };
     entry = [];
-    $("#meList").innerHTML = ""; $("#aiList").innerHTML = "";
-    $("#mySecret").textContent = fmt(mySecret);
-    $("#over").classList.add("hidden");
-    $("#status").textContent = "내 차례 — 컴퓨터의 숫자를 추측하세요";
+    renderView(soloView());
+  }
+  function soloPlayerGuess(d) {
+    const r = judge(d, solo.aiSecret);
+    solo.my.push({ g: d, s: r.s, b: r.b });
+    if (r.s === N) { solo.winner = 0; renderView(soloView()); return; }
+    solo.myTurn = false; renderView(soloView());
+    if (aiTimer) clearTimeout(aiTimer);
+    aiTimer = setTimeout(soloAI, AI_DELAY);
+  }
+  function soloAI() {
+    aiTimer = null; if (!solo || solo.winner != null) return;
+    const guess = solo.cands.length ? solo.cands[Math.floor(Math.random() * solo.cands.length)] : randSecret();
+    const r = judge(guess, solo.mySecret);
+    solo.ai.push({ g: guess, s: r.s, b: r.b });
+    solo.cands = solo.cands.filter((c) => { const j = judge(guess, c); return j.s === r.s && j.b === r.b; });
+    if (r.s === N) { solo.winner = 1; renderView(soloView()); return; }
+    solo.myTurn = true; renderView(soloView());
+  }
+
+  // ========================================================================
+  //  렌더 (솔로/온라인 공통 view)
+  // ========================================================================
+  function renderView(v) {
+    lastView = v;
+    if (screen !== SCREEN.PLAYING && screen !== SCREEN.OVER) setScreen(SCREEN.PLAYING);
+    if (v.winner != null) { showOver(v); }
+    else if (screen === SCREEN.OVER) setScreen(SCREEN.PLAYING);
+
+    $("modeLabel").textContent = v.online ? "온라인 2인" : "혼자";
+    $("oppName").textContent = v.online ? "상대" : "컴퓨터";
+    $("oppColTitle").textContent = (v.online ? "상대" : "컴퓨터") + " 추측";
+    $("mySecret").textContent = fmt(v.mySecret);
+    $("codeWrap").classList.toggle("hidden", !(v.online && myCode));
+    if (v.online && myCode) $("codeLabel").textContent = myCode;
+
+    $("status").textContent = v.winner != null ? "게임 종료" : (v.myTurn ? `내 차례 — ${v.online ? "상대" : "컴퓨터"}의 숫자를 추측하세요` : `${v.online ? "상대" : "컴퓨터"} 차례…`);
+
+    renderList("meList", v.myGuesses);
+    renderList("oppListEl", v.oppGuesses);
     renderPad(); renderEntry();
   }
-
-  // ── 렌더 ──
+  function renderList(id, arr) {
+    const el = $(id); el.innerHTML = "";
+    for (const it of arr) { const row = document.createElement("div"); row.className = "hrow";
+      row.innerHTML = `<span class="g">${fmt(it.g)}</span><span class="r">${resHTML({ s: it.s, b: it.b })}</span>`; el.appendChild(row); }
+    el.scrollTop = el.scrollHeight;
+  }
+  const canInput = () => lastView && lastView.myTurn && lastView.winner == null;
   function renderEntry() {
-    document.querySelectorAll(".slot").forEach((el, i) => {
-      el.textContent = entry[i] != null ? entry[i] : "";
-      el.classList.toggle("filled", entry[i] != null);
-    });
-    $("#submitBtn").disabled = !(myTurn && !over && entry.length === N);
+    document.querySelectorAll(".slot").forEach((el, i) => { el.textContent = entry[i] != null ? entry[i] : ""; el.classList.toggle("filled", entry[i] != null); });
+    $("submitBtn").disabled = !(canInput() && entry.length === N);
   }
   function renderPad() {
-    const pad = $("#pad"); pad.innerHTML = "";
+    const pad = $("pad"); pad.innerHTML = "";
     for (let d = 0; d <= 9; d++) {
-      const b = document.createElement("button");
-      b.textContent = d;
+      const b = document.createElement("button"); b.textContent = d;
       const used = entry.includes(d);
-      b.disabled = !myTurn || over || used || entry.length >= N;
-      if (used) b.classList.add("used");
-      b.addEventListener("click", () => { if (entry.length < N && !entry.includes(d)) { entry.push(d); renderPad(); renderEntry(); } });
+      b.disabled = !canInput() || used || entry.length >= N;
+      b.addEventListener("click", () => { if (canInput() && entry.length < N && !entry.includes(d)) { entry.push(d); renderPad(); renderEntry(); } });
       pad.appendChild(b);
     }
   }
-  function addRow(listSel, guess, r) {
-    const row = document.createElement("div"); row.className = "hrow";
-    row.innerHTML = `<span class="g">${fmt(guess)}</span><span class="r">${resultHTML(r)}</span>`;
-    const list = $(listSel); list.appendChild(row); list.scrollTop = list.scrollHeight;
+  function showOver(v) {
+    $("overTitle").textContent = v.iWon ? "🎉 승리!" : "😢 패배";
+    const who = v.online ? "상대" : "컴퓨터";
+    $("overSub").innerHTML = v.iWon
+      ? `${who}의 숫자 <span class="reveal">${fmt(v.oppReveal)}</span> 를 먼저 맞혔어요!`
+      : `${who}가 내 숫자 <span class="reveal">${fmt(v.mySecret)}</span> 를 먼저 맞혔어요.`;
+    setScreen(SCREEN.OVER); $("over").classList.remove("hidden");
   }
-
-  // ── 진행 ──
   function submitGuess() {
-    if (!myTurn || over || entry.length !== N) return;
-    const guess = entry.slice();
-    const r = judge(guess, aiSecret);
-    addRow("#meList", guess, r);
-    entry = []; renderPad(); renderEntry();
-    if (r.s === N) { endGame(true); return; }
-    myTurn = false;
-    $("#status").textContent = "컴퓨터가 생각 중…";
-    renderPad(); renderEntry();
-    setTimeout(aiTurn, AI_DELAY);
+    if (!canInput() || entry.length !== N) return;
+    const d = entry.slice(); entry = [];
+    if (onlineMode) { dispatch({ action: "guess", digits: d }); renderPad(); renderEntry(); }
+    else soloPlayerGuess(d);
   }
 
-  function aiTurn() {
-    if (over) return;
-    // 후보 중 하나를 골라 지목(간단·빠름). 후보가 비면(모순) 안전장치로 랜덤.
-    const guess = aiCandidates.length ? aiCandidates[Math.floor(Math.random() * aiCandidates.length)] : randSecret();
-    const r = judge(guess, mySecret);
-    addRow("#aiList", guess, r);
-    // 이 추측 결과와 일치하는 후보만 남긴다(공정한 추리 — 내 비밀번호는 직접 안 봄)
-    aiCandidates = aiCandidates.filter((c) => { const j = judge(guess, c); return j.s === r.s && j.b === r.b; });
-    if (r.s === N) { endGame(false); return; }
-    myTurn = true;
-    $("#status").textContent = "내 차례 — 컴퓨터의 숫자를 추측하세요";
-    renderPad(); renderEntry();
+  // ========================================================================
+  //  네트워크
+  // ========================================================================
+  function send(obj) { if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj)); }
+  function connect() {
+    $("conn").innerHTML = "서버 연결 중… <span style='color:var(--muted)'>(무료 서버는 첫 접속 30~60초)</span>";
+    try { ws = new WebSocket(SERVER_URL); } catch (e) { $("conn").innerHTML = "<span class='bad'>서버 주소 오류</span>"; return; }
+    ws.addEventListener("open", () => {
+      restoreConn();
+      const s = getSession();
+      if (s && s.code && s.token != null && sessionFresh(s)) {
+        onlineMode = true; isHost = s.isHost; myIndex = s.index; myCode = s.code; myToken = s.token;
+        $("lobbyTitle").textContent = "이전 게임에 재접속 중…"; $("lobbyCodeWrap").style.display = "none";
+        setScreen(SCREEN.LOBBY);
+        send({ type: "rejoin", code: s.code, index: s.index, token: s.token });
+      }
+    });
+    ws.addEventListener("close", () => { $("conn").innerHTML = "<span class='bad'>● 서버 연결 끊김</span>"; if (onlineMode && (screen === SCREEN.PLAYING || screen === SCREEN.LOBBY)) showMenuWithError("서버 연결이 끊겼습니다."); });
+    ws.addEventListener("error", () => { $("conn").innerHTML = "<span class='bad'>● 서버에 연결할 수 없습니다</span>"; });
+    ws.addEventListener("message", (ev) => { let m; try { m = JSON.parse(ev.data); } catch { return; } onMessage(m); });
+  }
+  function onMessage(m) {
+    switch (m.type) {
+      case "created":
+        onlineMode = true; isHost = true; myIndex = 0; myCode = m.code; myToken = m.token; saveSession();
+        $("roomCode").textContent = m.code; $("lobbyTitle").textContent = "상대를 기다리는 중…"; $("lobbyCodeWrap").style.display = "";
+        setScreen(SCREEN.LOBBY); break;
+      case "joined":
+        onlineMode = true; isHost = false; myIndex = m.index; myCode = m.code; myToken = m.token; saveSession();
+        $("lobbyTitle").textContent = "입장 완료! 시작 대기 중…"; $("lobbyCodeWrap").style.display = "none"; setScreen(SCREEN.LOBBY); break;
+      case "rejoined":
+        onlineMode = true; myIndex = m.index; myCode = m.code; myToken = m.token; isHost = (m.index === 0); saveSession(); restoreConn();
+        if (isHost) { const g = loadState(); if (g) { G = g; broadcast(); } else { $("roomCode").textContent = m.code; $("lobbyCodeWrap").style.display = ""; $("lobbyTitle").textContent = "상대를 기다리는 중…"; setScreen(SCREEN.LOBBY); } }
+        else { $("lobbyTitle").textContent = "재접속됨 — 동기화 중…"; setScreen(SCREEN.LOBBY); }
+        break;
+      case "rejoin-failed": clearSession(); onlineMode = false; isHost = false; myIndex = myCode = myToken = null; showMenuWithError(m.message || "재접속하지 못했습니다."); break;
+      case "peer-reconnected": restoreConn(); if (isHost && G) broadcast(); break;
+      case "peer-disconnected": $("conn").innerHTML = "<span class='bad'>● 상대 접속 끊김 — 대기 중…</span>"; break;
+      case "roster": $("rosterInfo").textContent = `${m.count} / ${m.capacity}명 입장`; break;
+      case "peer-joined": if (isHost) newOnlineGame(); else setScreen(SCREEN.PLAYING); break;
+      case "view": if (!isHost) { entry = []; renderView(m.view); touchSession(); } break;
+      case "act": if (isHost) applyAction(m.a); break;
+      case "restart": if (isHost) newOnlineGame(); break;
+      case "error": $("menuErr").textContent = m.message || "오류가 발생했습니다."; break;
+      case "peer-left": clearSession(); showMenuWithError("상대가 나갔습니다. 새 방을 만들거나 다시 입장하세요."); break;
+    }
   }
 
-  function endGame(iWon) {
-    over = true; renderPad(); renderEntry();
-    $("#overTitle").textContent = iWon ? "🎉 승리!" : "😢 패배";
-    $("#overSub").innerHTML = iWon
-      ? `컴퓨터의 숫자 <span class="reveal">${fmt(aiSecret)}</span> 를 먼저 맞혔어요!`
-      : `컴퓨터가 내 숫자 <span class="reveal">${fmt(mySecret)}</span> 를 먼저 맞혔어요.`;
-    $("#over").classList.remove("hidden");
+  // ========================================================================
+  //  뒤로가기 잠금 + 재접속(bfcache) — davinci와 동일 패턴
+  // ========================================================================
+  let historyGuardArmed = false, lastBackAt = 0, toastTimer = null;
+  function updateHistoryGuard(s) {
+    const inGame = (s === SCREEN.PLAYING || s === SCREEN.LOBBY);
+    if (inGame && !historyGuardArmed) { history.pushState({ bb: 1 }, ""); historyGuardArmed = true; }
+    else if (!inGame) historyGuardArmed = false;
   }
+  function flashToast(msg) {
+    let t = $("toast"); if (!t) { t = document.createElement("div"); t.id = "toast"; t.style.cssText = "position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:60;background:rgba(13,10,5,0.96);color:var(--parchment);border:1px solid var(--gold-deep);border-radius:999px;padding:10px 18px;font-size:13px;max-width:90vw;text-align:center;transition:opacity .2s;"; document.body.appendChild(t); }
+    t.textContent = msg; t.style.opacity = "1"; clearTimeout(toastTimer); toastTimer = setTimeout(() => (t.style.opacity = "0"), 2200);
+  }
+  window.addEventListener("popstate", () => {
+    if (!(screen === SCREEN.PLAYING || screen === SCREEN.LOBBY)) return;
+    const now = Date.now();
+    if (now - lastBackAt < 2500) { clearSession(); if (ws) { try { ws.close(); } catch {} } historyGuardArmed = false; history.back(); return; }
+    lastBackAt = now; history.pushState({ bb: 1 }, ""); flashToast("한 번 더 ‘뒤로가기’를 누르면 나갑니다");
+  });
+  window.addEventListener("pageshow", (e) => { if (e.persisted && onlineMode && (!ws || ws.readyState > WebSocket.OPEN)) connect(); });
+  window.addEventListener("beforeunload", (e) => { if (onlineMode && (screen === SCREEN.PLAYING || screen === SCREEN.LOBBY)) { e.preventDefault(); e.returnValue = ""; } });
 
-  // ── 이벤트 ──
-  $("#clearBtn").addEventListener("click", () => { if (!myTurn || over) return; entry = []; renderPad(); renderEntry(); });
-  $("#submitBtn").addEventListener("click", submitGuess);
-  $("#againBtn").addEventListener("click", newGame);
+  // ========================================================================
+  //  메뉴/입력 이벤트
+  // ========================================================================
+  $("segMode").addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    [...$("segMode").children].forEach((c) => c.classList.remove("on")); b.classList.add("on");
+    optMode = b.getAttribute("data-v");
+    $("startSoloBtn").classList.toggle("hidden", optMode !== "solo");
+    $("onlineBox").classList.toggle("hidden", optMode !== "online");
+    $("menuErr").textContent = "";
+    if (optMode === "online" && (!ws || ws.readyState !== WebSocket.OPEN)) connect();
+  });
+  $("startSoloBtn").addEventListener("click", () => { onlineMode = false; startSolo(); });
+  $("createBtn").addEventListener("click", () => {
+    $("menuErr").textContent = "";
+    if (!ws || ws.readyState !== WebSocket.OPEN) { $("menuErr").textContent = "서버 연결 중… 잠시 후 다시 시도하세요."; connect(); return; }
+    send({ type: "create", capacity: 2, reconnect: true });
+  });
+  $("joinBtn").addEventListener("click", () => {
+    const code = $("codeInput").value.trim().toUpperCase();
+    if (code.length !== 4) { $("menuErr").textContent = "4자리 코드를 입력하세요."; return; }
+    if (!ws || ws.readyState !== WebSocket.OPEN) { $("menuErr").textContent = "서버 연결 중… 잠시 후 다시 시도하세요."; connect(); return; }
+    $("menuErr").textContent = "";
+    const s = getSession();
+    if (s && s.code === code && s.token != null) { onlineMode = true; isHost = s.isHost; myIndex = s.index; myCode = s.code; myToken = s.token; $("lobbyTitle").textContent = "이전 게임에 재접속 중…"; $("lobbyCodeWrap").style.display = "none"; setScreen(SCREEN.LOBBY); send({ type: "rejoin", code: s.code, index: s.index, token: s.token }); }
+    else send({ type: "join", code });
+  });
+  $("codeInput").addEventListener("keydown", (e) => { if (e.code === "Enter") $("joinBtn").click(); });
+  $("copyBtn").addEventListener("click", () => { navigator.clipboard?.writeText($("roomCode").textContent).then(() => { const b = $("copyBtn"), o = b.textContent; b.textContent = "복사됨!"; setTimeout(() => (b.textContent = o), 1200); }).catch(() => {}); });
+  $("cancelBtn").addEventListener("click", () => { clearSession(); if (ws) { try { ws.close(); } catch {} } onlineMode = false; isHost = false; myIndex = myCode = myToken = null; setScreen(SCREEN.MENU); connect(); });
+  $("codeWrap").addEventListener("click", () => { if (myCode) navigator.clipboard?.writeText(myCode).then(() => { const b = $("codeLabel"), o = b.textContent; b.textContent = "복사됨"; setTimeout(() => (b.textContent = myCode), 1000); }).catch(() => {}); });
+
+  $("clearBtn").addEventListener("click", () => { if (!canInput()) return; entry = []; renderPad(); renderEntry(); });
+  $("submitBtn").addEventListener("click", submitGuess);
+  $("againBtn").addEventListener("click", () => { if (onlineMode) { if (isHost) newOnlineGame(); else send({ type: "restart", to: 0 }); } else startSolo(); });
   document.addEventListener("keydown", (e) => {
-    if (over || !myTurn) return;
+    if (screen !== SCREEN.PLAYING || !canInput()) return;
     if (e.key >= "0" && e.key <= "9") { const d = Number(e.key); if (entry.length < N && !entry.includes(d)) { entry.push(d); renderPad(); renderEntry(); } }
     else if (e.key === "Backspace") { entry.pop(); renderPad(); renderEntry(); }
     else if (e.key === "Enter") submitGuess();
   });
 
-  newGame();
+  // ===== 시작: 메뉴 먼저(솔로는 오프라인 가능), 서버는 백그라운드 연결(온라인·재접속용) =====
+  setScreen(SCREEN.MENU);
+  connect();
+
+  if (location.search.includes("debug")) { window.__bb = () => ({ screen, onlineMode, isHost, myIndex, myCode, G, solo, lastView }); }
 })();
 </script>
 </body>
