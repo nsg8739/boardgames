@@ -254,6 +254,21 @@
   .panel.hidden { display: none; }
   .panel h2, .overCard h2 { font-family: var(--serif); font-size: clamp(24px, 7vw, 30px); font-weight: 800; margin: 0; color: var(--gold-bright); letter-spacing: 1.5px; text-shadow: 0 1px 0 #000, 0 0 14px rgba(230, 192, 74, 0.2); }
   .panel .sub, .overCard .sub { font-size: 14px; color: var(--parchment); margin-top: -2px; line-height: 1.55; }
+  /* 채팅/이모지 */
+  #chatToggle { position: fixed; left: 12px; bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 45; width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--warm-border); background: rgba(26,19,11,0.95); color: #f2cc60; font-size: 22px; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,0.5); }
+  #chatBadge { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; border-radius: 9px; background: #a6402f; color: #fff; font-size: 11px; line-height: 18px; padding: 0 4px; }
+  #chatPanel { position: fixed; left: 12px; bottom: calc(70px + env(safe-area-inset-bottom)); z-index: 46; width: min(300px, calc(100vw - 24px)); background: rgba(20,14,7,0.98); border: 1px solid var(--warm-border); border-radius: 12px; padding: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 8px; }
+  #chatFeed { max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+  .cmsg { background: rgba(13,10,5,0.5); border-radius: 6px; padding: 4px 7px; line-height: 1.4; word-break: break-word; }
+  .cmsg.mine { background: rgba(201,162,39,0.14); }
+  .cmsg b { color: var(--gold-soft); margin-right: 5px; }
+  #chatEmojis { display: flex; gap: 4px; flex-wrap: wrap; }
+  .chatEmoji { font-size: 20px; border: 1px solid var(--warm-border); border-radius: 8px; background: var(--warm-bg); cursor: pointer; padding: 4px 8px; }
+  #chatInputRow { display: flex; gap: 6px; }
+  #chatInput { flex: 1; min-width: 0; font-size: 14px; padding: 8px; border-radius: 8px; border: 1px solid var(--warm-border); background: #0d0b05; color: var(--parchment); }
+  #chatSend { font-family: var(--serif); border: 1px solid var(--gold); border-radius: 8px; background: rgba(201,162,39,0.14); color: var(--gold-bright); padding: 0 12px; cursor: pointer; }
+  /* 숫자패드(하단 시트)가 열리면 채팅 버튼이 겹치지 않도록 숨긴다 */
+  body.numpad-open #chatToggle, body.numpad-open #chatPanel { display: none; }
   /* 결과(승/패)는 중앙 팝업(모달) */
   #over {
     position: fixed; inset: 0; z-index: 50;
@@ -600,6 +615,13 @@
         <button id="againBtn" class="btn primary">다시 하기</button>
       </div>
     </div>
+  </div>
+
+  <button id="chatToggle" class="hidden" title="채팅">💬<span id="chatBadge" class="hidden"></span></button>
+  <div id="chatPanel" class="hidden">
+    <div id="chatFeed"></div>
+    <div id="chatEmojis"></div>
+    <div id="chatInputRow"><input id="chatInput" maxlength="60" placeholder="메시지…" autocomplete="off" /><button id="chatSend">보내기</button></div>
   </div>
 
 <script>
@@ -1450,6 +1472,9 @@
       case "nick":
         if (isHost) { hostNames[m.from] = (m.name || "").toString().trim().slice(0, 8); if (G) broadcast(); }
         break;
+      case "chat":
+        addChatMsg(m.name, m.text, false);
+        break;
       case "peer-joined":  // 정원 참 → 시작
         resetSel();
         if (isHost) newGame();          // 호스트가 게임 초기화 후 broadcast
@@ -1496,6 +1521,10 @@
     $("menu").classList.toggle("hidden", s !== SCREEN.MENU);
     $("lobby").classList.toggle("hidden", s !== SCREEN.LOBBY);
     $("over").classList.toggle("hidden", s !== SCREEN.OVER);
+    // 채팅은 온라인 방(솔로 아님)에서 플레이/결과 화면일 때만 노출
+    const inGame = !soloMode && (s === SCREEN.PLAYING || s === SCREEN.OVER);
+    $("chatToggle").classList.toggle("hidden", !inGame);
+    if (!inGame) $("chatPanel").classList.add("hidden");
     updateHistoryGuard(s);  // 게임/로비면 뒤로가기 잠금 arm, 아니면 해제
   }
   function showMenuWithError(text) { $("menuErr").textContent = text || ""; setScreen(SCREEN.MENU); }
@@ -1711,6 +1740,24 @@
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => t.classList.remove("show"), 2400);
   }
+
+  // ── 채팅/이모지 (온라인 방에서만) ──
+  const EMOJIS = ["👍", "😂", "😮", "😢", "🎉", "❤️"];
+  let chatUnread = 0;
+  function escapeHtml(s) { return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+  function addChatMsg(name, text, mine) {
+    const feed = $("chatFeed"); const d = document.createElement("div"); d.className = "cmsg" + (mine ? " mine" : "");
+    d.innerHTML = `<b>${escapeHtml(name || "상대")}</b>${escapeHtml(text)}`; feed.appendChild(d);
+    while (feed.children.length > 40) feed.removeChild(feed.firstChild); feed.scrollTop = feed.scrollHeight;
+    if (!mine && $("chatPanel").classList.contains("hidden")) { chatUnread++; const b = $("chatBadge"); b.textContent = chatUnread > 9 ? "9+" : chatUnread; b.classList.remove("hidden"); }
+  }
+  function sendChat(text) { text = String(text).trim().slice(0, 60); if (!text || !myCode) return; send({ type: "chat", name: myNick, text }); addChatMsg(myNick || "나", text, true); }
+  (function initChat() {
+    const er = $("chatEmojis"); EMOJIS.forEach((e) => { const b = document.createElement("button"); b.className = "chatEmoji"; b.textContent = e; b.addEventListener("click", () => sendChat(e)); er.appendChild(b); });
+    $("chatToggle").addEventListener("click", () => { const p = $("chatPanel"); const willOpen = p.classList.contains("hidden"); p.classList.toggle("hidden"); if (willOpen) { chatUnread = 0; $("chatBadge").classList.add("hidden"); $("chatInput").focus(); } });
+    $("chatSend").addEventListener("click", () => { sendChat($("chatInput").value); $("chatInput").value = ""; });
+    $("chatInput").addEventListener("keydown", (e) => { if (e.key === "Enter") { sendChat($("chatInput").value); $("chatInput").value = ""; } });
+  })();
 
   // ===== 시작 =====
   setScreen(SCREEN.MENU);
