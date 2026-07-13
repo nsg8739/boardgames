@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>숫자야구 — vs 컴퓨터</title>
+<style>
+  :root {
+    --bg: #17110a; --bg2: #1e160c;
+    --card: rgba(26, 19, 11, 0.94); --warm-bg: #241a0e; --warm-bg2: #2e2211;
+    --warm-border: #3a2c15; --gold: #c9a227; --gold-bright: #e6c04a; --gold-soft: #f2cc60; --gold-deep: #6b5417;
+    --parchment: #e9dcc0; --muted: #9c8a63; --ink: #201607;
+    --serif: "Georgia", "Nanum Myeongjo", serif;
+    --strike: #f0883e; --ball: #e6c04a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    background: radial-gradient(1000px 500px at 50% -10%, rgba(201,162,39,0.10), transparent 60%), linear-gradient(180deg, var(--bg2), var(--bg));
+    color: var(--parchment); font-family: "Segoe UI", "Malgun Gothic", sans-serif;
+    padding: max(14px, env(safe-area-inset-top)) 14px calc(24px + env(safe-area-inset-bottom));
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { width: 100%; max-width: 460px; margin: 0 auto; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+  .home { text-decoration: none; color: var(--gold-bright); font-size: 13px; font-weight: 700; }
+  .home:hover { color: var(--gold-soft); }
+  h1 { font-family: var(--serif); font-size: clamp(20px, 6vw, 26px); font-weight: 800; margin: 0; color: var(--gold-bright); text-align: center; letter-spacing: .5px; }
+  .rules { font-size: 12px; color: var(--muted); text-align: center; line-height: 1.6; margin: 2px 0 12px; }
+  .rules b { color: var(--gold-soft); }
+
+  .secret { text-align: center; background: var(--card); border: 1px solid var(--warm-border); border-radius: 10px; padding: 10px; margin-bottom: 10px; font-size: 13px; color: var(--parchment); }
+  .secret .digits { font-family: var(--serif); font-size: 26px; font-weight: 800; letter-spacing: 8px; color: var(--gold-soft); }
+  .secret small { color: var(--muted); }
+
+  #status { text-align: center; font-size: 14px; min-height: 20px; margin: 4px 0 10px; color: var(--gold-bright); font-weight: 700; }
+
+  .histories { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .hcol { background: var(--card); border: 1px solid var(--warm-border); border-radius: 10px; padding: 8px; min-height: 90px; }
+  .hcol h3 { margin: 0 0 6px; font-size: 12.5px; text-align: center; color: var(--gold-bright); font-weight: 800; letter-spacing: .5px; }
+  .hlist { display: flex; flex-direction: column; gap: 4px; max-height: 190px; overflow-y: auto; }
+  .hrow { display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: 13px; padding: 3px 6px; border-radius: 6px; background: rgba(13,10,5,0.4); }
+  .hrow .g { font-family: var(--serif); letter-spacing: 3px; font-weight: 700; }
+  .hrow .r { font-size: 12px; font-weight: 800; white-space: nowrap; }
+  .r .s { color: var(--strike); } .r .b { color: var(--ball); } .r .o { color: var(--muted); }
+
+  .entry { display: flex; justify-content: center; gap: 8px; margin-bottom: 10px; }
+  .slot { width: 52px; height: 58px; border-radius: 10px; border: 2px solid var(--warm-border); background: var(--warm-bg);
+    display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-size: 30px; font-weight: 800; color: var(--gold-soft); }
+  .slot.filled { border-color: var(--gold); }
+
+  .pad { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .pad button { font-family: var(--serif); font-size: 19px; font-weight: 700; padding: 12px 0; border: 1px solid var(--warm-border); border-radius: 8px;
+    background: linear-gradient(180deg, var(--warm-bg2), var(--warm-bg)); color: var(--parchment); cursor: pointer; }
+  .pad button:hover:not(:disabled) { filter: brightness(1.25); border-color: var(--gold); }
+  .pad button:disabled { opacity: .32; cursor: default; }
+  .pad .used { opacity: .32; }
+  .actions { display: flex; gap: 8px; margin-top: 8px; }
+  .actions button { flex: 1; font-family: var(--serif); font-size: 15px; font-weight: 700; padding: 12px 0; border-radius: 8px; cursor: pointer; border: 1px solid var(--warm-border); }
+  #clearBtn { background: transparent; color: var(--parchment); }
+  #submitBtn { border: 1px solid #7b2419; background: linear-gradient(180deg, #d46a45, #7a2016); color: #fff1d2; font-weight: 800; letter-spacing: 1px; }
+  #submitBtn:disabled { opacity: .4; cursor: default; }
+
+  /* 결과 모달 */
+  #over { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 18px;
+    background: rgba(8,5,2,0.74); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+  #over.hidden { display: none; }
+  .overCard { width: min(340px, 100%); background: var(--card); border: 2px solid var(--warm-border); border-radius: 12px; padding: 24px 22px;
+    display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; box-shadow: 0 18px 54px rgba(0,0,0,0.7); }
+  .overCard h2 { font-family: var(--serif); font-size: 26px; margin: 0; color: var(--gold-bright); }
+  .overCard .sub { font-size: 14px; color: var(--parchment); line-height: 1.6; }
+  .overCard .sub .reveal { font-family: var(--serif); letter-spacing: 4px; color: var(--gold-soft); font-weight: 800; }
+  .overCard button { width: 100%; font-family: var(--serif); font-size: 16px; font-weight: 800; padding: 13px 0; border-radius: 9px; cursor: pointer;
+    border: 1px solid var(--gold-deep); background: linear-gradient(180deg, var(--gold-bright), var(--gold) 55%, var(--gold-deep)); color: var(--ink); }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <a class="home" href="./index.html">🎲 메인</a>
+      <h1>🔢 숫자야구</h1>
+      <span style="width:44px"></span>
+    </div>
+    <div class="rules">중복 없는 <b>세 자리</b> 숫자를 서로 맞히기 · <b class="" style="color:var(--strike)">S</b>=자리·숫자 일치, <b style="color:var(--ball)">B</b>=숫자만 일치 · 먼저 <b>3S</b>면 승리</div>
+
+    <div class="secret">내 비밀번호(컴퓨터가 맞혀야 함) <span class="digits" id="mySecret">· · ·</span></div>
+
+    <div id="status">내 차례 — 컴퓨터의 숫자를 추측하세요</div>
+
+    <div class="histories">
+      <div class="hcol"><h3>내 추측</h3><div class="hlist" id="meList"></div></div>
+      <div class="hcol"><h3>컴퓨터 추측</h3><div class="hlist" id="aiList"></div></div>
+    </div>
+
+    <div class="entry" id="entry">
+      <div class="slot" data-i="0"></div><div class="slot" data-i="1"></div><div class="slot" data-i="2"></div>
+    </div>
+    <div class="pad" id="pad"></div>
+    <div class="actions">
+      <button id="clearBtn">지우기</button>
+      <button id="submitBtn" disabled>확인 ▶</button>
+    </div>
+  </div>
+
+  <div id="over" class="hidden">
+    <div class="overCard">
+      <h2 id="overTitle">🎉 승리!</h2>
+      <div class="sub" id="overSub"></div>
+      <button id="againBtn">다시 하기</button>
+    </div>
+  </div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (s) => document.querySelector(s);
+  const N = 3;               // 자리수
+  const AI_DELAY = 650;
+
+  // ── 유틸 ──
+  function randSecret() {
+    const d = [0,1,2,3,4,5,6,7,8,9];
+    for (let i = d.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [d[i], d[j]] = [d[j], d[i]]; }
+    return d.slice(0, N);
+  }
+  // guess/secret: 숫자 배열. {s: 스트라이크, b: 볼}
+  function judge(guess, secret) {
+    let s = 0, common = 0;
+    for (let i = 0; i < N; i++) if (guess[i] === secret[i]) s++;
+    for (const g of guess) if (secret.includes(g)) common++;
+    return { s, b: common - s };
+  }
+  const fmt = (arr) => arr.join(" ");
+  const resultHTML = (r) => r.s === 0 && r.b === 0
+    ? `<span class="o">아웃</span>`
+    : `${r.s ? `<span class="s">${r.s}S</span> ` : ""}${r.b ? `<span class="b">${r.b}B</span>` : ""}`.trim();
+
+  // ── 상태 ──
+  let mySecret, aiSecret, myTurn, over;
+  let aiCandidates;   // 컴퓨터가 아직 가능하다고 보는 후보(내 비밀번호에 대한)
+  let entry = [];     // 현재 입력 중인 숫자들
+
+  // 모든 후보(중복 없는 N자리) 생성
+  function allCodes() {
+    const out = [];
+    const digits = [0,1,2,3,4,5,6,7,8,9];
+    (function rec(prefix, used) {
+      if (prefix.length === N) { out.push(prefix.slice()); return; }
+      for (const d of digits) if (!used.has(d)) { used.add(d); prefix.push(d); rec(prefix, used); prefix.pop(); used.delete(d); }
+    })([], new Set());
+    return out;
+  }
+
+  function newGame() {
+    mySecret = randSecret();
+    aiSecret = randSecret();
+    myTurn = true; over = false;
+    aiCandidates = allCodes();
+    entry = [];
+    $("#meList").innerHTML = ""; $("#aiList").innerHTML = "";
+    $("#mySecret").textContent = fmt(mySecret);
+    $("#over").classList.add("hidden");
+    $("#status").textContent = "내 차례 — 컴퓨터의 숫자를 추측하세요";
+    renderPad(); renderEntry();
+  }
+
+  // ── 렌더 ──
+  function renderEntry() {
+    document.querySelectorAll(".slot").forEach((el, i) => {
+      el.textContent = entry[i] != null ? entry[i] : "";
+      el.classList.toggle("filled", entry[i] != null);
+    });
+    $("#submitBtn").disabled = !(myTurn && !over && entry.length === N);
+  }
+  function renderPad() {
+    const pad = $("#pad"); pad.innerHTML = "";
+    for (let d = 0; d <= 9; d++) {
+      const b = document.createElement("button");
+      b.textContent = d;
+      const used = entry.includes(d);
+      b.disabled = !myTurn || over || used || entry.length >= N;
+      if (used) b.classList.add("used");
+      b.addEventListener("click", () => { if (entry.length < N && !entry.includes(d)) { entry.push(d); renderPad(); renderEntry(); } });
+      pad.appendChild(b);
+    }
+  }
+  function addRow(listSel, guess, r) {
+    const row = document.createElement("div"); row.className = "hrow";
+    row.innerHTML = `<span class="g">${fmt(guess)}</span><span class="r">${resultHTML(r)}</span>`;
+    const list = $(listSel); list.appendChild(row); list.scrollTop = list.scrollHeight;
+  }
+
+  // ── 진행 ──
+  function submitGuess() {
+    if (!myTurn || over || entry.length !== N) return;
+    const guess = entry.slice();
+    const r = judge(guess, aiSecret);
+    addRow("#meList", guess, r);
+    entry = []; renderPad(); renderEntry();
+    if (r.s === N) { endGame(true); return; }
+    myTurn = false;
+    $("#status").textContent = "컴퓨터가 생각 중…";
+    renderPad(); renderEntry();
+    setTimeout(aiTurn, AI_DELAY);
+  }
+
+  function aiTurn() {
+    if (over) return;
+    // 후보 중 하나를 골라 지목(간단·빠름). 후보가 비면(모순) 안전장치로 랜덤.
+    const guess = aiCandidates.length ? aiCandidates[Math.floor(Math.random() * aiCandidates.length)] : randSecret();
+    const r = judge(guess, mySecret);
+    addRow("#aiList", guess, r);
+    // 이 추측 결과와 일치하는 후보만 남긴다(공정한 추리 — 내 비밀번호는 직접 안 봄)
+    aiCandidates = aiCandidates.filter((c) => { const j = judge(guess, c); return j.s === r.s && j.b === r.b; });
+    if (r.s === N) { endGame(false); return; }
+    myTurn = true;
+    $("#status").textContent = "내 차례 — 컴퓨터의 숫자를 추측하세요";
+    renderPad(); renderEntry();
+  }
+
+  function endGame(iWon) {
+    over = true; renderPad(); renderEntry();
+    $("#overTitle").textContent = iWon ? "🎉 승리!" : "😢 패배";
+    $("#overSub").innerHTML = iWon
+      ? `컴퓨터의 숫자 <span class="reveal">${fmt(aiSecret)}</span> 를 먼저 맞혔어요!`
+      : `컴퓨터가 내 숫자 <span class="reveal">${fmt(mySecret)}</span> 를 먼저 맞혔어요.`;
+    $("#over").classList.remove("hidden");
+  }
+
+  // ── 이벤트 ──
+  $("#clearBtn").addEventListener("click", () => { if (!myTurn || over) return; entry = []; renderPad(); renderEntry(); });
+  $("#submitBtn").addEventListener("click", submitGuess);
+  $("#againBtn").addEventListener("click", newGame);
+  document.addEventListener("keydown", (e) => {
+    if (over || !myTurn) return;
+    if (e.key >= "0" && e.key <= "9") { const d = Number(e.key); if (entry.length < N && !entry.includes(d)) { entry.push(d); renderPad(); renderEntry(); } }
+    else if (e.key === "Backspace") { entry.pop(); renderPad(); renderEntry(); }
+    else if (e.key === "Enter") submitGuess();
+  });
+
+  newGame();
+})();
+</script>
+</body>
+</html>
