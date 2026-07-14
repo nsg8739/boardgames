@@ -135,6 +135,8 @@
     min-height: 420px; box-sizing: border-box;
   }
   #board.hidden { display: none; }
+  /* 범용 숨김 — chatPanel/chatToggle/otherGameBtn 등 개별 규칙이 없는 요소도 hidden으로 확실히 숨긴다 */
+  .hidden { display: none !important; }
   .gameMeta {
     display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px;
     margin: -2px 0 10px; padding: 8px 10px; border: 1px solid rgba(201, 162, 39, 0.35);
