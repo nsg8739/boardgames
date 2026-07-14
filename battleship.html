@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>격자 대전 — 보드게임 모음</title>
+<title>배틀십 — 보드게임 모음</title>
 <meta property="og:type" content="website" /><meta property="og:locale" content="ko_KR" />
 <meta property="og:site_name" content="보드게임 모음" />
-<meta property="og:title" content="격자 대전 — 틱택토·오목·커넥트4" />
-<meta property="og:description" content="격자판에 돌을 번갈아 두는 전통 대전 3종. 혼자(vs 컴퓨터)도, 온라인 2인도." />
-<meta property="og:url" content="https://nsg8739.github.io/boardgames/gridgames.html" />
+<meta property="og:title" content="배틀십 — 함선 포격 추리" />
+<meta property="og:description" content="바다에 숨긴 상대 함선을 좌표 포격으로 침몰시키는 2인 추리 대전. 혼자(vs 컴퓨터)도, 온라인 2인도." />
+<meta property="og:url" content="https://nsg8739.github.io/boardgames/battleship.html" />
 <meta property="og:image" content="https://nsg8739.github.io/boardgames/og.png" />
 <meta property="og:image:width" content="1200" /><meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" /><meta name="twitter:image" content="https://nsg8739.github.io/boardgames/og.png" />
@@ -18,20 +18,19 @@
   :root {
     --bg: #17110a; --card: rgba(26, 19, 11, 0.94); --warm-bg: #241a0e; --warm-bg2: #2e2211;
     --warm-border: #3a2c15; --gold: #c9a227; --gold-bright: #e6c04a; --gold-soft: #f2cc60; --gold-deep: #6b5417;
-    --parchment: #e9dcc0; --muted: #9c8a63; --ink: #201607; --seal: #a6402f;
-    --p0: #d1493a; --p1: #3f7fd8;
+    --parchment: #e9dcc0; --muted: #9c8a63; --ink: #201607;
+    --sea: #163a5c; --sea2: #1d4a72; --ship: #8a97a3; --hit: #d1493a; --miss: #cfe3f2; --sunk: #7a2418;
     --serif: "Georgia", "Nanum Myeongjo", serif;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; min-height: 100%; width: 100%; background: var(--bg); color: var(--parchment); font-family: "Segoe UI", "Malgun Gothic", sans-serif; }
   body { display: flex; flex-direction: column; align-items: center; padding: 14px 12px 40px; }
-  .wrap { width: 100%; max-width: 520px; }
+  .wrap { width: 100%; max-width: 480px; }
   #conn { position: fixed; top: 8px; right: 10px; z-index: 20; font-size: 11px; color: var(--muted); background: rgba(13,10,5,0.72); border: 1px solid var(--warm-border); border-radius: 999px; padding: 4px 10px; max-width: 62vw; text-align: right; }
   #conn .ok { color: #7fd18f; } #conn .bad { color: #e08a7a; }
   .top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
   .home { text-decoration: none; color: var(--gold-bright); font-size: 13px; font-weight: 700; } .home:hover { color: var(--gold-soft); }
   h1 { font-family: var(--serif); font-size: clamp(20px, 6vw, 26px); font-weight: 800; margin: 0; color: var(--gold-bright); text-align: center; letter-spacing: .5px; flex: 1; }
-  .rules { font-size: 12px; color: var(--muted); text-align: center; line-height: 1.6; margin: 2px 0 12px; }
   .panel { background: var(--card); border: 1px solid var(--warm-border); border-radius: 12px; padding: 18px 16px; margin-top: 6px; display: flex; flex-direction: column; gap: 14px; }
   .optRow { display: flex; flex-direction: column; gap: 6px; }
   .optLabel { font-size: 13px; color: var(--parchment); font-weight: 700; }
@@ -39,8 +38,7 @@
   .seg button { flex: 1; min-width: 0; font-family: var(--serif); cursor: pointer; border: none; background: linear-gradient(180deg, var(--warm-bg2), var(--warm-bg)); color: var(--muted); padding: 11px 4px; font-size: 14px; border-right: 1px solid var(--warm-border); white-space: nowrap; }
   .seg button:last-child { border-right: none; }
   .seg button.on { background: linear-gradient(180deg, var(--gold-bright), var(--gold-deep)); color: var(--ink); font-weight: 800; }
-  .variantDesc { font-size: 12px; color: var(--muted); text-align: center; line-height: 1.5; min-height: 32px; }
-  .cta { width: 100%; font-family: var(--serif); cursor: pointer; border: 1px solid #7b2419; border-radius: 9px; background: linear-gradient(180deg, #b5442f, #7b2419); color: #fff; font-weight: 800; font-size: 16px; padding: 13px 0; letter-spacing: .5px; }
+  .cta { width: 100%; font-family: var(--serif); cursor: pointer; border: 1px solid #7b2419; border-radius: 9px; background: linear-gradient(180deg, #b5442f, #7b2419); color: #fff; font-weight: 800; font-size: 16px; padding: 13px 0; }
   .cta:hover { filter: brightness(1.08); }
   .orDivider { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 12px; letter-spacing: 2px; }
   .orDivider::before, .orDivider::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--gold-deep), transparent); }
@@ -54,48 +52,46 @@
   .menuHome { text-align: center; margin-top: 4px; } .menuHome a { color: var(--gold-bright); font-size: 13px; font-weight: 700; text-decoration: none; }
 
   #lobby { text-align: center; }
-  #roomCode { font-family: var(--serif); font-size: clamp(34px, 12vw, 52px); font-weight: 800; letter-spacing: 10px; color: var(--gold-soft); text-align: center; margin: 4px 0; text-shadow: 0 2px 3px #000; }
+  #roomCode { font-family: var(--serif); font-size: clamp(34px, 12vw, 52px); font-weight: 800; letter-spacing: 10px; color: var(--gold-soft); margin: 4px 0; text-shadow: 0 2px 3px #000; }
   #lobbyTitle { font-family: var(--serif); font-size: 18px; color: var(--gold-bright); margin: 8px 0; }
   #rosterInfo { color: var(--muted); font-size: 13px; }
   .hint { font-size: 12px; color: var(--muted); line-height: 1.6; }
 
-  /* 게임 화면 */
-  .gameMeta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; padding: 8px 10px; border: 1px solid rgba(201,162,39,0.35); border-radius: 8px; background: rgba(13,10,5,0.46); color: var(--parchment); font-family: var(--serif); font-size: 12px; margin-bottom: 8px; }
+  .gameMeta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; padding: 8px 10px; border: 1px solid rgba(201,162,39,0.35); border-radius: 8px; background: rgba(13,10,5,0.46); font-family: var(--serif); font-size: 12px; margin-bottom: 8px; }
   .gameMeta b { color: var(--gold-bright); font-weight: 800; }
   #gameCodeWrap { cursor: pointer; white-space: nowrap; }
-  #turnBar { text-align: center; font-family: var(--serif); font-size: 16px; font-weight: 700; margin: 4px 0 10px; min-height: 24px; }
-  .chip { display: inline-flex; align-items: center; gap: 6px; }
-  .disc { width: 16px; height: 16px; border-radius: 50%; display: inline-block; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.3); }
-  .disc.p0 { background: radial-gradient(circle at 35% 30%, #f08a7c, var(--p0)); }
-  .disc.p1 { background: radial-gradient(circle at 35% 30%, #8fb6ef, var(--p1)); }
+  #statusBar { text-align: center; font-family: var(--serif); font-size: 16px; font-weight: 700; color: var(--gold-bright); margin: 4px 0 8px; min-height: 22px; }
 
-  #boardWrap { display: flex; justify-content: center; }
-  #boardGrid { display: grid; gap: 3px; background: rgba(13,10,5,0.5); border: 1px solid var(--warm-border); border-radius: 8px; padding: 5px; width: 100%; touch-action: manipulation; }
-  #boardGrid.connect4 { background: #24406b; border-color: #16294a; }
-  .cell { aspect-ratio: 1 / 1; border: 1px solid var(--warm-border); border-radius: 5px; background: var(--warm-bg); display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
-  .connect4 .cell { border-radius: 50%; background: #0d1b33; border-color: #16294a; }
-  .cell:disabled { cursor: default; }
-  .cell .stone { width: 78%; height: 78%; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.4); }
-  .cell .stone.p0 { background: radial-gradient(circle at 35% 30%, #f08a7c, var(--p0)); }
-  .cell .stone.p1 { background: radial-gradient(circle at 35% 30%, #8fb6ef, var(--p1)); }
-  .cell.win { box-shadow: 0 0 0 2px var(--gold-soft), 0 0 10px rgba(242,204,96,0.7); }
-  .cell.playable:hover:not(:disabled) { border-color: var(--gold); filter: brightness(1.15); }
-  .cell.last { outline: 2px solid var(--gold-soft); outline-offset: -2px; }
+  .boardLabel { font-size: 12px; color: var(--muted); text-align: center; margin: 8px 0 4px; font-weight: 700; }
+  .gridBox { display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px; background: rgba(13,10,5,0.4); border: 1px solid var(--warm-border); border-radius: 6px; padding: 4px; margin: 0 auto; }
+  .gridBox.target { max-width: 100%; }
+  .gridBox.mine { max-width: 240px; }
+  .gc { aspect-ratio: 1/1; border-radius: 3px; background: var(--sea); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; color: #fff; padding: 0; border: none; }
+  .gridBox.mine .gc { font-size: 10px; }
+  .gc.ship { background: var(--ship); }
+  .gc.miss { background: var(--sea2); color: var(--miss); }
+  .gc.miss::after { content: "•"; }
+  .gc.hit { background: var(--hit); } .gc.hit::after { content: "✕"; }
+  .gc.sunk { background: var(--sunk); } .gc.sunk::after { content: "✕"; }
+  .gridBox.target .gc.fireable { cursor: pointer; }
+  .gridBox.target .gc.fireable:hover { outline: 2px solid var(--gold-soft); outline-offset: -2px; }
 
-  #boardGrid.v-gomoku .cell { border-radius: 3px; }
+  .fleet { display: flex; flex-wrap: wrap; gap: 5px 10px; justify-content: center; margin: 8px 0; font-size: 12px; }
+  .fleet .fs { color: var(--parchment); } .fleet .fs.sunk { color: var(--muted); text-decoration: line-through; }
+  .setupBtns { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
+  .setupBtns button { font-family: var(--serif); font-size: 15px; font-weight: 700; padding: 11px 18px; border-radius: 8px; cursor: pointer; }
+  #rerollBtn { border: 1px solid var(--warm-border); background: linear-gradient(180deg, var(--warm-bg2), var(--warm-bg)); color: var(--parchment); }
+  #readyBtn { border: 1px solid var(--gold-deep); background: linear-gradient(180deg, var(--gold-bright), var(--gold-deep)); color: var(--ink); }
   .backHome { text-align: center; margin-top: 14px; } .backHome a { color: var(--gold-bright); font-size: 13px; font-weight: 700; text-decoration: none; }
 
-  /* 결과 모달 */
   #over { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 18px; background: rgba(8,5,2,0.72); }
   #over.hidden { display: none; }
   .overCard { width: min(340px, 100%); background: var(--card); border: 2px solid var(--warm-border); border-radius: 12px; padding: 24px 22px; text-align: center; box-shadow: 0 16px 44px rgba(0,0,0,0.7); }
   .overCard h2 { font-family: var(--serif); font-size: 26px; margin: 0 0 8px; color: var(--gold-bright); }
   .overCard .sub { font-size: 14px; color: var(--parchment); margin-bottom: 14px; }
   .overCard button { width: 100%; font-family: var(--serif); font-size: 16px; font-weight: 800; padding: 13px 0; border-radius: 9px; cursor: pointer; border: 1px solid var(--gold-deep); background: linear-gradient(180deg, var(--gold-bright), var(--gold) 55%, var(--gold-deep)); color: var(--ink); }
-
   .hidden { display: none !important; }
 
-  /* 채팅/이모지 */
   #chatToggle { position: fixed; left: 10px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 45; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--warm-border); background: rgba(26,19,11,0.9); color: #f2cc60; font-size: 18px; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,0.5); opacity: .55; transition: opacity .15s; }
   #chatToggle:hover, #chatToggle:focus { opacity: 1; }
   #chatBadge { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; border-radius: 9px; background: #a6402f; color: #fff; font-size: 11px; line-height: 18px; padding: 0 4px; }
@@ -116,21 +112,13 @@
   <div class="wrap">
     <div class="top">
       <a class="home" href="./index.html">🎲 메인</a>
-      <h1>격자 대전</h1>
+      <h1>배틀십</h1>
       <span style="width:44px"></span>
     </div>
 
-    <!-- 메뉴 -->
     <div id="menu" class="panel">
       <div class="optRow">
-        <span class="optLabel">게임 종류</span>
-        <div class="seg" id="segVariant">
-          <button data-v="tictactoe" class="on">틱택토</button><button data-v="gomoku">오목</button><button data-v="connect4">커넥트4</button>
-        </div>
-        <div class="variantDesc" id="variantDesc"></div>
-      </div>
-      <div class="optRow">
-        <span class="optLabel">인원</span>
+        <span class="optLabel">방식</span>
         <div class="seg" id="segMode">
           <button data-v="solo" class="on">혼자 (vs 컴퓨터)</button><button data-v="online">온라인 2인</button>
         </div>
@@ -149,7 +137,6 @@
       <div class="menuHome"><a href="./index.html">← 다른 게임 고르기</a></div>
     </div>
 
-    <!-- 로비 -->
     <div id="lobby" class="panel hidden">
       <div id="lobbyTitle">상대를 기다리는 중…</div>
       <div id="lobbyCodeWrap">
@@ -161,20 +148,39 @@
       <button id="cancelBtn" class="btn" style="margin-top:12px;">나가기</button>
     </div>
 
-    <!-- 게임판 -->
     <div id="board" class="hidden">
       <div class="gameMeta">
-        <span>게임 <b id="metaVariant">틱택토</b></span>
+        <span>🚢 배틀십</span>
         <span id="gameCodeWrap" class="hidden" title="탭하면 코드 복사">CODE <b id="metaCode">----</b></span>
         <span id="metaMode">혼자</span>
       </div>
-      <div id="turnBar"></div>
-      <div id="boardWrap"><div id="boardGrid"></div></div>
+      <div id="statusBar"></div>
+
+      <!-- 배치 단계 -->
+      <div id="setupBox" class="hidden">
+        <div class="boardLabel">내 함대 배치 (자동)</div>
+        <div class="gridBox mine" id="setupGrid" style="max-width:320px;"></div>
+        <div class="fleet" id="setupFleet"></div>
+        <div class="setupBtns">
+          <button id="rerollBtn">🔄 재배치</button>
+          <button id="readyBtn">⚓ 준비 완료</button>
+        </div>
+      </div>
+
+      <!-- 전투 단계 -->
+      <div id="battleBox" class="hidden">
+        <div class="boardLabel">🎯 상대 바다 — 좌표를 눌러 포격</div>
+        <div class="gridBox target" id="targetGrid"></div>
+        <div class="fleet" id="foeFleet"></div>
+        <div class="boardLabel">내 바다</div>
+        <div class="gridBox mine" id="myGrid"></div>
+        <div class="fleet" id="myFleet"></div>
+      </div>
+
       <div class="backHome"><a href="./index.html">🎲 다른 게임 (메인으로)</a></div>
     </div>
   </div>
 
-  <!-- 결과 -->
   <div id="over" class="hidden">
     <div class="overCard">
       <h2 id="overTitle">🎉 승리!</h2>
@@ -196,37 +202,27 @@
 (() => {
   "use strict";
   const $ = (id) => document.getElementById(id);
-
-  // ===== 서버 주소 =====
   const RENDER_URL = "wss://pingpong-server-hgl2.onrender.com";
   const override = new URLSearchParams(location.search).get("server");
   const isLocal = ["localhost", "127.0.0.1"].includes(location.hostname) || location.protocol === "file:";
   const SERVER_URL = override || (isLocal ? "ws://localhost:8080" : RENDER_URL);
 
-  // ===== 게임 정의 =====
-  const VARIANTS = {
-    tictactoe: { label: "틱택토", cols: 3, rows: 3, need: 3, gravity: false, desc: "3×3 판에 번갈아 두어 가로·세로·대각선 3개를 먼저 만들면 승리." },
-    gomoku:    { label: "오목",   cols: 15, rows: 15, need: 5, gravity: false, desc: "15×15 판에 번갈아 두어 5개를 먼저 이으면 승리." },
-    connect4:  { label: "커넥트4", cols: 7, rows: 6, need: 4, gravity: true, desc: "열을 골라 위에서 떨어뜨려 가로·세로·대각선 4개를 먼저 만들면 승리." },
-  };
-  const DIRS = [[0, 1], [1, 0], [1, 1], [1, -1]];
+  const N = 10;
+  const FLEET = [{ n: "항공모함", s: 5 }, { n: "전함", s: 4 }, { n: "순양함", s: 3 }, { n: "잠수함", s: 3 }, { n: "구축함", s: 2 }];
 
-  // ===== 상태 =====
   const SCREEN = { MENU: "menu", LOBBY: "lobby", PLAYING: "playing", OVER: "over" };
   let screen = SCREEN.MENU;
   let ws = null, myIndex = null, isHost = false, myCode = null, myToken = null;
-  let optVariant = "tictactoe", optMode = "solo", onlineMode = false;
+  let optMode = "solo", onlineMode = false;
   let soloMode = false, aiTimer = null;
-  const AI_INDEX = 1;
-  let G = null;                 // 호스트 권한 상태
-  let lastView = null;
+  let G = null, lastView = null;
+  let aiMem = { queue: [] };
   let myNick = ""; try { myNick = (localStorage.getItem("bg_nick") || "").trim().slice(0, 8); } catch (e) {}
   let hostNames = {};
   let handoffMode = false, handoffCap = 0, intentionalNav = false;
   const missingPeers = new Set();
 
-  // ===== 세션(재접속) =====
-  const SESS_KEY = "grid_session", STATE_KEY = "grid_state", REJOIN_WINDOW_MS = 300000;
+  const SESS_KEY = "battleship_session", STATE_KEY = "battleship_state", REJOIN_WINDOW_MS = 300000;
   function saveSession() { try { localStorage.setItem(SESS_KEY, JSON.stringify({ code: myCode, index: myIndex, token: myToken, isHost, ts: Date.now() })); } catch {} }
   function touchSession() { try { const s = JSON.parse(localStorage.getItem(SESS_KEY) || "null"); if (s) { s.ts = Date.now(); localStorage.setItem(SESS_KEY, JSON.stringify(s)); } } catch {} }
   function getSession() { try { return JSON.parse(localStorage.getItem(SESS_KEY) || "null"); } catch { return null; } }
@@ -237,120 +233,106 @@
   function restoreConn() { $("conn").innerHTML = "<span class='ok'>● 서버 연결됨</span>"; }
 
   // ===== 엔진 =====
-  function makeBoard(v) { const s = VARIANTS[v]; return Array.from({ length: s.rows }, () => Array(s.cols).fill(null)); }
-  function newGameState(v, starter) {
-    const s = VARIANTS[v];
-    return { variant: v, cols: s.cols, rows: s.rows, need: s.need, gravity: s.gravity, board: makeBoard(v), turn: starter != null ? starter : 0, winner: null, winLine: null, draw: false, last: null, count: 2 };
+  function emptyGrid(fill) { return Array.from({ length: N }, () => Array(N).fill(fill)); }
+  function placeShips() {
+    const occ = emptyGrid(-1); const ships = [];
+    FLEET.forEach((sp, si) => {
+      let placed = false, tries = 0;
+      while (!placed && tries < 800) {
+        tries++;
+        const horiz = Math.random() < 0.5;
+        const r = Math.floor(Math.random() * N), c = Math.floor(Math.random() * N);
+        const cells = []; let ok = true;
+        for (let k = 0; k < sp.s; k++) { const rr = horiz ? r : r + k, cc = horiz ? c + k : c; if (rr >= N || cc >= N || occ[rr][cc] !== -1) { ok = false; break; } cells.push([rr, cc]); }
+        if (ok) { cells.forEach(([rr, cc]) => occ[rr][cc] = si); ships.push({ name: sp.n, size: sp.s, cells, hits: 0 }); placed = true; }
+      }
+    });
+    return { ships, occ };
   }
-  function inb(g, r, c) { return r >= 0 && r < g.rows && c >= 0 && c < g.cols; }
-  function dropRow(g, c) { for (let r = g.rows - 1; r >= 0; r--) if (g.board[r][c] === null) return r; return -1; }
-  function winLineAt(g, r, c, mark) {
-    for (const [dr, dc] of DIRS) {
-      const line = [[r, c]];
-      let rr = r + dr, cc = c + dc;
-      while (inb(g, rr, cc) && g.board[rr][cc] === mark) { line.push([rr, cc]); rr += dr; cc += dc; }
-      rr = r - dr; cc = c - dc;
-      while (inb(g, rr, cc) && g.board[rr][cc] === mark) { line.unshift([rr, cc]); rr -= dr; cc -= dc; }
-      if (line.length >= g.need) return line;
-    }
-    return null;
+  function freshBoard() { const b = placeShips(); return { ships: b.ships, occ: b.occ, incoming: emptyGrid(null), ready: false }; }
+  function newGame() {
+    G = { phase: "setup", count: 2, turn: 0, winner: null, last: null, boards: [freshBoard(), freshBoard()] };
+    aiMem = { queue: [] };
+    if (soloMode) G.boards[1].ready = true;  // 컴퓨터는 자동 준비
   }
-  function boardFull(g) { return g.board.every((row) => row.every((c) => c !== null)); }
+  function shipSunk(s) { return s.hits >= s.size; }
+  function allSunk(b) { return b.ships.every(shipSunk); }
 
-  // 착수 적용(호스트 권한). a: {r,c} (gravity면 c만 사용)
   function applyAction(a) {
-    if (!G || G.winner != null || G.draw) return;
-    if (a.from !== G.turn) return;
-    let r, c;
-    if (G.gravity) { c = a.c; if (c == null || c < 0 || c >= G.cols) return; r = dropRow(G, c); if (r < 0) return; }
-    else { r = a.r; c = a.c; if (r == null || c == null || !inb(G, r, c) || G.board[r][c] !== null) return; }
-    const mark = G.turn;
-    G.board[r][c] = mark;
-    G.last = [r, c];
-    const wl = winLineAt(G, r, c, mark);
-    if (wl) { G.winner = mark; G.winLine = wl; }
-    else if (boardFull(G)) { G.draw = true; }
-    else { G.turn = 1 - G.turn; }
-    broadcast();
+    if (!G || G.winner != null) return;
+    const pi = a.from;
+    if (G.phase === "setup") {
+      const b = G.boards[pi];
+      if (a.action === "reroll" && !b.ready) { const nb = placeShips(); b.ships = nb.ships; b.occ = nb.occ; broadcast(); }
+      else if (a.action === "ready") { b.ready = true; if (G.boards[0].ready && G.boards[1].ready) { G.phase = "battle"; G.turn = 0; } broadcast(); }
+      return;
+    }
+    if (G.phase === "battle" && a.action === "fire") {
+      if (pi !== G.turn) return;
+      const foe = G.boards[1 - pi];
+      const r = a.r, c = a.c;
+      if (r == null || c == null || r < 0 || r >= N || c < 0 || c >= N || foe.incoming[r][c] != null) return;
+      const sid = foe.occ[r][c];
+      if (sid >= 0) {
+        foe.incoming[r][c] = "hit"; const ship = foe.ships[sid]; ship.hits++;
+        const sunk = shipSunk(ship);
+        G.last = { by: pi, r, c, result: "hit", sunk, shipName: sunk ? ship.name : null };
+        if (allSunk(foe)) G.winner = pi;
+      } else { foe.incoming[r][c] = "miss"; G.last = { by: pi, r, c, result: "miss" }; }
+      if (G.winner == null) G.turn = 1 - pi;   // 한 발 쏘고 교대
+      broadcast();
+    }
   }
-
   function dispatch(a) { a.from = myIndex; if (isHost) applyAction(a); else send({ type: "act", to: 0, a }); }
 
-  // ===== AI (솔로) =====
-  function legalMoves(g) {
-    const mv = [];
-    if (g.gravity) { for (let c = 0; c < g.cols; c++) if (dropRow(g, c) >= 0) mv.push({ c, r: dropRow(g, c) }); }
-    else { for (let r = 0; r < g.rows; r++) for (let c = 0; c < g.cols; c++) if (g.board[r][c] === null) mv.push({ r, c }); }
-    return mv;
-  }
-  function wouldWin(g, r, c, mark) { g.board[r][c] = mark; const w = winLineAt(g, r, c, mark); g.board[r][c] = null; return !!w; }
-  function lineScore(g, r, c, mark) {
-    let score = 0;
-    for (const [dr, dc] of DIRS) {
-      let cnt = 1, open = 0, rr = r + dr, cc = c + dc;
-      while (inb(g, rr, cc) && g.board[rr][cc] === mark) { cnt++; rr += dr; cc += dc; }
-      if (inb(g, rr, cc) && g.board[rr][cc] === null) open++;
-      rr = r - dr; cc = c - dc;
-      while (inb(g, rr, cc) && g.board[rr][cc] === mark) { cnt++; rr -= dr; cc -= dc; }
-      if (inb(g, rr, cc) && g.board[rr][cc] === null) open++;
-      score += cnt * cnt + open;
+  // ===== AI(솔로, 컴퓨터=1) =====
+  function aiTurn() {
+    const foe = G.boards[0];
+    const shot = (r, c) => foe.incoming[r][c] != null;
+    let cell = null;
+    while (aiMem.queue.length) { const [r, c] = aiMem.queue.shift(); if (r >= 0 && r < N && c >= 0 && c < N && !shot(r, c)) { cell = { r, c }; break; } }
+    if (!cell) {
+      const par = [], any = [];
+      for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (!shot(r, c)) { any.push([r, c]); if ((r + c) % 2 === 0) par.push([r, c]); }
+      const pool = par.length ? par : any;
+      if (!pool.length) return;
+      const [r, c] = pool[Math.floor(Math.random() * pool.length)]; cell = { r, c };
     }
-    return score;
-  }
-  // 틱택토 완전탐색(네가맥스)
-  function ttWin(g, mark) { for (let r = 0; r < g.rows; r++) for (let c = 0; c < g.cols; c++) if (g.board[r][c] === mark && winLineAt(g, r, c, mark)) return true; return false; }
-  function ttNegamax(g, player) {
-    if (ttWin(g, 1 - player)) return { score: -10 };  // 직전 상대가 이겼으면 패
-    const mv = legalMoves(g);
-    if (mv.length === 0) return { score: 0 };
-    let best = { score: -99, move: mv[0] };
-    for (const m of mv) {
-      g.board[m.r][m.c] = player;
-      const res = ttNegamax(g, 1 - player);
-      g.board[m.r][m.c] = null;
-      const sc = -res.score;
-      if (sc > best.score) best = { score: sc, move: m };
+    applyAction({ from: 1, action: "fire", r: cell.r, c: cell.c });
+    const last = G.last;
+    if (last && last.by === 1 && last.result === "hit") {
+      if (last.sunk) aiMem.queue = [];
+      else { const { r, c } = last; [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]].forEach((rc) => aiMem.queue.push(rc)); }
     }
-    return best;
-  }
-  function aiMove() {
-    const me = AI_INDEX, foe = 1 - AI_INDEX;
-    if (G.variant === "tictactoe") return ttNegamax(G, me).move;
-    const mv = legalMoves(G);
-    for (const m of mv) if (wouldWin(G, m.r, m.c, me)) return m;      // 이길 수 있으면
-    for (const m of mv) if (wouldWin(G, m.r, m.c, foe)) return m;     // 상대 승리 차단
-    let best = null, bestScore = -1;
-    const cc = (G.cols - 1) / 2, cr = (G.rows - 1) / 2;
-    for (const m of mv) {
-      const s = lineScore(G, m.r, m.c, me) + lineScore(G, m.r, m.c, foe) * 0.95
-        - (Math.abs(m.c - cc) + Math.abs(m.r - cr)) * 0.15;
-      if (s > bestScore) { bestScore = s; best = m; }
-    }
-    return best || mv[0];
   }
   function maybeAI() {
-    if (!soloMode || !G || G.winner != null || G.draw || G.turn !== AI_INDEX) return;
+    if (!soloMode || !G || G.winner != null || G.phase !== "battle" || G.turn !== 1) return;
     if (aiTimer) clearTimeout(aiTimer);
-    aiTimer = setTimeout(() => {
-      aiTimer = null;
-      if (!soloMode || !G || G.winner != null || G.draw || G.turn !== AI_INDEX) return;
-      const m = aiMove();
-      if (m) applyAction({ from: AI_INDEX, r: m.r, c: m.c });
-    }, 520);
+    aiTimer = setTimeout(() => { aiTimer = null; if (soloMode && G && G.winner == null && G.phase === "battle" && G.turn === 1) aiTurn(); }, 700);
   }
 
   // ===== 뷰 =====
   function viewFor(pi) {
+    const me = G.boards[pi], foe = G.boards[1 - pi];
+    const myBoard = emptyGrid(null), target = emptyGrid(null);
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+      myBoard[r][c] = { ship: me.occ[r][c] >= 0, shot: me.incoming[r][c] };
+      target[r][c] = foe.incoming[r][c];  // null / miss / hit
+    }
+    foe.ships.forEach((s) => { if (shipSunk(s)) s.cells.forEach(([r, c]) => target[r][c] = "sunk"); });
     return {
-      online: !soloMode, variant: G.variant, cols: G.cols, rows: G.rows, need: G.need, gravity: G.gravity,
-      board: G.board.map((row) => row.slice()), turn: G.turn, myIndex: pi, myTurn: G.turn === pi && G.winner == null && !G.draw,
-      winner: G.winner, winLine: G.winLine, draw: G.draw, last: G.last,
+      phase: G.phase, count: 2, myIndex: pi, turn: G.turn, winner: G.winner, last: G.last,
+      myReady: me.ready, oppReady: foe.ready,
+      myTurn: G.phase === "battle" && G.turn === pi && G.winner == null,
+      online: !soloMode, myBoard, target,
+      myFleet: me.ships.map((s) => ({ name: s.name, size: s.size, sunk: shipSunk(s) })),
+      foeFleet: foe.ships.map((s) => ({ name: s.name, size: s.size, sunk: shipSunk(s) })),
       names: [hostNames[0] || null, hostNames[1] || null],
     };
   }
   function broadcast() {
     if (intentionalNav) return;
-    if (!soloMode) send({ type: "view", view: viewFor(1), to: 1 });
+    if (!soloMode) for (let i = 1; i < G.count; i++) send({ type: "view", view: viewFor(i), to: i });
     renderView(viewFor(0));
     saveState();
     if (!soloMode) touchSession();
@@ -358,82 +340,61 @@
   }
 
   // ===== 렌더 =====
-  function nameOf(v, idx) {
-    if (soloMode) return idx === AI_INDEX ? "컴퓨터" : "나";
-    const nm = v.names && v.names[idx];
-    if (idx === v.myIndex) return nm || "나";
-    return nm || "상대";
-  }
+  function nmv(v, idx) { if (soloMode) return idx === v.myIndex ? "나" : "컴퓨터"; const n = v.names[idx]; if (idx === v.myIndex) return n || "나"; return n || "상대"; }
   function renderView(v) {
-    if (!v || !Array.isArray(v.board)) return;   // 다른 게임 잔여 view 방어
+    if (!v || !Array.isArray(v.myBoard)) return;
     lastView = v;
     if (screen !== SCREEN.PLAYING && screen !== SCREEN.OVER) setScreen(SCREEN.PLAYING);
-    $("metaVariant").textContent = VARIANTS[v.variant].label;
     $("metaMode").textContent = v.online ? "온라인 2인" : "혼자";
     $("gameCodeWrap").classList.toggle("hidden", !(v.online && myCode));
     if (v.online && myCode) $("metaCode").textContent = myCode;
 
-    renderTurnBar(v);
-    renderBoard(v);
+    const setup = v.phase === "setup";
+    $("setupBox").classList.toggle("hidden", !setup);
+    $("battleBox").classList.toggle("hidden", setup);
 
-    if (v.winner != null || v.draw) { showOver(v); }
+    if (setup) {
+      $("statusBar").textContent = v.myReady ? "상대가 배치를 마치길 기다리는 중…" : "함대를 배치하세요";
+      renderGrid($("setupGrid"), v.myBoard, "mine", null);
+      $("setupFleet").innerHTML = FLEET.map((f) => `<span class="fs">${f.n}(${f.s})</span>`).join("");
+      $("rerollBtn").disabled = v.myReady; $("readyBtn").disabled = v.myReady;
+      $("readyBtn").textContent = v.myReady ? "대기 중…" : "⚓ 준비 완료";
+    } else {
+      if (v.winner != null) $("statusBar").textContent = "";
+      else $("statusBar").textContent = v.myTurn ? "🎯 내 차례 — 포격하세요" : `${nmv(v, v.turn)} 차례…`;
+      renderGrid($("targetGrid"), v.target, "target", v.myTurn ? onFire : null);
+      renderGrid($("myGrid"), v.myBoard, "mine", null);
+      $("foeFleet").innerHTML = "<span style='color:var(--muted)'>상대 함대:</span> " + v.foeFleet.map((f) => `<span class="fs ${f.sunk ? "sunk" : ""}">${f.n}${f.sunk ? " 침몰" : ""}</span>`).join("");
+      $("myFleet").innerHTML = "<span style='color:var(--muted)'>내 함대:</span> " + v.myFleet.map((f) => `<span class="fs ${f.sunk ? "sunk" : ""}">${f.n}</span>`).join("");
+    }
+    if (v.winner != null) showOver(v);
     else if (screen === SCREEN.OVER) setScreen(SCREEN.PLAYING);
   }
-  function discHtml(p) { return `<span class="disc p${p}"></span>`; }
-  function renderTurnBar(v) {
-    const bar = $("turnBar");
-    if (v.winner != null || v.draw) { bar.innerHTML = ""; return; }
-    const who = v.myTurn ? "내 차례" : `${nameOf(v, v.turn)} 차례`;
-    bar.innerHTML = `<span class="chip">${discHtml(v.turn)} ${who}</span>`;
-  }
-  function renderBoard(v) {
-    const grid = $("boardGrid");
-    grid.className = v.variant === "connect4" ? "connect4" : (v.variant === "gomoku" ? "v-gomoku" : "");
-    grid.style.gridTemplateColumns = `repeat(${v.cols}, 1fr)`;
-    grid.style.maxWidth = v.variant === "gomoku" ? "460px" : (v.variant === "connect4" ? "360px" : "280px");
-    const winSet = new Set((v.winLine || []).map(([r, c]) => r + "," + c));
-    const myTurn = v.myTurn;
-    grid.innerHTML = "";
-    for (let r = 0; r < v.rows; r++) {
-      for (let c = 0; c < v.cols; c++) {
-        const cell = document.createElement("button");
-        cell.className = "cell";
-        const val = v.board[r][c];
-        if (val != null) cell.innerHTML = `<span class="stone p${val}"></span>`;
-        if (v.last && v.last[0] === r && v.last[1] === c) cell.classList.add("last");
-        if (winSet.has(r + "," + c)) cell.classList.add("win");
-        // 착수 가능 여부
-        let playable = false;
-        if (myTurn && v.winner == null && !v.draw) {
-          if (v.gravity) playable = (v.board[0][c] === null);  // 열에 자리 있으면
-          else playable = (val === null);
-        }
-        if (playable) cell.classList.add("playable"); else cell.disabled = true;
-        cell.addEventListener("click", () => onCellClick(v, r, c));
-        grid.appendChild(cell);
-      }
+  function renderGrid(box, cells, kind, onClick) {
+    box.className = "gridBox " + kind;
+    box.innerHTML = "";
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+      const el = document.createElement("button"); el.className = "gc";
+      const cell = cells[r][c];
+      if (kind === "mine") { if (cell && cell.ship) el.classList.add("ship"); if (cell && cell.shot) el.classList.add(cell.shot); }
+      else { if (cell) el.classList.add(cell); if (onClick && !cell) el.classList.add("fireable"); }
+      if (onClick && kind === "target" && !cell) el.addEventListener("click", () => onClick(r, c));
+      else el.disabled = (kind === "target");
+      box.appendChild(el);
     }
   }
-  function onCellClick(v, r, c) {
-    if (!v.myTurn || v.winner != null || v.draw) return;
-    if (v.gravity) { if (v.board[0][c] !== null) return; dispatch({ c }); }
-    else { if (v.board[r][c] !== null) return; dispatch({ r, c }); }
-  }
+  function onFire(r, c) { if (!lastView || !lastView.myTurn) return; dispatch({ action: "fire", r, c }); }
 
   function showOver(v) {
-    if (v.draw) { $("overTitle").textContent = "무승부"; $("overSub").textContent = "판이 가득 찼습니다."; }
-    else {
-      const iWon = v.winner === v.myIndex;
-      if (soloMode) { $("overTitle").textContent = iWon ? "🎉 승리!" : "😢 패배"; $("overSub").textContent = iWon ? "컴퓨터를 이겼습니다!" : "컴퓨터가 이겼습니다."; }
-      else { $("overTitle").textContent = iWon ? "🎉 승리!" : "😢 패배"; $("overSub").innerHTML = `${discHtml(v.winner)} ${nameOf(v, v.winner)} 승리!`; }
-    }
+    const iWon = v.winner === v.myIndex;
+    $("overTitle").textContent = iWon ? "🎉 승리!" : "😢 패배";
+    $("overSub").textContent = iWon ? "상대 함대를 모두 침몰시켰습니다!" : `${nmv(v, v.winner)}님이 내 함대를 모두 침몰시켰습니다.`;
     $("gamePicker").classList.add("hidden");
     $("otherGameBtn").classList.toggle("hidden", !(isHost && isOnlineRoom()));
     setScreen(SCREEN.OVER);
     $("over").classList.remove("hidden");
   }
 
-  // ===== 화면 전환 =====
   function setScreen(s) {
     screen = s;
     $("menu").classList.toggle("hidden", s !== SCREEN.MENU);
@@ -448,22 +409,8 @@
   }
   function showMenuWithError(msg) { $("menuErr").textContent = msg || ""; onlineMode = false; setScreen(SCREEN.MENU); }
 
-  // ===== 솔로 =====
-  function startSolo() {
-    soloMode = true; isHost = true; myIndex = 0; myCode = myToken = null; onlineMode = false;
-    hostNames = {};
-    G = newGameState(optVariant, 0);   // 사람 선공
-    setScreen(SCREEN.PLAYING);
-    broadcast();
-  }
-
-  // ===== 온라인 엔진 =====
-  function newOnlineGame() {
-    // 이전 승자가 선공(없으면 0)
-    const starter = (G && (G.winner != null)) ? G.winner : 0;
-    G = newGameState(optVariant, starter);
-    broadcast();
-  }
+  function startSolo() { soloMode = true; isHost = true; myIndex = 0; myCode = myToken = null; onlineMode = false; hostNames = {}; newGame(); setScreen(SCREEN.PLAYING); broadcast(); }
+  function newOnlineGame() { newGame(); broadcast(); }
 
   // ===== 네트워크 =====
   function send(obj) { if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj)); }
@@ -480,16 +427,13 @@
         handoffMode = true; handoffCap = ho.cap || 2; onlineMode = true;
         isHost = (ho.index === 0); myIndex = ho.index; myCode = ho.code; myToken = ho.token;
         $("lobbyTitle").textContent = "방 유지 — 상대 대기 중…"; $("lobbyCodeWrap").style.display = "none";
-        setScreen(SCREEN.LOBBY);
-        send({ type: "rejoin", code: ho.code, index: ho.index, token: ho.token });
-        return;
+        setScreen(SCREEN.LOBBY); send({ type: "rejoin", code: ho.code, index: ho.index, token: ho.token }); return;
       }
       const s = getSession();
       if (s && s.code && s.token != null && sessionFresh(s)) {
         onlineMode = true; isHost = s.isHost; myIndex = s.index; myCode = s.code; myToken = s.token;
         $("lobbyTitle").textContent = "이전 게임에 재접속 중…"; $("lobbyCodeWrap").style.display = "none";
-        setScreen(SCREEN.LOBBY);
-        send({ type: "rejoin", code: s.code, index: s.index, token: s.token });
+        setScreen(SCREEN.LOBBY); send({ type: "rejoin", code: s.code, index: s.index, token: s.token });
       }
     });
     ws.addEventListener("close", () => { $("conn").innerHTML = "<span class='bad'>● 서버 연결 끊김</span>"; if (onlineMode && (screen === SCREEN.PLAYING || screen === SCREEN.LOBBY)) showMenuWithError("서버 연결이 끊겼습니다."); });
@@ -532,7 +476,7 @@
     }
   }
 
-  // ===== 뒤로가기 잠금 + bfcache =====
+  // ===== 뒤로가기 잠금 =====
   let armed = false, lastBackAt = 0, toastTimer = null;
   function updateHistoryGuard(s) { const inGame = (s === SCREEN.PLAYING || s === SCREEN.LOBBY); if (inGame && !armed) { history.pushState({ g: 1 }, ""); armed = true; } else if (!inGame) armed = false; }
   function toast(msg) { let t = $("toast"); if (!t) { t = document.createElement("div"); t.id = "toast"; t.style.cssText = "position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:60;background:rgba(13,10,5,0.96);color:var(--parchment);border:1px solid var(--gold-deep);border-radius:999px;padding:10px 18px;font-size:13px;max-width:90vw;text-align:center;transition:opacity .2s;"; document.body.appendChild(t); } t.textContent = msg; t.style.opacity = "1"; clearTimeout(toastTimer); toastTimer = setTimeout(() => t.style.opacity = "0", 2200); }
@@ -541,12 +485,8 @@
   window.addEventListener("beforeunload", (e) => { if (intentionalNav) return; if (onlineMode && (screen === SCREEN.PLAYING || screen === SCREEN.LOBBY)) { e.preventDefault(); e.returnValue = ""; } });
 
   // ===== 메뉴/버튼 =====
-  function updateVariantDesc() { $("variantDesc").textContent = VARIANTS[optVariant].desc; }
   function initSeg(id, cb) { $(id).addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; [...$(id).children].forEach((c) => c.classList.remove("on")); b.classList.add("on"); cb(b.getAttribute("data-v")); }); }
-  initSeg("segVariant", (v) => { optVariant = v; updateVariantDesc(); });
   initSeg("segMode", (v) => { optMode = v; $("startSoloBtn").classList.toggle("hidden", v !== "solo"); $("onlineBox").classList.toggle("hidden", v !== "online"); if (v === "online" && (!ws || ws.readyState !== WebSocket.OPEN)) connect(); });
-  updateVariantDesc();
-
   $("startSoloBtn").addEventListener("click", startSolo);
   $("nickInput").value = myNick;
   $("nickInput").addEventListener("input", () => { myNick = $("nickInput").value.trim().slice(0, 8); try { localStorage.setItem("bg_nick", myNick); } catch {} });
@@ -564,9 +504,11 @@
   $("copyBtn").addEventListener("click", () => { navigator.clipboard?.writeText($("roomCode").textContent).then(() => { const b = $("copyBtn"), o = b.textContent; b.textContent = "복사됨!"; setTimeout(() => b.textContent = o, 1200); }).catch(() => {}); });
   $("gameCodeWrap").addEventListener("click", () => { if (myCode) navigator.clipboard?.writeText(myCode).then(() => toast("코드 복사됨: " + myCode)).catch(() => {}); });
   $("cancelBtn").addEventListener("click", () => { clearSession(); if (ws) { try { ws.close(); } catch {} } onlineMode = false; isHost = false; myIndex = myCode = myToken = null; setScreen(SCREEN.MENU); connect(); });
-  $("againBtn").addEventListener("click", () => { if (soloMode) { startSolo(); } else if (onlineMode) { if (isHost) newOnlineGame(); else send({ type: "restart", to: 0 }); } });
+  $("rerollBtn").addEventListener("click", () => { if (!$("rerollBtn").disabled) dispatch({ action: "reroll" }); });
+  $("readyBtn").addEventListener("click", () => { if (!$("readyBtn").disabled) dispatch({ action: "ready" }); });
+  $("againBtn").addEventListener("click", () => { if (soloMode) startSolo(); else if (onlineMode) { if (isHost) newOnlineGame(); else send({ type: "restart", to: 0 }); } });
 
-  // ===== 채팅/이모지 =====
+  // ===== 채팅 =====
   const EMOJIS = ["👍", "😂", "😮", "😢", "🎉", "❤️"];
   let chatUnread = 0;
   function escapeHtml(s) { return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
@@ -584,8 +526,8 @@
     $("chatInput").addEventListener("keydown", (e) => { if (e.key === "Enter") { sendChat($("chatInput").value); $("chatInput").value = ""; } });
   })();
 
-  // ===== 방 유지(게임 간 이동) =====
-  const THIS_GAME = "grid";
+  // ===== 방 유지 =====
+  const THIS_GAME = "battleship";
   const ROOM_GAMES = [
     { key: "davinci",    file: "davinci.html",    label: "🔎 다빈치코드", min: 2, max: 4 },
     { key: "loveletter", file: "loveletter.html", label: "💌 러브레터",   min: 2, max: 4 },
@@ -620,10 +562,10 @@
   connect();
 
   if (location.search.includes("debug")) {
-    window.__grid = () => ({ screen, soloMode, onlineMode, isHost, myIndex, myCode, G, lastView, handoffMode, intentionalNav, missing: missingPeers.size });
-    window.__gact = (a) => dispatch(a);
+    window.__bs = () => ({ screen, soloMode, onlineMode, isHost, myIndex, myCode, G, lastView, handoffMode, intentionalNav, missing: missingPeers.size });
+    window.__bsact = (a) => dispatch(a);
     window.__goto = (k) => gotoGame(k);
-    window.__st = () => ({ screen, isHost, myIndex, myCode, handoffMode, intentionalNav });
+    window.__st = () => ({ screen, isHost, myIndex, myCode, handoffMode, intentionalNav, phase: G && G.phase });
   }
 })();
 </script>
