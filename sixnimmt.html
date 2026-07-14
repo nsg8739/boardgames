@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>더 마인드 — 보드게임 모음</title>
+<title>젝스님트 — 보드게임 모음</title>
 <meta property="og:type" content="website" /><meta property="og:locale" content="ko_KR" />
 <meta property="og:site_name" content="보드게임 모음" />
-<meta property="og:title" content="더 마인드 — 협동 카드게임" />
-<meta property="og:description" content="대화 없이 눈치와 타이밍만으로 1~100 카드를 오름차순으로! 가족과 온라인 2~4인 협동." />
-<meta property="og:url" content="https://nsg8739.github.io/boardgames/themind.html" />
+<meta property="og:title" content="젝스님트 — 6번째 카드를 피하라" />
+<meta property="og:description" content="동시에 카드를 내고 여섯 번째 카드를 낸 사람이 그 줄을 벌점으로! 혼자도, 온라인 2~4인도." />
+<meta property="og:url" content="https://nsg8739.github.io/boardgames/sixnimmt.html" />
 <meta property="og:image" content="https://nsg8739.github.io/boardgames/og.png" />
 <meta property="og:image:width" content="1200" /><meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" /><meta name="twitter:image" content="https://nsg8739.github.io/boardgames/og.png" />
@@ -24,14 +24,14 @@
   * { box-sizing: border-box; }
   html, body { margin: 0; min-height: 100%; width: 100%; background: var(--bg); color: var(--parchment); font-family: "Segoe UI", "Malgun Gothic", sans-serif; }
   body { display: flex; flex-direction: column; align-items: center; padding: 14px 12px 40px; }
-  .wrap { width: 100%; max-width: 500px; }
+  .wrap { width: 100%; max-width: 520px; }
   #conn { position: fixed; top: 8px; right: 10px; z-index: 20; font-size: 11px; color: var(--muted); background: rgba(13,10,5,0.72); border: 1px solid var(--warm-border); border-radius: 999px; padding: 4px 10px; max-width: 62vw; text-align: right; }
   #conn .ok { color: #7fd18f; } #conn .bad { color: #e08a7a; }
   .top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
   .home { text-decoration: none; color: var(--gold-bright); font-size: 13px; font-weight: 700; } .home:hover { color: var(--gold-soft); }
   h1 { font-family: var(--serif); font-size: clamp(20px, 6vw, 26px); font-weight: 800; margin: 0; color: var(--gold-bright); text-align: center; letter-spacing: .5px; flex: 1; }
   .panel { background: var(--card); border: 1px solid var(--warm-border); border-radius: 12px; padding: 18px 16px; margin-top: 6px; display: flex; flex-direction: column; gap: 14px; }
-  .rules { font-size: 12.5px; color: var(--muted); line-height: 1.6; text-align: center; }
+  .rules { font-size: 12px; color: var(--muted); line-height: 1.6; text-align: center; }
   .optRow { display: flex; flex-direction: column; gap: 6px; }
   .optLabel { font-size: 13px; color: var(--parchment); font-weight: 700; }
   .seg { display: flex; width: 100%; border: 1px solid var(--warm-border); border-radius: 8px; overflow: hidden; }
@@ -42,6 +42,7 @@
   .cta:hover { filter: brightness(1.08); }
   .orDivider { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 12px; letter-spacing: 2px; }
   .orDivider::before, .orDivider::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--gold-deep), transparent); }
+  #onlineBox { display: flex; flex-direction: column; gap: 12px; }
   .nick { width: 100%; font-family: var(--serif); font-size: 15px; text-align: center; padding: 11px; border-radius: 8px; border: 1px solid var(--warm-border); background: #0d0b05; color: var(--gold-bright); }
   .joinGroup { display: flex; }
   .joinGroup input { flex: 1; min-width: 0; font-family: var(--serif); font-size: 20px; letter-spacing: 6px; text-align: center; text-transform: uppercase; padding: 12px; border-radius: 8px 0 0 8px; border: 1px solid var(--warm-border); border-right: none; background: #0d0b05; color: var(--gold-bright); }
@@ -56,38 +57,40 @@
   #rosterInfo { color: var(--muted); font-size: 13px; }
   .hint { font-size: 12px; color: var(--muted); line-height: 1.6; }
 
-  .gameMeta { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px; border: 1px solid rgba(201,162,39,0.35); border-radius: 8px; background: rgba(13,10,5,0.46); font-family: var(--serif); font-size: 14px; margin-bottom: 10px; }
+  .gameMeta { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px; border: 1px solid rgba(201,162,39,0.35); border-radius: 8px; background: rgba(13,10,5,0.46); font-family: var(--serif); font-size: 12px; margin-bottom: 8px; }
   .gameMeta b { color: var(--gold-bright); font-weight: 800; }
-  #gameCodeWrap { cursor: pointer; white-space: nowrap; font-size: 12px; }
-  .lives { color: var(--muted); }
-  .lives b { color: #e07a6a; }
+  #gameCodeWrap { cursor: pointer; white-space: nowrap; }
 
-  .center { text-align: center; margin: 16px 0; }
-  .lastCard { display: inline-flex; align-items: center; justify-content: center; width: 92px; height: 120px; border-radius: 12px; background: linear-gradient(180deg,#f3e6c6,#e2cf9f); border: 3px solid var(--gold-deep); color: #4a2f14; font-family: var(--serif); font-size: 48px; font-weight: 800; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
-  .lastCard.empty { background: rgba(13,10,5,0.3); color: var(--muted); border-color: var(--warm-border); font-size: 15px; }
-  .played { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin-top: 10px; }
-  .played .pc { min-width: 24px; height: 30px; padding: 0 4px; border-radius: 4px; background: #e2cf9f; color: #4a2f14; font-family: var(--serif); font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center; }
-  #mistake { color: #e07a6a; font-size: 13px; text-align: center; min-height: 18px; margin-top: 8px; font-weight: 700; }
+  .rows { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
+  .row { display: flex; align-items: center; gap: 4px; background: rgba(13,10,5,0.4); border: 1px solid var(--warm-border); border-radius: 8px; padding: 5px 6px; min-height: 52px; }
+  .rowcards { display: flex; gap: 3px; flex: 1; flex-wrap: wrap; }
+  .cardv { position: relative; min-width: 34px; height: 44px; border-radius: 6px; background: linear-gradient(180deg,#f3e6c6,#e2cf9f); color: #4a2f14; font-family: var(--serif); font-weight: 800; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+  .cardv .bh { position: absolute; top: -6px; right: -5px; background: #a6402f; color: #fff; border-radius: 8px; font-size: 9px; padding: 0 3px; font-family: sans-serif; }
+  .rowbull { font-size: 11px; color: var(--muted); min-width: 34px; text-align: right; }
 
-  .others { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 10px 0; }
-  .oth { border: 1px solid var(--warm-border); border-radius: 8px; padding: 6px 10px; font-size: 12px; text-align: center; }
-  .oth .on { color: var(--gold-bright); font-weight: 700; } .oth .oc { color: var(--parchment); margin-top: 2px; }
+  #statusBar { text-align: center; font-family: var(--serif); font-size: 15px; font-weight: 700; color: var(--gold-bright); min-height: 22px; margin: 6px 0; }
+  #logBox { font-size: 11.5px; color: var(--muted); line-height: 1.5; min-height: 30px; text-align: center; margin-bottom: 4px; }
+  #logBox div:first-child { color: var(--parchment); }
+  .scores { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin: 8px 0; }
+  .scb { border: 1px solid var(--warm-border); border-radius: 8px; padding: 4px 8px; font-size: 12px; }
+  .scb.me { background: rgba(201,162,39,0.1); } .scb.picked { border-color: var(--gold-soft); }
+  .scb .snm { color: var(--gold-bright); font-weight: 700; } .scb .sbl { color: var(--parchment); }
 
-  #statusBar { text-align: center; font-family: var(--serif); font-size: 15px; color: var(--gold-bright); min-height: 22px; margin: 6px 0; }
-  .myhand { text-align: center; margin-top: 12px; }
-  .myLabel { font-size: 13px; color: var(--gold-bright); font-weight: 800; margin-bottom: 8px; }
-  #myCards { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; margin-bottom: 12px; }
-  #myCards .mc { min-width: 34px; height: 46px; padding: 0 6px; border-radius: 6px; background: #e2cf9f; color: #4a2f14; font-family: var(--serif); font-weight: 800; font-size: 18px; display: flex; align-items: center; justify-content: center; }
-  #myCards .mc.lowest { outline: 2px solid var(--gold-soft); }
-  #playBtn { width: 100%; max-width: 320px; font-family: var(--serif); font-size: 17px; font-weight: 800; padding: 14px 0; border-radius: 10px; cursor: pointer; border: 1px solid #7b2419; background: linear-gradient(180deg,#b5442f,#7b2419); color: #fff; }
-  #playBtn:disabled { opacity: 0.4; cursor: default; }
+  .myhand { border-top: 1px solid var(--warm-border); padding-top: 10px; margin-top: 8px; }
+  .myLabel { font-size: 13px; color: var(--gold-bright); font-weight: 800; text-align: center; margin-bottom: 8px; }
+  #hand { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; }
+  #hand .cardv { cursor: pointer; }
+  #hand .cardv.pick { outline: 3px solid var(--gold-soft); transform: translateY(-4px); }
+  #hand .cardv.dim { opacity: 0.5; }
   .backHome { text-align: center; margin-top: 14px; } .backHome a { color: var(--gold-bright); font-size: 13px; font-weight: 700; text-decoration: none; }
 
   #over { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 18px; background: rgba(8,5,2,0.72); }
   #over.hidden { display: none; }
-  .overCard { width: min(340px, 100%); background: var(--card); border: 2px solid var(--warm-border); border-radius: 12px; padding: 24px 22px; text-align: center; box-shadow: 0 16px 44px rgba(0,0,0,0.7); }
-  .overCard h2 { font-family: var(--serif); font-size: 26px; margin: 0 0 8px; color: var(--gold-bright); }
-  .overCard .sub { font-size: 14px; color: var(--parchment); margin-bottom: 14px; }
+  .overCard { width: min(360px, 100%); background: var(--card); border: 2px solid var(--warm-border); border-radius: 12px; padding: 22px; text-align: center; box-shadow: 0 16px 44px rgba(0,0,0,0.7); }
+  .overCard h2 { font-family: var(--serif); font-size: 24px; margin: 0 0 10px; color: var(--gold-bright); }
+  #scoreTable { font-size: 14px; margin-bottom: 14px; }
+  #scoreTable .sr { display: flex; justify-content: space-between; padding: 4px 8px; border-bottom: 1px solid rgba(201,162,39,0.15); }
+  #scoreTable .sr.win { color: var(--gold-soft); font-weight: 800; }
   .overCard button { width: 100%; font-family: var(--serif); font-size: 16px; font-weight: 800; padding: 13px 0; border-radius: 9px; cursor: pointer; border: 1px solid var(--gold-deep); background: linear-gradient(180deg, var(--gold-bright), var(--gold) 55%, var(--gold-deep)); color: var(--ink); }
   .hidden { display: none !important; }
 
@@ -111,47 +114,51 @@
   <div class="wrap">
     <div class="top">
       <a class="home" href="./index.html">🎲 메인</a>
-      <h1>더 마인드</h1>
+      <h1>젝스님트</h1>
       <span style="width:44px"></span>
     </div>
 
     <div id="menu" class="panel">
-      <div class="rules">🧠 협동 게임 (온라인 전용)<br>대화·신호 없이 눈치와 타이밍만으로<br>1~100 카드를 <b>오름차순</b>으로 냅니다.</div>
+      <div class="rules">동시에 카드 한 장씩 → 낮은 순서로 배치.<br>줄의 <b>6번째</b> 카드를 낸 사람이 그 줄(1~5)을 벌점으로 가져갑니다. 벌점(🐂)이 가장 적으면 승리!</div>
       <div class="optRow">
         <span class="optLabel">인원</span>
         <div class="seg" id="segCount"><button data-v="2" class="on">2명</button><button data-v="3">3명</button><button data-v="4">4명</button></div>
       </div>
-      <input id="nickInput" class="nick" maxlength="8" placeholder="닉네임 (예: 아빠)" autocomplete="off" />
-      <button id="createBtn" class="cta">방 만들기</button>
-      <div class="joinGroup"><input id="codeInput" maxlength="4" placeholder="방 코드" autocomplete="off" /><button id="joinBtn" class="cta2">입장</button></div>
+      <div class="optRow">
+        <span class="optLabel">방식</span>
+        <div class="seg" id="segMode"><button data-v="solo" class="on">혼자 (vs 컴퓨터)</button><button data-v="online">온라인</button></div>
+      </div>
+      <button id="startSoloBtn" class="cta">게임 시작</button>
+      <div id="onlineBox" class="hidden">
+        <input id="nickInput" class="nick" maxlength="8" placeholder="닉네임 (예: 아빠)" autocomplete="off" />
+        <div class="orDivider"><span>온라인</span></div>
+        <button id="createBtn" class="cta">방 만들기</button>
+        <div class="joinGroup"><input id="codeInput" maxlength="4" placeholder="방 코드" autocomplete="off" /><button id="joinBtn" class="cta2">입장</button></div>
+      </div>
       <div class="menuErr" id="menuErr"></div>
       <div class="menuHome"><a href="./index.html">← 다른 게임 고르기</a></div>
     </div>
 
     <div id="lobby" class="panel hidden">
       <div id="lobbyTitle">상대를 기다리는 중…</div>
-      <div id="lobbyCodeWrap"><div class="hint">이 코드를 친구에게 알려주세요</div><div id="roomCode">----</div><button id="copyBtn" class="btn">코드 복사</button></div>
+      <div id="lobbyCodeWrap"><div class="hint">이 코드를 상대에게 알려주세요</div><div id="roomCode">----</div><button id="copyBtn" class="btn">코드 복사</button></div>
       <div id="rosterInfo"></div>
       <button id="cancelBtn" class="btn" style="margin-top:12px;">나가기</button>
     </div>
 
     <div id="board" class="hidden">
       <div class="gameMeta">
-        <span>레벨 <b id="metaLevel">1</b> / <span id="metaMax">12</span></span>
+        <span>🐂 젝스님트 <b id="metaRound"></b></span>
         <span id="gameCodeWrap" class="hidden" title="탭하면 코드 복사">CODE <b id="metaCode">----</b></span>
-        <span class="lives" id="metaLives">❤</span>
+        <span id="metaMode">혼자</span>
       </div>
-      <div class="others" id="others"></div>
-      <div class="center">
-        <div class="lastCard empty" id="lastCard">시작</div>
-        <div class="played" id="playedStrip"></div>
-        <div id="mistake"></div>
-      </div>
+      <div class="rows" id="rows"></div>
+      <div class="scores" id="scores"></div>
       <div id="statusBar"></div>
+      <div id="logBox"></div>
       <div class="myhand">
-        <div class="myLabel" id="myLabel">내 카드</div>
-        <div id="myCards"></div>
-        <button id="playBtn">▲ 가장 낮은 카드 내기</button>
+        <div class="myLabel" id="myLabel">내 카드 — 낼 카드를 고르세요</div>
+        <div id="hand"></div>
       </div>
       <div class="backHome"><a href="./index.html">🎲 다른 게임 (메인으로)</a></div>
     </div>
@@ -159,8 +166,8 @@
 
   <div id="over" class="hidden">
     <div class="overCard">
-      <h2 id="overTitle"></h2>
-      <div class="sub" id="overSub"></div>
+      <h2 id="overTitle">게임 종료</h2>
+      <div id="scoreTable"></div>
       <button id="againBtn">다시 하기</button>
       <button id="otherGameBtn" class="hidden" style="margin-top:8px;background:linear-gradient(180deg,var(--warm-bg2),var(--warm-bg));border:1px solid var(--warm-border);color:var(--parchment);">🔀 다른 게임</button>
       <div id="gamePicker" class="hidden" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;"></div>
@@ -183,19 +190,19 @@
   const isLocal = ["localhost", "127.0.0.1"].includes(location.hostname) || location.protocol === "file:";
   const SERVER_URL = override || (isLocal ? "ws://localhost:8080" : RENDER_URL);
 
-  const MAXLV = { 2: 12, 3: 10, 4: 8 };
+  const HAND_SIZE = 10;
   const SCREEN = { MENU: "menu", LOBBY: "lobby", PLAYING: "playing", OVER: "over" };
   let screen = SCREEN.MENU;
   let ws = null, myIndex = null, isHost = false, myCode = null, myToken = null;
-  let optCount = 2, onlineMode = false;
-  const soloMode = false;
+  let optCount = 2, optMode = "solo", onlineMode = false;
+  let soloMode = false, aiTimer = null;
   let G = null, lastView = null;
   let myNick = ""; try { myNick = (localStorage.getItem("bg_nick") || "").trim().slice(0, 8); } catch (e) {}
   let hostNames = {};
   let handoffMode = false, handoffCap = 0, intentionalNav = false;
   const missingPeers = new Set();
 
-  const SESS_KEY = "themind_session", STATE_KEY = "themind_state", REJOIN_WINDOW_MS = 300000;
+  const SESS_KEY = "sixnimmt_session", STATE_KEY = "sixnimmt_state", REJOIN_WINDOW_MS = 300000;
   function saveSession() { try { localStorage.setItem(SESS_KEY, JSON.stringify({ code: myCode, index: myIndex, token: myToken, isHost, ts: Date.now() })); } catch {} }
   function touchSession() { try { const s = JSON.parse(localStorage.getItem(SESS_KEY) || "null"); if (s) { s.ts = Date.now(); localStorage.setItem(SESS_KEY, JSON.stringify(s)); } } catch {} }
   function getSession() { try { return JSON.parse(localStorage.getItem(SESS_KEY) || "null"); } catch { return null; } }
@@ -206,98 +213,109 @@
   function restoreConn() { $("conn").innerHTML = "<span class='ok'>● 서버 연결됨</span>"; }
 
   // ===== 엔진 =====
-  function dealLevel(count, level) {
-    const pool = []; for (let n = 1; n <= 100; n++) pool.push(n);
-    for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
-    const hands = [];
-    for (let i = 0; i < count; i++) { const h = pool.splice(0, level).sort((a, b) => a - b); hands.push(h); }
-    return hands;
-  }
+  function bulls(n) { if (n === 55) return 7; if (n % 11 === 0) return 5; if (n % 10 === 0) return 3; if (n % 5 === 0) return 2; return 1; }
+  function rowBulls(row) { return row.reduce((s, x) => s + bulls(x), 0); }
+  function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
   function newGame(count) {
-    const lives = count;  // 인원 수 = 시작 생명
-    G = { count, level: 1, maxLevel: MAXLV[count] || 10, lives, phase: "play", center: 0, played: [], hands: dealLevel(count, 1), mistake: null, result: null };
+    const deck = []; for (let n = 1; n <= 104; n++) deck.push(n); shuffle(deck);
+    const rows = [[deck.pop()], [deck.pop()], [deck.pop()], [deck.pop()]];
+    const hands = []; for (let i = 0; i < count; i++) hands.push(deck.splice(0, HAND_SIZE).sort((a, b) => a - b));
+    G = { count, rows, hands, bulls: new Array(count).fill(0), picks: new Array(count).fill(null), round: 1, phase: "select", winner: null, log: [] };
   }
-  function startLevel() { G.hands = dealLevel(G.count, G.level); G.center = 0; G.played = []; G.mistake = null; }
-  function applyAction(a) {
-    if (!G || G.phase !== "play") return;
-    if (a.action !== "play") return;
-    const pi = a.from;
-    const hand = G.hands[pi];
-    if (!hand || hand.length === 0) return;
-    const card = Math.min.apply(null, hand);
-    // 다른 손패 중 더 낮은 카드
-    const lowers = [];
-    G.hands.forEach((h, i) => { h.forEach((c) => { if (c < card) lowers.push(c); }); });
-    // 낸 카드 제거
-    G.hands[pi] = hand.filter((c) => c !== card);
-    G.center = card; G.played.push(card);
-    if (lowers.length) {
-      G.lives -= 1;
-      lowers.sort((x, y) => x - y);
-      G.hands = G.hands.map((h) => h.filter((c) => c >= card));  // 낮은 카드 전부 버림
-      G.mistake = { card, lowers };
-      if (G.lives <= 0) { G.phase = "over"; G.result = "lost"; broadcast(); return; }
-    } else G.mistake = null;
-    // 레벨 클리어?
-    if (G.hands.every((h) => h.length === 0)) {
-      if (G.level >= G.maxLevel) { G.phase = "over"; G.result = "won"; }
-      else { G.level += 1; startLevel(); }
+  function nm(i) { if (soloMode) return i === 0 ? "나" : "컴퓨터" + i; return hostNames[i] || ("P" + (i + 1)); }
+  function resolveRound() {
+    const plays = G.picks.map((c, pi) => ({ c, pi })).filter((x) => x.c != null).sort((a, b) => a.c - b.c);
+    const ev = [];
+    for (const { c, pi } of plays) {
+      let best = -1, bestLast = -1;
+      G.rows.forEach((row, ri) => { const last = row[row.length - 1]; if (last < c && last > bestLast) { bestLast = last; best = ri; } });
+      if (best === -1) {
+        let tr = 0, tb = Infinity;
+        G.rows.forEach((row, ri) => { const b = rowBulls(row); if (b < tb) { tb = b; tr = ri; } });
+        G.bulls[pi] += tb; ev.push(`${nm(pi)}: ${c} 너무 낮아 ${tr + 1}번 줄 가져감 (+${tb}🐂)`); G.rows[tr] = [c];
+      } else if (G.rows[best].length >= 5) {
+        const b = rowBulls(G.rows[best]); G.bulls[pi] += b; ev.push(`${nm(pi)}: ${c} → ${best + 1}번 줄 6번째! 가져감 (+${b}🐂)`); G.rows[best] = [c];
+      } else { G.rows[best].push(c); ev.push(`${nm(pi)}: ${c} → ${best + 1}번 줄`); }
+      G.hands[pi] = G.hands[pi].filter((x) => x !== c);
     }
+    G.picks = new Array(G.count).fill(null);
+    G.log = ev; G.round++;
+    if (G.hands.every((h) => h.length === 0)) { G.phase = "over"; let best = Infinity, w = 0; G.bulls.forEach((b, i) => { if (b < best) { best = b; w = i; } }); G.winner = w; }
+  }
+  function applyAction(a) {
+    if (!G || G.phase !== "select") return;
+    if (a.action !== "pick") return;
+    const pi = a.from;
+    if (G.picks[pi] != null) return;
+    if (!G.hands[pi].includes(a.card)) return;
+    G.picks[pi] = a.card;
+    if (soloMode) { for (let i = 1; i < G.count; i++) if (G.picks[i] == null) G.picks[i] = aiPick(i); resolveRound(); broadcast(); return; }
+    if (G.picks.every((p) => p != null)) resolveRound();
     broadcast();
   }
   function dispatch(a) { a.from = myIndex; if (isHost) applyAction(a); else send({ type: "act", to: 0, a }); }
 
+  // ===== AI =====
+  function aiPick(i) {
+    const hand = G.hands[i]; let best = hand[0], bestScore = Infinity;
+    for (const c of hand) {
+      let ri = -1, rl = -1; G.rows.forEach((row, k) => { const last = row[row.length - 1]; if (last < c && last > rl) { rl = last; ri = k; } });
+      let pen;
+      if (ri === -1) pen = 10 + Math.min.apply(null, G.rows.map(rowBulls));
+      else if (G.rows[ri].length >= 5) pen = 8 + rowBulls(G.rows[ri]);
+      else pen = G.rows[ri].length * 0.5 + (c - rl) * 0.02;
+      if (pen < bestScore) { bestScore = pen; best = c; }
+    }
+    return best;
+  }
+
   // ===== 뷰 =====
   function viewFor(pi) {
     return {
-      count: G.count, level: G.level, maxLevel: G.maxLevel, lives: G.lives, phase: G.phase, result: G.result,
-      center: G.center, played: G.played.slice(), mistake: G.mistake, myIndex: pi,
-      myHand: G.hands[pi].slice(),
-      others: G.hands.map((h, i) => ({ idx: i, count: h.length })),
-      names: Array.from({ length: G.count }, (_, i) => hostNames[i] || null),
+      online: !soloMode, count: G.count, round: G.round, phase: G.phase, winner: G.winner,
+      rows: G.rows.map((r) => r.slice()), myHand: G.hands[pi].slice(), myPick: G.picks[pi],
+      picked: G.picks.map((p) => p != null), bulls: G.bulls.slice(), myIndex: pi,
+      names: Array.from({ length: G.count }, (_, i) => hostNames[i] || null), log: G.log.slice(),
     };
   }
   function broadcast() {
     if (intentionalNav) return;
-    for (let i = 1; i < G.count; i++) send({ type: "view", view: viewFor(i), to: i });
+    if (!soloMode) for (let i = 1; i < G.count; i++) send({ type: "view", view: viewFor(i), to: i });
     renderView(viewFor(0));
-    saveState(); touchSession();
+    saveState();
+    if (!soloMode) touchSession();
   }
 
   // ===== 렌더 =====
-  function nmv(v, idx) { const n = v.names[idx]; if (idx === v.myIndex) return n || "나"; return n || ("P" + (idx + 1)); }
+  function nmv(v, i) { if (soloMode) return i === 0 ? "나" : "컴퓨터" + i; const n = v.names[i]; if (i === v.myIndex) return n || "나"; return n || ("P" + (i + 1)); }
+  function cardHtml(n, cls) { return `<div class="cardv ${cls || ""}" data-c="${n}">${n}<span class="bh">${bulls(n)}</span></div>`; }
   function renderView(v) {
-    if (!v || !Array.isArray(v.myHand)) return;
+    if (!v || !Array.isArray(v.rows) || !Array.isArray(v.myHand)) return;
     lastView = v;
     if (screen !== SCREEN.PLAYING && screen !== SCREEN.OVER) setScreen(SCREEN.PLAYING);
-    $("metaLevel").textContent = v.level; $("metaMax").textContent = v.maxLevel;
-    $("metaLives").innerHTML = "생명 <b>" + "❤".repeat(Math.max(0, v.lives)) + "</b>";
-    $("gameCodeWrap").classList.toggle("hidden", !myCode);
-    if (myCode) $("metaCode").textContent = myCode;
+    $("metaRound").textContent = (v.round <= 10 ? v.round : 10) + "/10";
+    $("metaMode").textContent = v.online ? "온라인 " + v.count + "인" : "혼자";
+    $("gameCodeWrap").classList.toggle("hidden", !(v.online && myCode));
+    if (v.online && myCode) $("metaCode").textContent = myCode;
 
-    const lc = $("lastCard");
-    if (v.center > 0) { lc.textContent = v.center; lc.classList.remove("empty"); }
-    else { lc.textContent = "시작"; lc.classList.add("empty"); }
-    $("playedStrip").innerHTML = v.played.map((c) => `<span class="pc">${c}</span>`).join("");
-    $("mistake").textContent = v.mistake ? `⚠ 실수! 낮은 카드 버림: ${v.mistake.lowers.join(", ")}` : "";
+    $("rows").innerHTML = v.rows.map((row) => `<div class="row"><div class="rowcards">${row.map((n) => cardHtml(n)).join("")}</div><div class="rowbull">${row.reduce((s, x) => s + bulls(x), 0)}🐂</div></div>`).join("");
+    $("scores").innerHTML = Array.from({ length: v.count }, (_, i) => `<div class="scb ${i === v.myIndex ? "me" : ""} ${v.picked[i] ? "picked" : ""}"><span class="snm">${escapeHtml(nmv(v, i))}</span> <span class="sbl">${v.bulls[i]}🐂${v.picked[i] ? " ✓" : ""}</span></div>`).join("");
 
-    const oth = $("others"); oth.innerHTML = "";
-    for (let i = 0; i < v.count; i++) { if (i === v.myIndex) continue; const el = document.createElement("div"); el.className = "oth"; el.innerHTML = `<div class="on">${escapeHtml(nmv(v, i))}</div><div class="oc">${v.others[i].count}장</div>`; oth.appendChild(el); }
+    const picked = v.myPick != null;
+    $("statusBar").textContent = v.phase === "over" ? "" : (picked ? "다른 플레이어를 기다리는 중…" : "낼 카드를 고르세요");
+    $("logBox").innerHTML = (v.log || []).map((l) => `<div>${escapeHtml(l)}</div>`).join("");
 
-    const mc = $("myCards"); mc.innerHTML = "";
-    const lowest = v.myHand.length ? Math.min.apply(null, v.myHand) : null;
-    v.myHand.forEach((c) => { const el = document.createElement("div"); el.className = "mc" + (c === lowest ? " lowest" : ""); el.textContent = c; mc.appendChild(el); });
-    $("myLabel").textContent = `내 카드 (${v.myHand.length}장)`;
-    $("playBtn").disabled = v.myHand.length === 0 || v.phase !== "play";
-    $("playBtn").textContent = lowest != null ? `▲ ${lowest} 내기` : "낼 카드 없음";
-    $("statusBar").textContent = v.phase === "over" ? "" : "낮은 순서대로, 대화 없이 타이밍만으로!";
+    const hand = $("hand"); hand.innerHTML = v.myHand.map((n) => cardHtml(n, n === v.myPick ? "pick" : (picked ? "dim" : ""))).join("");
+    if (!picked && v.phase === "select") hand.querySelectorAll(".cardv").forEach((el) => el.addEventListener("click", () => { const c = +el.getAttribute("data-c"); dispatch({ action: "pick", card: c }); }));
+    $("myLabel").textContent = picked ? `선택함: ${v.myPick}` : "내 카드 — 낼 카드를 고르세요";
 
     if (v.phase === "over") showOver(v);
     else if (screen === SCREEN.OVER) setScreen(SCREEN.PLAYING);
   }
   function showOver(v) {
-    if (v.result === "won") { $("overTitle").textContent = "🎉 클리어!"; $("overSub").textContent = `축하합니다! 모든 레벨(${v.maxLevel})을 통과했습니다.`; }
-    else { $("overTitle").textContent = "💀 실패"; $("overSub").textContent = `레벨 ${v.level}에서 생명을 모두 잃었습니다. 다시 도전해보세요!`; }
+    $("overTitle").textContent = v.winner === v.myIndex ? "🎉 승리!" : "게임 종료";
+    const rows = Array.from({ length: v.count }, (_, i) => ({ i, b: v.bulls[i] })).sort((a, b) => a.b - b.b);
+    $("scoreTable").innerHTML = rows.map((r) => `<div class="sr ${r.i === v.winner ? "win" : ""}">${escapeHtml(nmv(v, r.i))}${r.i === v.winner ? " 🏆" : ""}<span>${r.b}🐂</span></div>`).join("");
     $("gamePicker").classList.add("hidden");
     $("otherGameBtn").classList.toggle("hidden", !(isHost && isOnlineRoom()));
     setScreen(SCREEN.OVER);
@@ -310,12 +328,14 @@
     $("lobby").classList.toggle("hidden", s !== SCREEN.LOBBY);
     $("board").classList.toggle("hidden", !(s === SCREEN.PLAYING || s === SCREEN.OVER));
     if (s !== SCREEN.OVER) $("over").classList.add("hidden");
-    const inGame = (s === SCREEN.PLAYING || s === SCREEN.OVER);
+    if (s === SCREEN.MENU) { soloMode = false; if (aiTimer) { clearTimeout(aiTimer); aiTimer = null; } }
+    const inGame = !soloMode && (s === SCREEN.PLAYING || s === SCREEN.OVER);
     $("chatToggle").classList.toggle("hidden", !inGame);
     if (!inGame) $("chatPanel").classList.add("hidden");
     updateHistoryGuard(s);
   }
   function showMenuWithError(msg) { $("menuErr").textContent = msg || ""; onlineMode = false; setScreen(SCREEN.MENU); }
+  function startSolo() { soloMode = true; isHost = true; myIndex = 0; myCode = myToken = null; onlineMode = false; hostNames = {}; newGame(optCount); setScreen(SCREEN.PLAYING); broadcast(); }
   function newOnlineGame() { const c = G ? G.count : optCount; newGame(c); broadcast(); }
 
   function send(obj) { if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj)); }
@@ -380,6 +400,8 @@
 
   function initSeg(id, cb) { $(id).addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; [...$(id).children].forEach((c) => c.classList.remove("on")); b.classList.add("on"); cb(b.getAttribute("data-v")); }); }
   initSeg("segCount", (v) => { optCount = +v; });
+  initSeg("segMode", (v) => { optMode = v; $("startSoloBtn").classList.toggle("hidden", v !== "solo"); $("onlineBox").classList.toggle("hidden", v !== "online"); if (v === "online" && (!ws || ws.readyState !== WebSocket.OPEN)) connect(); });
+  $("startSoloBtn").addEventListener("click", startSolo);
   $("nickInput").value = myNick;
   $("nickInput").addEventListener("input", () => { myNick = $("nickInput").value.trim().slice(0, 8); try { localStorage.setItem("bg_nick", myNick); } catch {} });
   $("createBtn").addEventListener("click", () => { $("menuErr").textContent = ""; if (!ws || ws.readyState !== WebSocket.OPEN) { $("menuErr").textContent = "서버 연결 중… 잠시 후 다시 시도하세요."; connect(); return; } send({ type: "create", capacity: optCount, reconnect: true }); });
@@ -396,8 +418,7 @@
   $("copyBtn").addEventListener("click", () => { navigator.clipboard?.writeText($("roomCode").textContent).then(() => { const b = $("copyBtn"), o = b.textContent; b.textContent = "복사됨!"; setTimeout(() => b.textContent = o, 1200); }).catch(() => {}); });
   $("gameCodeWrap").addEventListener("click", () => { if (myCode) navigator.clipboard?.writeText(myCode).then(() => toast("코드 복사됨: " + myCode)).catch(() => {}); });
   $("cancelBtn").addEventListener("click", () => { clearSession(); if (ws) { try { ws.close(); } catch {} } onlineMode = false; isHost = false; myIndex = myCode = myToken = null; setScreen(SCREEN.MENU); connect(); });
-  $("playBtn").addEventListener("click", () => { if (!$("playBtn").disabled) dispatch({ action: "play" }); });
-  $("againBtn").addEventListener("click", () => { if (isHost) newOnlineGame(); else send({ type: "restart", to: 0 }); });
+  $("againBtn").addEventListener("click", () => { if (soloMode) startSolo(); else if (onlineMode) { if (isHost) newOnlineGame(); else send({ type: "restart", to: 0 }); } });
 
   const EMOJIS = ["👍", "😂", "😮", "😢", "🎉", "❤️"];
   let chatUnread = 0;
@@ -416,7 +437,7 @@
     $("chatInput").addEventListener("keydown", (e) => { if (e.key === "Enter") { sendChat($("chatInput").value); $("chatInput").value = ""; } });
   })();
 
-  const THIS_GAME = "themind";
+  const THIS_GAME = "sixnimmt";
   const ROOM_GAMES = [
     { key: "davinci",    file: "davinci.html",    label: "🔎 다빈치코드", min: 2, max: 4 },
     { key: "loveletter", file: "loveletter.html", label: "💌 러브레터",   min: 2, max: 4 },
@@ -453,8 +474,8 @@
   connect();
 
   if (location.search.includes("debug")) {
-    window.__tm = () => ({ screen, onlineMode, isHost, myIndex, myCode, G, lastView, handoffMode, intentionalNav, missing: missingPeers.size });
-    window.__tmact = (a) => dispatch(a);
+    window.__sn = () => ({ screen, soloMode, onlineMode, isHost, myIndex, myCode, G, lastView, handoffMode, intentionalNav, missing: missingPeers.size });
+    window.__snact = (a) => dispatch(a);
     window.__goto = (k) => gotoGame(k);
     window.__st = () => ({ screen, isHost, myIndex, myCode, handoffMode, intentionalNav });
   }
