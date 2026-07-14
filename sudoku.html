@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>스도쿠 — 보드게임 모음</title>
+<meta property="og:type" content="website" /><meta property="og:locale" content="ko_KR" />
+<meta property="og:site_name" content="보드게임 모음" />
+<meta property="og:title" content="스도쿠 — 숫자 퍼즐" />
+<meta property="og:description" content="9×9 격자에 1~9를 채우는 클래식 숫자 퍼즐. 쉬움·보통·어려움 난이도." />
+<meta property="og:url" content="https://nsg8739.github.io/boardgames/sudoku.html" />
+<meta property="og:image" content="https://nsg8739.github.io/boardgames/og.png" />
+<meta property="og:image:width" content="1200" /><meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" /><meta name="twitter:image" content="https://nsg8739.github.io/boardgames/og.png" />
+<link rel="manifest" href="./manifest.json" />
+<meta name="theme-color" content="#17110a" />
+<style>
+  :root {
+    --bg: #17110a; --card: rgba(26, 19, 11, 0.94); --warm-bg: #241a0e; --warm-bg2: #2e2211;
+    --warm-border: #3a2c15; --gold: #c9a227; --gold-bright: #e6c04a; --gold-soft: #f2cc60; --gold-deep: #6b5417;
+    --parchment: #e9dcc0; --muted: #9c8a63; --ink: #201607; --err: #d1493a;
+    --serif: "Georgia", "Nanum Myeongjo", serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; width: 100%; background: var(--bg); color: var(--parchment); font-family: "Segoe UI", "Malgun Gothic", sans-serif; }
+  body { display: flex; flex-direction: column; align-items: center; padding: 14px 12px 40px; }
+  .wrap { width: 100%; max-width: 460px; }
+  .top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .home { text-decoration: none; color: var(--gold-bright); font-size: 13px; font-weight: 700; } .home:hover { color: var(--gold-soft); }
+  h1 { font-family: var(--serif); font-size: clamp(20px, 6vw, 26px); font-weight: 800; margin: 0; color: var(--gold-bright); text-align: center; letter-spacing: .5px; flex: 1; }
+  .panel { background: var(--card); border: 1px solid var(--warm-border); border-radius: 12px; padding: 18px 16px; margin-top: 6px; display: flex; flex-direction: column; gap: 14px; }
+  .optLabel { font-size: 13px; color: var(--parchment); font-weight: 700; margin-bottom: 6px; }
+  .seg { display: flex; width: 100%; border: 1px solid var(--warm-border); border-radius: 8px; overflow: hidden; }
+  .seg button { flex: 1; font-family: var(--serif); cursor: pointer; border: none; background: linear-gradient(180deg, var(--warm-bg2), var(--warm-bg)); color: var(--muted); padding: 11px 4px; font-size: 14px; border-right: 1px solid var(--warm-border); }
+  .seg button:last-child { border-right: none; }
+  .seg button.on { background: linear-gradient(180deg, var(--gold-bright), var(--gold-deep)); color: var(--ink); font-weight: 800; }
+  .cta { width: 100%; font-family: var(--serif); cursor: pointer; border: 1px solid #7b2419; border-radius: 9px; background: linear-gradient(180deg, #b5442f, #7b2419); color: #fff; font-weight: 800; font-size: 16px; padding: 13px 0; }
+  .menuHome { text-align: center; } .menuHome a { color: var(--gold-bright); font-size: 13px; font-weight: 700; text-decoration: none; }
+
+  .bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; margin-bottom: 8px; }
+  .bar b { color: var(--gold-bright); }
+  #newBtn { font-family: var(--serif); font-size: 13px; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--warm-border); background: linear-gradient(180deg, var(--warm-bg2), var(--warm-bg)); color: var(--parchment); cursor: pointer; }
+
+  #grid { display: grid; grid-template-columns: repeat(9, 1fr); width: 100%; aspect-ratio: 1/1; border: 2.5px solid var(--gold-deep); border-radius: 6px; overflow: hidden; background: var(--gold-deep); gap: 1px; }
+  .sc { background: var(--warm-bg); display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-size: clamp(16px, 5.5vw, 24px); font-weight: 700; color: var(--parchment); cursor: pointer; user-select: none; }
+  .sc.given { color: var(--gold-soft); font-weight: 800; cursor: default; background: #1e160c; }
+  .sc.sel { background: rgba(201,162,39,0.28); }
+  .sc.peer { background: rgba(201,162,39,0.1); }
+  .sc.same { color: var(--gold-bright); }
+  .sc.err { color: var(--err); }
+  /* 3x3 박스 경계 */
+  .sc.br { border-right: 2px solid var(--gold-deep); }
+  .sc.bb { border-bottom: 2px solid var(--gold-deep); }
+
+  #pad { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 12px; }
+  #pad button { font-family: var(--serif); font-size: 20px; font-weight: 700; padding: 12px 0; border-radius: 8px; border: 1px solid var(--warm-border); background: linear-gradient(180deg, var(--warm-bg2), var(--warm-bg)); color: var(--parchment); cursor: pointer; }
+  #pad button:hover { filter: brightness(1.2); border-color: var(--gold); }
+  #pad .erase { grid-column: span 5; color: var(--gold-bright); font-size: 15px; }
+  #msg { text-align: center; min-height: 20px; margin-top: 10px; font-size: 14px; color: var(--gold-soft); font-weight: 700; }
+  .backHome { text-align: center; margin-top: 14px; } .backHome a { color: var(--gold-bright); font-size: 13px; font-weight: 700; text-decoration: none; }
+
+  #over { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 18px; background: rgba(8,5,2,0.72); }
+  #over.hidden { display: none; }
+  .overCard { width: min(320px, 100%); background: var(--card); border: 2px solid var(--warm-border); border-radius: 12px; padding: 24px 22px; text-align: center; box-shadow: 0 16px 44px rgba(0,0,0,0.7); }
+  .overCard h2 { font-family: var(--serif); font-size: 26px; margin: 0 0 8px; color: var(--gold-bright); }
+  .overCard .sub { font-size: 14px; color: var(--parchment); margin-bottom: 14px; }
+  .overCard button { width: 100%; font-family: var(--serif); font-size: 16px; font-weight: 800; padding: 13px 0; border-radius: 9px; cursor: pointer; border: 1px solid var(--gold-deep); background: linear-gradient(180deg, var(--gold-bright), var(--gold) 55%, var(--gold-deep)); color: var(--ink); }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <a class="home" href="./index.html">🎲 메인</a>
+      <h1>스도쿠</h1>
+      <span style="width:44px"></span>
+    </div>
+
+    <div id="menu" class="panel">
+      <div>
+        <div class="optLabel">난이도</div>
+        <div class="seg" id="segDiff"><button data-v="easy" class="on">쉬움</button><button data-v="normal">보통</button><button data-v="hard">어려움</button></div>
+      </div>
+      <button id="startBtn" class="cta">퍼즐 시작</button>
+      <div class="menuHome"><a href="./index.html">← 다른 게임 고르기</a></div>
+    </div>
+
+    <div id="board" class="hidden">
+      <div class="bar">
+        <span>난이도 <b id="diffLabel">쉬움</b></span>
+        <span>시간 <b id="timer">00:00</b></span>
+        <button id="newBtn">새 퍼즐</button>
+      </div>
+      <div id="grid"></div>
+      <div id="pad"></div>
+      <div id="msg"></div>
+      <div class="backHome"><a href="./index.html">🎲 다른 게임 (메인으로)</a></div>
+    </div>
+  </div>
+
+  <div id="over" class="hidden">
+    <div class="overCard">
+      <h2>🎉 완성!</h2>
+      <div class="sub" id="overSub"></div>
+      <button id="againBtn">새 퍼즐</button>
+    </div>
+  </div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const GIVENS = { easy: 42, normal: 34, hard: 28 };
+  const DIFF_KR = { easy: "쉬움", normal: "보통", hard: "어려움" };
+
+  let optDiff = "easy";
+  let solution = null;   // 9x9 정답
+  let puzzle = null;     // 9x9 (0=빈칸)
+  let given = null;      // 9x9 bool
+  let board = null;      // 9x9 현재 입력
+  let sel = null;        // {r,c}
+  let timerId = null, startTs = 0, solved = false;
+
+  function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+  // 유효한 완성 스도쿠 생성(패턴 + 무작위화)
+  function makeSolution() {
+    const base = (r, c) => (3 * (r % 3) + Math.floor(r / 3) + c) % 9;
+    const bands = shuffle([0, 1, 2]), stacks = shuffle([0, 1, 2]);
+    const rowsIn = [shuffle([0, 1, 2]), shuffle([0, 1, 2]), shuffle([0, 1, 2])];
+    const colsIn = [shuffle([0, 1, 2]), shuffle([0, 1, 2]), shuffle([0, 1, 2])];
+    const rowOrder = [], colOrder = [];
+    bands.forEach((b) => rowsIn[b].forEach((r) => rowOrder.push(b * 3 + r)));
+    stacks.forEach((s) => colsIn[s].forEach((c) => colOrder.push(s * 3 + c)));
+    const digits = shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    const g = [];
+    for (let r = 0; r < 9; r++) { const row = []; for (let c = 0; c < 9; c++) row.push(digits[base(rowOrder[r], colOrder[c])]); g.push(row); }
+    return g;
+  }
+  function newPuzzle() {
+    solution = makeSolution();
+    given = Array.from({ length: 9 }, () => Array(9).fill(true));
+    // 제거할 칸 수
+    let remove = 81 - GIVENS[optDiff];
+    const cells = shuffle(Array.from({ length: 81 }, (_, i) => i));
+    for (const idx of cells) { if (remove <= 0) break; const r = Math.floor(idx / 9), c = idx % 9; given[r][c] = false; remove--; }
+    board = solution.map((row, r) => row.map((v, c) => given[r][c] ? v : 0));
+    puzzle = board.map((row) => row.slice());
+    sel = null; solved = false;
+    startTs = performance.now();
+    if (timerId) clearInterval(timerId);
+    timerId = setInterval(updateTimer, 1000);
+    $("diffLabel").textContent = DIFF_KR[optDiff];
+    $("msg").textContent = "";
+    $("over").classList.add("hidden");
+    renderGrid();
+    updateTimer();
+  }
+  function updateTimer() { const s = Math.floor((performance.now() - startTs) / 1000); const mm = String(Math.floor(s / 60)).padStart(2, "0"); const ss = String(s % 60).padStart(2, "0"); $("timer").textContent = mm + ":" + ss; }
+
+  function conflicts() {
+    const bad = Array.from({ length: 9 }, () => Array(9).fill(false));
+    for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) {
+      const v = board[r][c]; if (!v) continue;
+      for (let k = 0; k < 9; k++) {
+        if (k !== c && board[r][k] === v) bad[r][c] = true;
+        if (k !== r && board[k][c] === v) bad[r][c] = true;
+      }
+      const br = Math.floor(r / 3) * 3, bc = Math.floor(c / 3) * 3;
+      for (let dr = 0; dr < 3; dr++) for (let dc = 0; dc < 3; dc++) { const rr = br + dr, cc = bc + dc; if ((rr !== r || cc !== c) && board[rr][cc] === v) bad[r][c] = true; }
+    }
+    return bad;
+  }
+  function renderGrid() {
+    const grid = $("grid"); grid.innerHTML = "";
+    const bad = conflicts();
+    const selV = sel ? board[sel.r][sel.c] : 0;
+    for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) {
+      const el = document.createElement("div");
+      let cls = "sc";
+      if (given[r][c]) cls += " given";
+      if (c % 3 === 2 && c !== 8) cls += " br";
+      if (r % 3 === 2 && r !== 8) cls += " bb";
+      if (sel && sel.r === r && sel.c === c) cls += " sel";
+      else if (sel && (sel.r === r || sel.c === c || (Math.floor(sel.r / 3) === Math.floor(r / 3) && Math.floor(sel.c / 3) === Math.floor(c / 3)))) cls += " peer";
+      if (board[r][c]) { if (bad[r][c]) cls += " err"; else if (selV && board[r][c] === selV) cls += " same"; }
+      el.className = cls;
+      el.textContent = board[r][c] || "";
+      el.addEventListener("click", () => { sel = { r, c }; renderGrid(); });
+      grid.appendChild(el);
+    }
+  }
+  function place(n) {
+    if (!sel || solved) return;
+    const { r, c } = sel;
+    if (given[r][c]) return;
+    board[r][c] = (board[r][c] === n) ? 0 : n;  // 같은 숫자 다시 누르면 지움
+    renderGrid();
+    checkWin();
+  }
+  function erase() { if (!sel || solved) return; const { r, c } = sel; if (given[r][c]) return; board[r][c] = 0; renderGrid(); }
+  function checkWin() {
+    for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) if (!board[r][c]) return;
+    const bad = conflicts();
+    for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) if (bad[r][c]) return;
+    // 완성
+    solved = true; if (timerId) clearInterval(timerId);
+    $("overSub").textContent = `${DIFF_KR[optDiff]} 난이도를 ${$("timer").textContent} 만에 완성했어요!`;
+    $("over").classList.remove("hidden");
+  }
+
+  function initPad() {
+    const pad = $("pad"); pad.innerHTML = "";
+    for (let n = 1; n <= 9; n++) { const b = document.createElement("button"); b.textContent = n; b.addEventListener("click", () => place(n)); pad.appendChild(b); }
+    const er = document.createElement("button"); er.className = "erase"; er.textContent = "지우기"; er.addEventListener("click", erase); pad.appendChild(er);
+  }
+  function initSeg() { $("segDiff").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; [...$("segDiff").children].forEach((x) => x.classList.remove("on")); b.classList.add("on"); optDiff = b.getAttribute("data-v"); }); }
+  function start() { $("menu").classList.add("hidden"); $("board").classList.remove("hidden"); newPuzzle(); }
+
+  initSeg(); initPad();
+  $("startBtn").addEventListener("click", start);
+  $("newBtn").addEventListener("click", newPuzzle);
+  $("againBtn").addEventListener("click", newPuzzle);
+  document.addEventListener("keydown", (e) => { if ($("board").classList.contains("hidden")) return; if (e.key >= "1" && e.key <= "9") place(+e.key); else if (e.key === "Backspace" || e.key === "Delete" || e.key === "0") erase(); });
+
+  if (location.search.includes("debug")) { window.__su = () => ({ solution, board, given, solved }); window.__fill = () => { for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) if (!given[r][c]) board[r][c] = solution[r][c]; renderGrid(); checkWin(); }; }
+})();
+</script>
+</body>
+</html>
