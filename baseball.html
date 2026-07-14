@@ -101,7 +101,8 @@
   #submitBtn:disabled { opacity: .4; cursor: default; }
 
   /* 채팅/이모지 */
-  #chatToggle { position: fixed; left: 12px; bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 45; width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--warm-border); background: rgba(26,19,11,0.95); color: #f2cc60; font-size: 22px; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,0.5); }
+  #chatToggle { position: fixed; left: 10px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 45; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--warm-border); background: rgba(26,19,11,0.9); color: #f2cc60; font-size: 18px; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,0.5); opacity: .55; transition: opacity .15s; }
+  #chatToggle:hover, #chatToggle:focus { opacity: 1; }
   #chatBadge { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; border-radius: 9px; background: #a6402f; color: #fff; font-size: 11px; line-height: 18px; padding: 0 4px; }
   #chatPanel { position: fixed; left: 12px; bottom: calc(70px + env(safe-area-inset-bottom)); z-index: 46; width: min(300px, calc(100vw - 24px)); background: rgba(20,14,7,0.98); border: 1px solid var(--warm-border); border-radius: 12px; padding: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 8px; }
   #chatFeed { max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
@@ -631,7 +632,7 @@
   if (location.search.includes("debug")) {
     window.__bb = () => ({ screen, onlineMode, isHost, myIndex, myCode, G, solo, lastView });
     window.__goto = (k) => gotoGame(k);
-    window.__st = () => ({ screen, isHost, myIndex, myCode, handoffMode });
+    window.__st = () => ({ screen, isHost, myIndex, myCode, handoffMode, intentionalNav });
   }
 })();
 </script>
