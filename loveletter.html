@@ -101,6 +101,21 @@
   #chatInputRow { display: flex; gap: 6px; }
   #chatInput { flex: 1; min-width: 0; font-size: 14px; padding: 8px; border-radius: 8px; border: 1px solid var(--warm-border); background: #0d0b05; color: var(--parchment); }
   #chatSend { font-family: var(--serif); border: 1px solid var(--gold); border-radius: 8px; background: rgba(201,162,39,0.14); color: var(--gold-bright); padding: 0 12px; cursor: pointer; }
+  /* 카드 족보 */
+  #rulesBtn { position: fixed; right: 10px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 45; height: 40px; padding: 0 12px; border-radius: 20px; border: 1px solid var(--warm-border); background: rgba(26,19,11,0.9); color: #f2cc60; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,0.5); opacity: .62; transition: opacity .15s; }
+  #rulesBtn:hover, #rulesBtn:focus { opacity: 1; }
+  #rulesModal { position: fixed; inset: 0; z-index: 55; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(8,5,2,0.72); }
+  #rulesModal.hidden { display: none; }
+  .rulesCard { width: min(380px, 100%); max-height: 86vh; overflow-y: auto; background: var(--card); border: 2px solid var(--warm-border); border-radius: 12px; padding: 16px; box-shadow: 0 16px 44px rgba(0,0,0,0.7); }
+  .rulesCard h3 { font-family: var(--serif); font-size: 18px; color: var(--gold-bright); margin: 0 0 4px; text-align: center; }
+  .rulesCard .rsub { font-size: 11.5px; color: var(--muted); text-align: center; margin-bottom: 12px; }
+  .rrow { display: flex; gap: 10px; align-items: flex-start; padding: 8px 4px; border-bottom: 1px solid rgba(201,162,39,0.14); }
+  .rrow:last-of-type { border-bottom: none; }
+  .rnum { flex: none; width: 30px; height: 40px; border-radius: 6px; border: 1px solid var(--gold-deep); background: linear-gradient(180deg,#2e2211,#1a130b); color: var(--gold-soft); font-family: var(--serif); font-weight: 800; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+  .rinfo { flex: 1; min-width: 0; }
+  .rname { font-weight: 800; color: var(--gold-bright); font-size: 14px; } .rname .cnt { color: var(--muted); font-weight: 400; font-size: 11.5px; margin-left: 6px; }
+  .reff { font-size: 12.5px; color: var(--parchment); line-height: 1.45; margin-top: 2px; }
+  #rulesClose { width: 100%; margin-top: 12px; font-family: var(--serif); font-weight: 800; padding: 11px 0; border-radius: 8px; cursor: pointer; border: 1px solid var(--gold-deep); background: linear-gradient(180deg,var(--gold-bright),var(--gold-deep)); color: var(--ink); }
 </style>
 </head>
 <body>
@@ -141,6 +156,16 @@
         <div class="prompt hidden" id="prompt"><div class="q" id="promptQ"></div><div class="chips" id="chips"></div></div>
         <div style="text-align:center;"><button id="cancelSel" class="btn hidden">취소</button></div>
       </div>
+    </div>
+  </div>
+
+  <button id="rulesBtn" class="hidden" title="카드 족보">📜 족보</button>
+  <div id="rulesModal" class="hidden">
+    <div class="rulesCard">
+      <h3>💌 카드 족보</h3>
+      <div class="rsub">숫자가 높을수록 강하지만 위험합니다 · 괄호는 덱 매수</div>
+      <div id="rulesList"></div>
+      <button id="rulesClose">닫기</button>
     </div>
   </div>
 
@@ -199,6 +224,8 @@
     const inGame=(s===SCREEN.PLAYING||s===SCREEN.OVER);
     $("chatToggle").classList.toggle("hidden", !inGame);
     if(!inGame) $("chatPanel").classList.add("hidden");
+    $("rulesBtn").classList.toggle("hidden", !inGame);
+    if(!inGame) $("rulesModal").classList.add("hidden");
     updateHistoryGuard(s);
   }
   function showMenuWithError(m){ $("menuErr").textContent=m||""; onlineMode=false; setScreen(SCREEN.MENU); }
@@ -483,6 +510,30 @@
     if(g){ if(isHost) newGameFresh(); else send({type:"restartFresh",to:0}); }
     else { if(isHost) newRoundKeepTokens(); else send({type:"restart",to:0}); }
   });
+
+  // ===== 카드 족보 =====
+  (function initRules(){
+    const counts={1:5,2:2,3:2,4:2,5:2,6:1,7:1,8:1};
+    const RTXT={
+      1:"다른 1명을 지목하고 숫자(2~8)를 추측 — 맞으면 그 사람 탈락.",
+      2:"다른 1명의 손패를 몰래 확인한다.",
+      3:"다른 1명과 손패를 비교 — 숫자가 낮은 쪽이 탈락.",
+      4:"다음 내 차례까지 다른 카드 효과로부터 보호받는다.",
+      5:"자신 포함 1명을 지목 — 그 사람은 손패를 버리고 새로 뽑는다(공주면 탈락).",
+      6:"다른 1명과 손패를 서로 교환한다.",
+      7:"손에 왕(6)이나 왕자(5)와 함께 있으면 반드시 이 카드를 내야 한다.",
+      8:"어떤 이유로든 버리면 즉시 탈락. 절대 버리지 말 것.",
+    };
+    const list=$("rulesList");
+    for(let v=1; v<=8; v++){
+      const row=document.createElement("div"); row.className="rrow";
+      row.innerHTML=`<div class="rnum">${v}</div><div class="rinfo"><div class="rname">${CARDS[v].n}<span class="cnt">(${counts[v]}장)</span></div><div class="reff">${RTXT[v]}</div></div>`;
+      list.appendChild(row);
+    }
+    $("rulesBtn").addEventListener("click", ()=>$("rulesModal").classList.remove("hidden"));
+    $("rulesClose").addEventListener("click", ()=>$("rulesModal").classList.add("hidden"));
+    $("rulesModal").addEventListener("click", (e)=>{ if(e.target===$("rulesModal")) $("rulesModal").classList.add("hidden"); });
+  })();
 
   // ===== 채팅/이모지 =====
   const EMOJIS = ["👍","😂","😮","😢","🎉","❤️"];
