@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>격자 대전 — 보드게임 모음</title>
+<title>원카드 — 보드게임 모음</title>
 <meta property="og:type" content="website" /><meta property="og:locale" content="ko_KR" />
 <meta property="og:site_name" content="보드게임 모음" />
-<meta property="og:title" content="격자 대전 — 틱택토·오목·커넥트4" />
-<meta property="og:description" content="격자판에 돌을 번갈아 두는 전통 대전 3종. 혼자(vs 컴퓨터)도, 온라인 2인도." />
-<meta property="og:url" content="https://nsg8739.github.io/boardgames/gridgames.html" />
+<meta property="og:title" content="원카드 — 우노식 카드게임" />
+<meta property="og:description" content="같은 색·숫자·기호 카드를 내며 손패를 먼저 터는 카드게임. 혼자(vs 컴퓨터)도, 온라인 2~4인도." />
+<meta property="og:url" content="https://nsg8739.github.io/boardgames/oncard.html" />
 <meta property="og:image" content="https://nsg8739.github.io/boardgames/og.png" />
 <meta property="og:image:width" content="1200" /><meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" /><meta name="twitter:image" content="https://nsg8739.github.io/boardgames/og.png" />
@@ -18,20 +18,19 @@
   :root {
     --bg: #17110a; --card: rgba(26, 19, 11, 0.94); --warm-bg: #241a0e; --warm-bg2: #2e2211;
     --warm-border: #3a2c15; --gold: #c9a227; --gold-bright: #e6c04a; --gold-soft: #f2cc60; --gold-deep: #6b5417;
-    --parchment: #e9dcc0; --muted: #9c8a63; --ink: #201607; --seal: #a6402f;
-    --p0: #d1493a; --p1: #3f7fd8;
+    --parchment: #e9dcc0; --muted: #9c8a63; --ink: #201607;
+    --cr: #d1493a; --cy: #d6a52e; --cg: #3ea35a; --cb: #3f7fd8; --cw: #2a2233;
     --serif: "Georgia", "Nanum Myeongjo", serif;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; min-height: 100%; width: 100%; background: var(--bg); color: var(--parchment); font-family: "Segoe UI", "Malgun Gothic", sans-serif; }
   body { display: flex; flex-direction: column; align-items: center; padding: 14px 12px 40px; }
-  .wrap { width: 100%; max-width: 520px; }
+  .wrap { width: 100%; max-width: 560px; }
   #conn { position: fixed; top: 8px; right: 10px; z-index: 20; font-size: 11px; color: var(--muted); background: rgba(13,10,5,0.72); border: 1px solid var(--warm-border); border-radius: 999px; padding: 4px 10px; max-width: 62vw; text-align: right; }
   #conn .ok { color: #7fd18f; } #conn .bad { color: #e08a7a; }
   .top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
   .home { text-decoration: none; color: var(--gold-bright); font-size: 13px; font-weight: 700; } .home:hover { color: var(--gold-soft); }
   h1 { font-family: var(--serif); font-size: clamp(20px, 6vw, 26px); font-weight: 800; margin: 0; color: var(--gold-bright); text-align: center; letter-spacing: .5px; flex: 1; }
-  .rules { font-size: 12px; color: var(--muted); text-align: center; line-height: 1.6; margin: 2px 0 12px; }
   .panel { background: var(--card); border: 1px solid var(--warm-border); border-radius: 12px; padding: 18px 16px; margin-top: 6px; display: flex; flex-direction: column; gap: 14px; }
   .optRow { display: flex; flex-direction: column; gap: 6px; }
   .optLabel { font-size: 13px; color: var(--parchment); font-weight: 700; }
@@ -39,8 +38,7 @@
   .seg button { flex: 1; min-width: 0; font-family: var(--serif); cursor: pointer; border: none; background: linear-gradient(180deg, var(--warm-bg2), var(--warm-bg)); color: var(--muted); padding: 11px 4px; font-size: 14px; border-right: 1px solid var(--warm-border); white-space: nowrap; }
   .seg button:last-child { border-right: none; }
   .seg button.on { background: linear-gradient(180deg, var(--gold-bright), var(--gold-deep)); color: var(--ink); font-weight: 800; }
-  .variantDesc { font-size: 12px; color: var(--muted); text-align: center; line-height: 1.5; min-height: 32px; }
-  .cta { width: 100%; font-family: var(--serif); cursor: pointer; border: 1px solid #7b2419; border-radius: 9px; background: linear-gradient(180deg, #b5442f, #7b2419); color: #fff; font-weight: 800; font-size: 16px; padding: 13px 0; letter-spacing: .5px; }
+  .cta { width: 100%; font-family: var(--serif); cursor: pointer; border: 1px solid #7b2419; border-radius: 9px; background: linear-gradient(180deg, #b5442f, #7b2419); color: #fff; font-weight: 800; font-size: 16px; padding: 13px 0; }
   .cta:hover { filter: brightness(1.08); }
   .orDivider { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 12px; letter-spacing: 2px; }
   .orDivider::before, .orDivider::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--gold-deep), transparent); }
@@ -54,38 +52,61 @@
   .menuHome { text-align: center; margin-top: 4px; } .menuHome a { color: var(--gold-bright); font-size: 13px; font-weight: 700; text-decoration: none; }
 
   #lobby { text-align: center; }
-  #roomCode { font-family: var(--serif); font-size: clamp(34px, 12vw, 52px); font-weight: 800; letter-spacing: 10px; color: var(--gold-soft); text-align: center; margin: 4px 0; text-shadow: 0 2px 3px #000; }
+  #roomCode { font-family: var(--serif); font-size: clamp(34px, 12vw, 52px); font-weight: 800; letter-spacing: 10px; color: var(--gold-soft); margin: 4px 0; text-shadow: 0 2px 3px #000; }
   #lobbyTitle { font-family: var(--serif); font-size: 18px; color: var(--gold-bright); margin: 8px 0; }
   #rosterInfo { color: var(--muted); font-size: 13px; }
   .hint { font-size: 12px; color: var(--muted); line-height: 1.6; }
 
   /* 게임 화면 */
-  .gameMeta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; padding: 8px 10px; border: 1px solid rgba(201,162,39,0.35); border-radius: 8px; background: rgba(13,10,5,0.46); color: var(--parchment); font-family: var(--serif); font-size: 12px; margin-bottom: 8px; }
+  .gameMeta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; padding: 8px 10px; border: 1px solid rgba(201,162,39,0.35); border-radius: 8px; background: rgba(13,10,5,0.46); font-family: var(--serif); font-size: 12px; margin-bottom: 8px; }
   .gameMeta b { color: var(--gold-bright); font-weight: 800; }
   #gameCodeWrap { cursor: pointer; white-space: nowrap; }
-  #turnBar { text-align: center; font-family: var(--serif); font-size: 16px; font-weight: 700; margin: 4px 0 10px; min-height: 24px; }
-  .chip { display: inline-flex; align-items: center; gap: 6px; }
-  .disc { width: 16px; height: 16px; border-radius: 50%; display: inline-block; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.3); }
-  .disc.p0 { background: radial-gradient(circle at 35% 30%, #f08a7c, var(--p0)); }
-  .disc.p1 { background: radial-gradient(circle at 35% 30%, #8fb6ef, var(--p1)); }
+  .opps { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 8px; }
+  .opp { border: 1px solid var(--warm-border); border-radius: 8px; padding: 6px 8px; background: rgba(13,10,5,0.4); font-size: 12px; min-width: 76px; text-align: center; }
+  .opp.active { border-color: var(--gold-soft); box-shadow: 0 0 8px rgba(242,204,96,0.4); }
+  .opp .onm { font-weight: 700; color: var(--gold-bright); }
+  .opp .ocnt { color: var(--parchment); margin-top: 3px; }
+  .opp .oc { font-size: 15px; font-weight: 800; }
+  .opp .uno { color: var(--cr); font-weight: 800; }
 
-  #boardWrap { display: flex; justify-content: center; }
-  #boardGrid { display: grid; gap: 3px; background: rgba(13,10,5,0.5); border: 1px solid var(--warm-border); border-radius: 8px; padding: 5px; width: 100%; touch-action: manipulation; }
-  #boardGrid.connect4 { background: #24406b; border-color: #16294a; }
-  .cell { aspect-ratio: 1 / 1; border: 1px solid var(--warm-border); border-radius: 5px; background: var(--warm-bg); display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
-  .connect4 .cell { border-radius: 50%; background: #0d1b33; border-color: #16294a; }
-  .cell:disabled { cursor: default; }
-  .cell .stone { width: 78%; height: 78%; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.4); }
-  .cell .stone.p0 { background: radial-gradient(circle at 35% 30%, #f08a7c, var(--p0)); }
-  .cell .stone.p1 { background: radial-gradient(circle at 35% 30%, #8fb6ef, var(--p1)); }
-  .cell.win { box-shadow: 0 0 0 2px var(--gold-soft), 0 0 10px rgba(242,204,96,0.7); }
-  .cell.playable:hover:not(:disabled) { border-color: var(--gold); filter: brightness(1.15); }
-  .cell.last { outline: 2px solid var(--gold-soft); outline-offset: -2px; }
+  .center { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 10px 0; }
+  .deckPile { text-align: center; }
+  .cardback { width: 58px; height: 82px; border-radius: 8px; background: repeating-linear-gradient(45deg, #2a1d10, #2a1d10 6px, #3a2a16 6px, #3a2a16 12px); border: 2px solid var(--gold-deep); display: flex; align-items: center; justify-content: center; color: var(--gold-soft); font-family: var(--serif); font-weight: 800; }
+  .pileLabel { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .colorDot { width: 26px; height: 26px; border-radius: 50%; display: inline-block; vertical-align: middle; box-shadow: inset 0 0 0 2px rgba(0,0,0,0.25); }
+  .dir { font-size: 13px; color: var(--muted); text-align: center; }
 
-  #boardGrid.v-gomoku .cell { border-radius: 3px; }
+  .ucard { width: 58px; height: 82px; border-radius: 8px; border: 2px solid rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-weight: 800; font-size: 26px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); box-shadow: 0 2px 5px rgba(0,0,0,0.4); user-select: none; }
+  .ucard.r { background: var(--cr); } .ucard.y { background: var(--cy); } .ucard.g { background: var(--cg); } .ucard.b { background: var(--cb); }
+  .ucard.w { background: conic-gradient(var(--cr) 0 25%, var(--cy) 25% 50%, var(--cg) 50% 75%, var(--cb) 75% 100%); color:#fff; }
+  .ucard .sym { font-size: 20px; }
+
+  #turnBar { text-align: center; font-family: var(--serif); font-size: 15px; font-weight: 700; margin: 4px 0 8px; min-height: 22px; color: var(--gold-bright); }
+  #logBox { font-size: 12px; color: var(--muted); text-align: center; line-height: 1.5; min-height: 34px; margin-bottom: 6px; }
+  #logBox div:last-child { color: var(--parchment); }
+
+  .myArea { border-top: 1px solid var(--warm-border); padding-top: 10px; }
+  .myLabel { font-size: 13px; color: var(--gold-bright); font-weight: 800; text-align: center; margin-bottom: 6px; }
+  #hand { display: flex; gap: 6px; overflow-x: auto; padding: 6px 2px 10px; }
+  #hand .ucard { flex: none; cursor: pointer; transition: transform .1s; }
+  #hand .ucard.playable { outline: 2px solid var(--gold-soft); }
+  #hand .ucard.playable:hover { transform: translateY(-6px); }
+  #hand .ucard.dim { opacity: 0.4; }
+  .actions { display: flex; gap: 10px; justify-content: center; margin-top: 4px; }
+  .actions button { font-family: var(--serif); font-size: 15px; font-weight: 700; padding: 11px 18px; border-radius: 8px; cursor: pointer; border: 1px solid var(--warm-border); background: linear-gradient(180deg, var(--warm-bg2), var(--warm-bg)); color: var(--parchment); }
+  .actions button:disabled { opacity: 0.4; cursor: default; }
   .backHome { text-align: center; margin-top: 14px; } .backHome a { color: var(--gold-bright); font-size: 13px; font-weight: 700; text-decoration: none; }
 
-  /* 결과 모달 */
+  /* 색 선택 모달 */
+  #colorPick { position: fixed; inset: 0; z-index: 52; display: flex; align-items: center; justify-content: center; padding: 18px; background: rgba(8,5,2,0.72); }
+  #colorPick.hidden { display: none; }
+  .cpCard { background: var(--card); border: 2px solid var(--warm-border); border-radius: 12px; padding: 20px; text-align: center; }
+  .cpCard h3 { font-family: var(--serif); color: var(--gold-bright); margin: 0 0 14px; }
+  .cpBtns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .cpBtns button { width: 96px; height: 60px; border-radius: 10px; border: 2px solid rgba(0,0,0,0.3); cursor: pointer; font-family: var(--serif); font-weight: 800; color: #fff; font-size: 15px; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+  .cpBtns .r { background: var(--cr); } .cpBtns .y { background: var(--cy); } .cpBtns .g { background: var(--cg); } .cpBtns .b { background: var(--cb); }
+
+  /* 결과 */
   #over { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 18px; background: rgba(8,5,2,0.72); }
   #over.hidden { display: none; }
   .overCard { width: min(340px, 100%); background: var(--card); border: 2px solid var(--warm-border); border-radius: 12px; padding: 24px 22px; text-align: center; box-shadow: 0 16px 44px rgba(0,0,0,0.7); }
@@ -95,7 +116,7 @@
 
   .hidden { display: none !important; }
 
-  /* 채팅/이모지 */
+  /* 채팅 */
   #chatToggle { position: fixed; left: 10px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 45; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--warm-border); background: rgba(26,19,11,0.9); color: #f2cc60; font-size: 18px; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,0.5); opacity: .55; transition: opacity .15s; }
   #chatToggle:hover, #chatToggle:focus { opacity: 1; }
   #chatBadge { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; border-radius: 9px; background: #a6402f; color: #fff; font-size: 11px; line-height: 18px; padding: 0 4px; }
@@ -116,23 +137,22 @@
   <div class="wrap">
     <div class="top">
       <a class="home" href="./index.html">🎲 메인</a>
-      <h1>격자 대전</h1>
+      <h1>원카드</h1>
       <span style="width:44px"></span>
     </div>
 
     <!-- 메뉴 -->
     <div id="menu" class="panel">
       <div class="optRow">
-        <span class="optLabel">게임 종류</span>
-        <div class="seg" id="segVariant">
-          <button data-v="tictactoe" class="on">틱택토</button><button data-v="gomoku">오목</button><button data-v="connect4">커넥트4</button>
+        <span class="optLabel">인원</span>
+        <div class="seg" id="segCount">
+          <button data-v="2" class="on">2명</button><button data-v="3">3명</button><button data-v="4">4명</button>
         </div>
-        <div class="variantDesc" id="variantDesc"></div>
       </div>
       <div class="optRow">
-        <span class="optLabel">인원</span>
+        <span class="optLabel">방식</span>
         <div class="seg" id="segMode">
-          <button data-v="solo" class="on">혼자 (vs 컴퓨터)</button><button data-v="online">온라인 2인</button>
+          <button data-v="solo" class="on">혼자 (vs 컴퓨터)</button><button data-v="online">온라인</button>
         </div>
       </div>
       <button id="startSoloBtn" class="cta">게임 시작</button>
@@ -164,13 +184,38 @@
     <!-- 게임판 -->
     <div id="board" class="hidden">
       <div class="gameMeta">
-        <span>게임 <b id="metaVariant">틱택토</b></span>
+        <span>🃏 원카드 <b id="metaCount"></b></span>
         <span id="gameCodeWrap" class="hidden" title="탭하면 코드 복사">CODE <b id="metaCode">----</b></span>
         <span id="metaMode">혼자</span>
       </div>
+      <div class="opps" id="opps"></div>
+      <div class="center">
+        <div class="deckPile"><div class="cardback" id="deckBack">?</div><div class="pileLabel">덱 <span id="deckLeft">0</span></div></div>
+        <div class="deckPile"><div id="topCard"></div><div class="pileLabel">현재 색 <span class="colorDot" id="colorDot"></span></div></div>
+      </div>
+      <div class="dir" id="dirLabel"></div>
       <div id="turnBar"></div>
-      <div id="boardWrap"><div id="boardGrid"></div></div>
+      <div id="logBox"></div>
+      <div class="myArea">
+        <div class="myLabel" id="myLabel">내 손패</div>
+        <div id="hand"></div>
+        <div class="actions">
+          <button id="drawBtn">카드 뽑기</button>
+          <button id="passBtn">패스</button>
+        </div>
+      </div>
       <div class="backHome"><a href="./index.html">🎲 다른 게임 (메인으로)</a></div>
+    </div>
+  </div>
+
+  <!-- 색 선택 -->
+  <div id="colorPick" class="hidden">
+    <div class="cpCard">
+      <h3>색을 고르세요</h3>
+      <div class="cpBtns">
+        <button class="r" data-c="r">빨강</button><button class="y" data-c="y">노랑</button>
+        <button class="g" data-c="g">초록</button><button class="b" data-c="b">파랑</button>
+      </div>
     </div>
   </div>
 
@@ -197,36 +242,31 @@
   "use strict";
   const $ = (id) => document.getElementById(id);
 
-  // ===== 서버 주소 =====
+  // ===== 서버 =====
   const RENDER_URL = "wss://pingpong-server-hgl2.onrender.com";
   const override = new URLSearchParams(location.search).get("server");
   const isLocal = ["localhost", "127.0.0.1"].includes(location.hostname) || location.protocol === "file:";
   const SERVER_URL = override || (isLocal ? "ws://localhost:8080" : RENDER_URL);
 
-  // ===== 게임 정의 =====
-  const VARIANTS = {
-    tictactoe: { label: "틱택토", cols: 3, rows: 3, need: 3, gravity: false, desc: "3×3 판에 번갈아 두어 가로·세로·대각선 3개를 먼저 만들면 승리." },
-    gomoku:    { label: "오목",   cols: 15, rows: 15, need: 5, gravity: false, desc: "15×15 판에 번갈아 두어 5개를 먼저 이으면 승리." },
-    connect4:  { label: "커넥트4", cols: 7, rows: 6, need: 4, gravity: true, desc: "열을 골라 위에서 떨어뜨려 가로·세로·대각선 4개를 먼저 만들면 승리." },
-  };
-  const DIRS = [[0, 1], [1, 0], [1, 1], [1, -1]];
+  const COLORS = ["r", "y", "g", "b"];
+  const COLOR_KR = { r: "빨강", y: "노랑", g: "초록", b: "파랑" };
+  const SYM = { skip: "⊘", rev: "⇄", d2: "+2", wild: "🎨", d4: "+4" };
 
   // ===== 상태 =====
   const SCREEN = { MENU: "menu", LOBBY: "lobby", PLAYING: "playing", OVER: "over" };
   let screen = SCREEN.MENU;
   let ws = null, myIndex = null, isHost = false, myCode = null, myToken = null;
-  let optVariant = "tictactoe", optMode = "solo", onlineMode = false;
+  let optCount = 2, optMode = "solo", onlineMode = false;
   let soloMode = false, aiTimer = null;
-  const AI_INDEX = 1;
-  let G = null;                 // 호스트 권한 상태
-  let lastView = null;
+  let G = null, lastView = null;
   let myNick = ""; try { myNick = (localStorage.getItem("bg_nick") || "").trim().slice(0, 8); } catch (e) {}
   let hostNames = {};
   let handoffMode = false, handoffCap = 0, intentionalNav = false;
   const missingPeers = new Set();
+  let pendingWild = null;  // 색 선택 대기 중인 손패 index
 
-  // ===== 세션(재접속) =====
-  const SESS_KEY = "grid_session", STATE_KEY = "grid_state", REJOIN_WINDOW_MS = 300000;
+  // ===== 세션 =====
+  const SESS_KEY = "oncard_session", STATE_KEY = "oncard_state", REJOIN_WINDOW_MS = 300000;
   function saveSession() { try { localStorage.setItem(SESS_KEY, JSON.stringify({ code: myCode, index: myIndex, token: myToken, isHost, ts: Date.now() })); } catch {} }
   function touchSession() { try { const s = JSON.parse(localStorage.getItem(SESS_KEY) || "null"); if (s) { s.ts = Date.now(); localStorage.setItem(SESS_KEY, JSON.stringify(s)); } } catch {} }
   function getSession() { try { return JSON.parse(localStorage.getItem(SESS_KEY) || "null"); } catch { return null; } }
@@ -237,120 +277,109 @@
   function restoreConn() { $("conn").innerHTML = "<span class='ok'>● 서버 연결됨</span>"; }
 
   // ===== 엔진 =====
-  function makeBoard(v) { const s = VARIANTS[v]; return Array.from({ length: s.rows }, () => Array(s.cols).fill(null)); }
-  function newGameState(v, starter) {
-    const s = VARIANTS[v];
-    return { variant: v, cols: s.cols, rows: s.rows, need: s.need, gravity: s.gravity, board: makeBoard(v), turn: starter != null ? starter : 0, winner: null, winLine: null, draw: false, last: null, count: 2 };
-  }
-  function inb(g, r, c) { return r >= 0 && r < g.rows && c >= 0 && c < g.cols; }
-  function dropRow(g, c) { for (let r = g.rows - 1; r >= 0; r--) if (g.board[r][c] === null) return r; return -1; }
-  function winLineAt(g, r, c, mark) {
-    for (const [dr, dc] of DIRS) {
-      const line = [[r, c]];
-      let rr = r + dr, cc = c + dc;
-      while (inb(g, rr, cc) && g.board[rr][cc] === mark) { line.push([rr, cc]); rr += dr; cc += dc; }
-      rr = r - dr; cc = c - dc;
-      while (inb(g, rr, cc) && g.board[rr][cc] === mark) { line.unshift([rr, cc]); rr -= dr; cc -= dc; }
-      if (line.length >= g.need) return line;
+  function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+  function buildDeck() {
+    const d = [];
+    for (const c of COLORS) {
+      d.push({ c, v: 0 });
+      for (let n = 1; n <= 9; n++) { d.push({ c, v: n }); d.push({ c, v: n }); }
+      for (const a of ["skip", "rev", "d2"]) { d.push({ c, v: a }); d.push({ c, v: a }); }
     }
-    return null;
+    for (let i = 0; i < 4; i++) { d.push({ c: "w", v: "wild" }); d.push({ c: "w", v: "d4" }); }
+    return shuffle(d);
   }
-  function boardFull(g) { return g.board.every((row) => row.every((c) => c !== null)); }
+  function newGame(count, starter) {
+    const deck = buildDeck();
+    const players = Array.from({ length: count }, () => ({ hand: [] }));
+    for (let k = 0; k < 7; k++) for (let i = 0; i < count; i++) players[i].hand.push(deck.pop());
+    const ti = deck.findIndex((x) => typeof x.v === "number");
+    const top = deck.splice(ti, 1)[0];
+    G = { count, players, deck, pile: [], top, color: top.c, turn: starter != null ? starter : 0, dir: 1, winner: null, drawnThisTurn: false, log: [], lastPlay: null };
+    log(`게임 시작 — 첫 카드 ${cardName(top)}`);
+  }
+  function cardName(c) { if (c.c === "w") return c.v === "d4" ? "와일드 +4" : "와일드"; return `${COLOR_KR[c.c]} ${typeof c.v === "number" ? c.v : (c.v === "skip" ? "스킵" : c.v === "rev" ? "리버스" : "+2")}`; }
+  function log(msg) { G.log.push(msg); if (G.log.length > 30) G.log.shift(); }
+  function playable(card, top, color) { if (card.c === "w") return true; if (card.c === color) return true; if (card.v === top.v) return true; return false; }
+  function step(from) { return (from + G.dir + G.count) % G.count; }
+  function reshuffleIfNeeded() { if (G.deck.length === 0 && G.pile.length > 0) { G.deck = shuffle(G.pile); G.pile = []; } }
+  function drawFor(pi, n) { for (let k = 0; k < n; k++) { reshuffleIfNeeded(); if (G.deck.length === 0) break; G.players[pi].hand.push(G.deck.pop()); } }
 
-  // 착수 적용(호스트 권한). a: {r,c} (gravity면 c만 사용)
   function applyAction(a) {
-    if (!G || G.winner != null || G.draw) return;
+    if (!G || G.winner != null) return;
     if (a.from !== G.turn) return;
-    let r, c;
-    if (G.gravity) { c = a.c; if (c == null || c < 0 || c >= G.cols) return; r = dropRow(G, c); if (r < 0) return; }
-    else { r = a.r; c = a.c; if (r == null || c == null || !inb(G, r, c) || G.board[r][c] !== null) return; }
-    const mark = G.turn;
-    G.board[r][c] = mark;
-    G.last = [r, c];
-    const wl = winLineAt(G, r, c, mark);
-    if (wl) { G.winner = mark; G.winLine = wl; }
-    else if (boardFull(G)) { G.draw = true; }
-    else { G.turn = 1 - G.turn; }
+    if (a.action === "play") return doPlay(a.from, a.idx, a.color);
+    if (a.action === "draw") return doDraw(a.from);
+    if (a.action === "pass") return doPass(a.from);
+  }
+  function doPlay(pi, idx, chosen) {
+    const hand = G.players[pi].hand;
+    const card = hand[idx];
+    if (!card) return;
+    if (!playable(card, G.top, G.color)) return;
+    if (card.c === "w" && !COLORS.includes(chosen)) return;
+    hand.splice(idx, 1);
+    G.pile.push(G.top);
+    G.top = card;
+    G.color = card.c === "w" ? chosen : card.c;
+    G.drawnThisTurn = false;
+    G.lastPlay = { by: pi, card, color: G.color };
+    log(`${nm(pi)}: ${cardName(card)}${card.c === "w" ? " → " + COLOR_KR[G.color] : ""}`);
+    if (hand.length === 0) { G.winner = pi; log(`🏆 ${nm(pi)} 승리!`); broadcast(); return; }
+    const v = card.v;
+    if (v === "skip") { const s = step(G.turn); log(`${nm(s)} 스킵!`); G.turn = step(s); }
+    else if (v === "rev") { if (G.count === 2) { log("리버스(2인) — 한 번 더!"); G.turn = step(step(G.turn)); } else { G.dir *= -1; log("방향 전환!"); G.turn = step(G.turn); } }
+    else if (v === "d2") { const vic = step(G.turn); drawFor(vic, 2); log(`${nm(vic)} +2장, 스킵!`); G.turn = step(vic); }
+    else if (v === "d4") { const vic = step(G.turn); drawFor(vic, 4); log(`${nm(vic)} +4장, 스킵!`); G.turn = step(vic); }
+    else { G.turn = step(G.turn); }
     broadcast();
   }
+  function doDraw(pi) {
+    if (G.drawnThisTurn) return;
+    drawFor(pi, 1);
+    G.drawnThisTurn = true;
+    const hand = G.players[pi].hand;
+    const hasPlay = hand.some((c) => playable(c, G.top, G.color));
+    log(`${nm(pi)} 카드 뽑음`);
+    if (!hasPlay) { G.drawnThisTurn = false; G.turn = step(G.turn); }  // 낼 게 없으면 자동 패스
+    broadcast();
+  }
+  function doPass(pi) { if (!G.drawnThisTurn) return; G.drawnThisTurn = false; G.turn = step(G.turn); broadcast(); }
 
   function dispatch(a) { a.from = myIndex; if (isHost) applyAction(a); else send({ type: "act", to: 0, a }); }
 
-  // ===== AI (솔로) =====
-  function legalMoves(g) {
-    const mv = [];
-    if (g.gravity) { for (let c = 0; c < g.cols; c++) if (dropRow(g, c) >= 0) mv.push({ c, r: dropRow(g, c) }); }
-    else { for (let r = 0; r < g.rows; r++) for (let c = 0; c < g.cols; c++) if (g.board[r][c] === null) mv.push({ r, c }); }
-    return mv;
-  }
-  function wouldWin(g, r, c, mark) { g.board[r][c] = mark; const w = winLineAt(g, r, c, mark); g.board[r][c] = null; return !!w; }
-  function lineScore(g, r, c, mark) {
-    let score = 0;
-    for (const [dr, dc] of DIRS) {
-      let cnt = 1, open = 0, rr = r + dr, cc = c + dc;
-      while (inb(g, rr, cc) && g.board[rr][cc] === mark) { cnt++; rr += dr; cc += dc; }
-      if (inb(g, rr, cc) && g.board[rr][cc] === null) open++;
-      rr = r - dr; cc = c - dc;
-      while (inb(g, rr, cc) && g.board[rr][cc] === mark) { cnt++; rr -= dr; cc -= dc; }
-      if (inb(g, rr, cc) && g.board[rr][cc] === null) open++;
-      score += cnt * cnt + open;
-    }
-    return score;
-  }
-  // 틱택토 완전탐색(네가맥스)
-  function ttWin(g, mark) { for (let r = 0; r < g.rows; r++) for (let c = 0; c < g.cols; c++) if (g.board[r][c] === mark && winLineAt(g, r, c, mark)) return true; return false; }
-  function ttNegamax(g, player) {
-    if (ttWin(g, 1 - player)) return { score: -10 };  // 직전 상대가 이겼으면 패
-    const mv = legalMoves(g);
-    if (mv.length === 0) return { score: 0 };
-    let best = { score: -99, move: mv[0] };
-    for (const m of mv) {
-      g.board[m.r][m.c] = player;
-      const res = ttNegamax(g, 1 - player);
-      g.board[m.r][m.c] = null;
-      const sc = -res.score;
-      if (sc > best.score) best = { score: sc, move: m };
-    }
-    return best;
-  }
-  function aiMove() {
-    const me = AI_INDEX, foe = 1 - AI_INDEX;
-    if (G.variant === "tictactoe") return ttNegamax(G, me).move;
-    const mv = legalMoves(G);
-    for (const m of mv) if (wouldWin(G, m.r, m.c, me)) return m;      // 이길 수 있으면
-    for (const m of mv) if (wouldWin(G, m.r, m.c, foe)) return m;     // 상대 승리 차단
-    let best = null, bestScore = -1;
-    const cc = (G.cols - 1) / 2, cr = (G.rows - 1) / 2;
-    for (const m of mv) {
-      const s = lineScore(G, m.r, m.c, me) + lineScore(G, m.r, m.c, foe) * 0.95
-        - (Math.abs(m.c - cc) + Math.abs(m.r - cr)) * 0.15;
-      if (s > bestScore) { bestScore = s; best = m; }
-    }
-    return best || mv[0];
+  // ===== AI(솔로) — 사람=0, 1..count-1 = 컴퓨터 =====
+  const AI_DELAY = 850;
+  function aiScore(c) { if (c.c === "w") return -1; if (["skip", "rev", "d2"].includes(c.v)) return 12; return typeof c.v === "number" ? c.v : 0; }
+  function chooseColor(hand) { const cnt = { r: 0, y: 0, g: 0, b: 0 }; hand.forEach((c) => { if (c.c !== "w") cnt[c.c]++; }); let best = "r", bv = -1; for (const k of COLORS) if (cnt[k] > bv) { bv = cnt[k]; best = k; } return best; }
+  function aiTurn(i) {
+    const hand = G.players[i].hand;
+    const plays = hand.map((c, idx) => ({ c, idx })).filter((o) => playable(o.c, G.top, G.color));
+    if (plays.length) { plays.sort((a, b) => aiScore(b.c) - aiScore(a.c)); const pk = plays[0]; applyAction({ from: i, action: "play", idx: pk.idx, color: pk.c.c === "w" ? chooseColor(hand) : null }); }
+    else if (!G.drawnThisTurn) applyAction({ from: i, action: "draw" });
+    else applyAction({ from: i, action: "pass" });
   }
   function maybeAI() {
-    if (!soloMode || !G || G.winner != null || G.draw || G.turn !== AI_INDEX) return;
+    if (!soloMode || !G || G.winner != null || G.turn === 0) return;
     if (aiTimer) clearTimeout(aiTimer);
-    aiTimer = setTimeout(() => {
-      aiTimer = null;
-      if (!soloMode || !G || G.winner != null || G.draw || G.turn !== AI_INDEX) return;
-      const m = aiMove();
-      if (m) applyAction({ from: AI_INDEX, r: m.r, c: m.c });
-    }, 520);
+    aiTimer = setTimeout(() => { aiTimer = null; if (soloMode && G && G.winner == null && G.turn !== 0) aiTurn(G.turn); }, AI_DELAY);
   }
 
   // ===== 뷰 =====
   function viewFor(pi) {
     return {
-      online: !soloMode, variant: G.variant, cols: G.cols, rows: G.rows, need: G.need, gravity: G.gravity,
-      board: G.board.map((row) => row.slice()), turn: G.turn, myIndex: pi, myTurn: G.turn === pi && G.winner == null && !G.draw,
-      winner: G.winner, winLine: G.winLine, draw: G.draw, last: G.last,
-      names: [hostNames[0] || null, hostNames[1] || null],
+      online: !soloMode, count: G.count, turn: G.turn, dir: G.dir, myIndex: pi,
+      myTurn: G.turn === pi && G.winner == null,
+      top: G.top, color: G.color, deckLeft: G.deck.length, winner: G.winner,
+      drawnThisTurn: G.turn === pi ? G.drawnThisTurn : false,
+      myHand: G.players[pi].hand.map((c) => ({ c: c.c, v: c.v })),
+      players: G.players.map((p, i) => ({ idx: i, count: p.hand.length })),
+      names: Array.from({ length: G.count }, (_, i) => hostNames[i] || null),
+      log: G.log.slice(-4),
     };
   }
   function broadcast() {
     if (intentionalNav) return;
-    if (!soloMode) send({ type: "view", view: viewFor(1), to: 1 });
+    if (!soloMode) for (let i = 1; i < G.count; i++) send({ type: "view", view: viewFor(i), to: i });
     renderView(viewFor(0));
     saveState();
     if (!soloMode) touchSession();
@@ -358,75 +387,71 @@
   }
 
   // ===== 렌더 =====
-  function nameOf(v, idx) {
-    if (soloMode) return idx === AI_INDEX ? "컴퓨터" : "나";
-    const nm = v.names && v.names[idx];
-    if (idx === v.myIndex) return nm || "나";
-    return nm || "상대";
+  function nm(idx) { if (soloMode) return idx === 0 ? "나" : "컴퓨터" + idx; return hostNames[idx] || (idx === 0 ? "방장" : "P" + (idx + 1)); }
+  function nmv(v, idx) { if (soloMode) return idx === v.myIndex ? "나" : "컴퓨터" + idx; const n = v.names[idx]; if (idx === v.myIndex) return n || "나"; return n || ("P" + (idx + 1)); }
+  function cardEl(card) {
+    const d = document.createElement("div"); d.className = "ucard " + card.c;
+    if (typeof card.v === "number") d.textContent = card.v;
+    else { const s = document.createElement("span"); s.className = "sym"; s.textContent = SYM[card.v]; d.appendChild(s); }
+    return d;
   }
   function renderView(v) {
-    if (!v || !Array.isArray(v.board)) return;   // 다른 게임 잔여 view 방어
+    if (!v || !Array.isArray(v.myHand) || !v.top) return;   // 잔여 view 방어
     lastView = v;
     if (screen !== SCREEN.PLAYING && screen !== SCREEN.OVER) setScreen(SCREEN.PLAYING);
-    $("metaVariant").textContent = VARIANTS[v.variant].label;
-    $("metaMode").textContent = v.online ? "온라인 2인" : "혼자";
+    $("metaCount").textContent = v.count + "인";
+    $("metaMode").textContent = v.online ? "온라인 " + v.count + "인" : "혼자";
     $("gameCodeWrap").classList.toggle("hidden", !(v.online && myCode));
     if (v.online && myCode) $("metaCode").textContent = myCode;
+    $("deckLeft").textContent = v.deckLeft;
+    $("colorDot").style.background = colorCss(v.color);
+    const tc = $("topCard"); tc.innerHTML = ""; tc.appendChild(cardEl(v.top));
+
+    // 상대들
+    const opps = $("opps"); opps.innerHTML = "";
+    for (let i = 0; i < v.count; i++) {
+      if (i === v.myIndex) continue;
+      const el = document.createElement("div"); el.className = "opp" + (v.turn === i ? " active" : "");
+      const cnt = v.players[i].count;
+      el.innerHTML = `<div class="onm">${escapeHtml(nmv(v, i))}</div><div class="ocnt"><span class="oc">${cnt}</span>장 ${cnt === 1 ? '<span class="uno">원카드!</span>' : ""}</div>`;
+      opps.appendChild(el);
+    }
+    $("dirLabel").textContent = v.count > 2 ? (v.dir === 1 ? "진행 방향 →" : "← 진행 방향") : "";
 
     renderTurnBar(v);
-    renderBoard(v);
+    $("logBox").innerHTML = (v.log || []).map((l) => `<div>${escapeHtml(l)}</div>`).join("");
 
-    if (v.winner != null || v.draw) { showOver(v); }
+    // 내 손패
+    const hand = $("hand"); hand.innerHTML = "";
+    v.myHand.forEach((card, idx) => {
+      const el = cardEl(card);
+      const canPlay = v.myTurn && playable(card, v.top, v.color);
+      if (v.myTurn) { if (canPlay) el.classList.add("playable"); else el.classList.add("dim"); }
+      el.addEventListener("click", () => onCardClick(v, idx, card));
+      hand.appendChild(el);
+    });
+    $("myLabel").textContent = `내 손패 (${v.myHand.length}장)` + (v.myHand.length === 1 ? " · 원카드!" : "");
+    $("drawBtn").disabled = !(v.myTurn && !v.drawnThisTurn);
+    $("passBtn").disabled = !(v.myTurn && v.drawnThisTurn);
+
+    if (v.winner != null) showOver(v);
     else if (screen === SCREEN.OVER) setScreen(SCREEN.PLAYING);
   }
-  function discHtml(p) { return `<span class="disc p${p}"></span>`; }
+  function colorCss(c) { return c === "r" ? "var(--cr)" : c === "y" ? "var(--cy)" : c === "g" ? "var(--cg)" : c === "b" ? "var(--cb)" : "#888"; }
   function renderTurnBar(v) {
-    const bar = $("turnBar");
-    if (v.winner != null || v.draw) { bar.innerHTML = ""; return; }
-    const who = v.myTurn ? "내 차례" : `${nameOf(v, v.turn)} 차례`;
-    bar.innerHTML = `<span class="chip">${discHtml(v.turn)} ${who}</span>`;
+    if (v.winner != null) { $("turnBar").textContent = ""; return; }
+    $("turnBar").textContent = v.myTurn ? "내 차례 — 낼 카드를 고르거나 뽑으세요" : `${nmv(v, v.turn)} 차례…`;
   }
-  function renderBoard(v) {
-    const grid = $("boardGrid");
-    grid.className = v.variant === "connect4" ? "connect4" : (v.variant === "gomoku" ? "v-gomoku" : "");
-    grid.style.gridTemplateColumns = `repeat(${v.cols}, 1fr)`;
-    grid.style.maxWidth = v.variant === "gomoku" ? "460px" : (v.variant === "connect4" ? "360px" : "280px");
-    const winSet = new Set((v.winLine || []).map(([r, c]) => r + "," + c));
-    const myTurn = v.myTurn;
-    grid.innerHTML = "";
-    for (let r = 0; r < v.rows; r++) {
-      for (let c = 0; c < v.cols; c++) {
-        const cell = document.createElement("button");
-        cell.className = "cell";
-        const val = v.board[r][c];
-        if (val != null) cell.innerHTML = `<span class="stone p${val}"></span>`;
-        if (v.last && v.last[0] === r && v.last[1] === c) cell.classList.add("last");
-        if (winSet.has(r + "," + c)) cell.classList.add("win");
-        // 착수 가능 여부
-        let playable = false;
-        if (myTurn && v.winner == null && !v.draw) {
-          if (v.gravity) playable = (v.board[0][c] === null);  // 열에 자리 있으면
-          else playable = (val === null);
-        }
-        if (playable) cell.classList.add("playable"); else cell.disabled = true;
-        cell.addEventListener("click", () => onCellClick(v, r, c));
-        grid.appendChild(cell);
-      }
-    }
-  }
-  function onCellClick(v, r, c) {
-    if (!v.myTurn || v.winner != null || v.draw) return;
-    if (v.gravity) { if (v.board[0][c] !== null) return; dispatch({ c }); }
-    else { if (v.board[r][c] !== null) return; dispatch({ r, c }); }
+  function onCardClick(v, idx, card) {
+    if (!v.myTurn || !playable(card, v.top, v.color)) return;
+    if (card.c === "w") { pendingWild = idx; $("colorPick").classList.remove("hidden"); return; }
+    dispatch({ action: "play", idx });
   }
 
   function showOver(v) {
-    if (v.draw) { $("overTitle").textContent = "무승부"; $("overSub").textContent = "판이 가득 찼습니다."; }
-    else {
-      const iWon = v.winner === v.myIndex;
-      if (soloMode) { $("overTitle").textContent = iWon ? "🎉 승리!" : "😢 패배"; $("overSub").textContent = iWon ? "컴퓨터를 이겼습니다!" : "컴퓨터가 이겼습니다."; }
-      else { $("overTitle").textContent = iWon ? "🎉 승리!" : "😢 패배"; $("overSub").innerHTML = `${discHtml(v.winner)} ${nameOf(v, v.winner)} 승리!`; }
-    }
+    const iWon = v.winner === v.myIndex;
+    $("overTitle").textContent = iWon ? "🎉 승리!" : "게임 종료";
+    $("overSub").textContent = iWon ? "손패를 가장 먼저 다 냈습니다!" : `${nmv(v, v.winner)}님이 손패를 다 냈습니다.`;
     $("gamePicker").classList.add("hidden");
     $("otherGameBtn").classList.toggle("hidden", !(isHost && isOnlineRoom()));
     setScreen(SCREEN.OVER);
@@ -449,21 +474,9 @@
   function showMenuWithError(msg) { $("menuErr").textContent = msg || ""; onlineMode = false; setScreen(SCREEN.MENU); }
 
   // ===== 솔로 =====
-  function startSolo() {
-    soloMode = true; isHost = true; myIndex = 0; myCode = myToken = null; onlineMode = false;
-    hostNames = {};
-    G = newGameState(optVariant, 0);   // 사람 선공
-    setScreen(SCREEN.PLAYING);
-    broadcast();
-  }
-
-  // ===== 온라인 엔진 =====
-  function newOnlineGame() {
-    // 이전 승자가 선공(없으면 0)
-    const starter = (G && (G.winner != null)) ? G.winner : 0;
-    G = newGameState(optVariant, starter);
-    broadcast();
-  }
+  function startSolo() { soloMode = true; isHost = true; myIndex = 0; myCode = myToken = null; onlineMode = false; hostNames = {}; newGame(optCount, 0); setScreen(SCREEN.PLAYING); broadcast(); }
+  // ===== 온라인 =====
+  function newOnlineGame() { const starter = (G && G.winner != null) ? G.winner : 0; newGame(G ? G.count : optCount, starter); broadcast(); }
 
   // ===== 네트워크 =====
   function send(obj) { if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj)); }
@@ -479,17 +492,14 @@
         clearRoomHandoff();
         handoffMode = true; handoffCap = ho.cap || 2; onlineMode = true;
         isHost = (ho.index === 0); myIndex = ho.index; myCode = ho.code; myToken = ho.token;
-        $("lobbyTitle").textContent = "방 유지 — 상대 대기 중…"; $("lobbyCodeWrap").style.display = "none";
-        setScreen(SCREEN.LOBBY);
-        send({ type: "rejoin", code: ho.code, index: ho.index, token: ho.token });
-        return;
+        $("lobbyTitle").textContent = "방 유지 — 다른 플레이어 대기 중…"; $("lobbyCodeWrap").style.display = "none";
+        setScreen(SCREEN.LOBBY); send({ type: "rejoin", code: ho.code, index: ho.index, token: ho.token }); return;
       }
       const s = getSession();
       if (s && s.code && s.token != null && sessionFresh(s)) {
         onlineMode = true; isHost = s.isHost; myIndex = s.index; myCode = s.code; myToken = s.token;
         $("lobbyTitle").textContent = "이전 게임에 재접속 중…"; $("lobbyCodeWrap").style.display = "none";
-        setScreen(SCREEN.LOBBY);
-        send({ type: "rejoin", code: s.code, index: s.index, token: s.token });
+        setScreen(SCREEN.LOBBY); send({ type: "rejoin", code: s.code, index: s.index, token: s.token });
       }
     });
     ws.addEventListener("close", () => { $("conn").innerHTML = "<span class='bad'>● 서버 연결 끊김</span>"; if (onlineMode && (screen === SCREEN.PLAYING || screen === SCREEN.LOBBY)) showMenuWithError("서버 연결이 끊겼습니다."); });
@@ -509,7 +519,7 @@
         onlineMode = true; myIndex = m.index; myCode = m.code; myToken = m.token; isHost = (m.index === 0); saveSession(); restoreConn();
         if (handoffMode) {
           handoffCap = m.capacity || 2;
-          if (isHost) { $("lobbyTitle").textContent = "방 유지 — 상대 대기 중…"; setScreen(SCREEN.LOBBY); maybeStartHandoff(m.count); }
+          if (isHost) { $("lobbyTitle").textContent = "방 유지 — 다른 플레이어 대기 중…"; setScreen(SCREEN.LOBBY); maybeStartHandoff(m.count); }
           else { $("lobbyTitle").textContent = "방 유지됨 — 방장이 곧 새 게임을 시작합니다…"; setScreen(SCREEN.LOBBY); }
           sendNick(); break;
         }
@@ -541,16 +551,14 @@
   window.addEventListener("beforeunload", (e) => { if (intentionalNav) return; if (onlineMode && (screen === SCREEN.PLAYING || screen === SCREEN.LOBBY)) { e.preventDefault(); e.returnValue = ""; } });
 
   // ===== 메뉴/버튼 =====
-  function updateVariantDesc() { $("variantDesc").textContent = VARIANTS[optVariant].desc; }
   function initSeg(id, cb) { $(id).addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; [...$(id).children].forEach((c) => c.classList.remove("on")); b.classList.add("on"); cb(b.getAttribute("data-v")); }); }
-  initSeg("segVariant", (v) => { optVariant = v; updateVariantDesc(); });
+  initSeg("segCount", (v) => { optCount = +v; });
   initSeg("segMode", (v) => { optMode = v; $("startSoloBtn").classList.toggle("hidden", v !== "solo"); $("onlineBox").classList.toggle("hidden", v !== "online"); if (v === "online" && (!ws || ws.readyState !== WebSocket.OPEN)) connect(); });
-  updateVariantDesc();
 
   $("startSoloBtn").addEventListener("click", startSolo);
   $("nickInput").value = myNick;
   $("nickInput").addEventListener("input", () => { myNick = $("nickInput").value.trim().slice(0, 8); try { localStorage.setItem("bg_nick", myNick); } catch {} });
-  $("createBtn").addEventListener("click", () => { $("menuErr").textContent = ""; if (!ws || ws.readyState !== WebSocket.OPEN) { $("menuErr").textContent = "서버 연결 중… 잠시 후 다시 시도하세요."; connect(); return; } send({ type: "create", capacity: 2, reconnect: true }); });
+  $("createBtn").addEventListener("click", () => { $("menuErr").textContent = ""; if (!ws || ws.readyState !== WebSocket.OPEN) { $("menuErr").textContent = "서버 연결 중… 잠시 후 다시 시도하세요."; connect(); return; } send({ type: "create", capacity: optCount, reconnect: true }); });
   $("joinBtn").addEventListener("click", () => {
     const code = $("codeInput").value.trim().toUpperCase();
     if (code.length !== 4) { $("menuErr").textContent = "4자리 코드를 입력하세요."; return; }
@@ -564,9 +572,16 @@
   $("copyBtn").addEventListener("click", () => { navigator.clipboard?.writeText($("roomCode").textContent).then(() => { const b = $("copyBtn"), o = b.textContent; b.textContent = "복사됨!"; setTimeout(() => b.textContent = o, 1200); }).catch(() => {}); });
   $("gameCodeWrap").addEventListener("click", () => { if (myCode) navigator.clipboard?.writeText(myCode).then(() => toast("코드 복사됨: " + myCode)).catch(() => {}); });
   $("cancelBtn").addEventListener("click", () => { clearSession(); if (ws) { try { ws.close(); } catch {} } onlineMode = false; isHost = false; myIndex = myCode = myToken = null; setScreen(SCREEN.MENU); connect(); });
-  $("againBtn").addEventListener("click", () => { if (soloMode) { startSolo(); } else if (onlineMode) { if (isHost) newOnlineGame(); else send({ type: "restart", to: 0 }); } });
+  $("drawBtn").addEventListener("click", () => { if (!$("drawBtn").disabled) dispatch({ action: "draw" }); });
+  $("passBtn").addEventListener("click", () => { if (!$("passBtn").disabled) dispatch({ action: "pass" }); });
+  $("colorPick").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-c]");
+    if (b) { const col = b.getAttribute("data-c"); if (pendingWild != null) { const idx = pendingWild; pendingWild = null; $("colorPick").classList.add("hidden"); dispatch({ action: "play", idx, color: col }); } return; }
+    if (e.target === $("colorPick")) { pendingWild = null; $("colorPick").classList.add("hidden"); }
+  });
+  $("againBtn").addEventListener("click", () => { if (soloMode) startSolo(); else if (onlineMode) { if (isHost) newOnlineGame(); else send({ type: "restart", to: 0 }); } });
 
-  // ===== 채팅/이모지 =====
+  // ===== 채팅 =====
   const EMOJIS = ["👍", "😂", "😮", "😢", "🎉", "❤️"];
   let chatUnread = 0;
   function escapeHtml(s) { return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
@@ -584,8 +599,8 @@
     $("chatInput").addEventListener("keydown", (e) => { if (e.key === "Enter") { sendChat($("chatInput").value); $("chatInput").value = ""; } });
   })();
 
-  // ===== 방 유지(게임 간 이동) =====
-  const THIS_GAME = "grid";
+  // ===== 방 유지 =====
+  const THIS_GAME = "oncard";
   const ROOM_GAMES = [
     { key: "davinci",    file: "davinci.html",    label: "🔎 다빈치코드", min: 2, max: 4 },
     { key: "loveletter", file: "loveletter.html", label: "💌 러브레터",   min: 2, max: 4 },
@@ -594,14 +609,14 @@
     { key: "grid",       file: "gridgames.html",  label: "🔷 격자 대전",  min: 2, max: 2 },
   ];
   const ROOM_HANDOFF_MS = 90 * 1000;
-  function roomCap() { return 2; }
+  function roomCap() { return (G && G.count) || handoffCap || optCount || 2; }
   function isOnlineRoom() { return onlineMode && !!myCode && myIndex != null && myToken != null; }
   function saveRoomHandoff() { if (!isOnlineRoom()) return; try { localStorage.setItem("bg_room", JSON.stringify({ code: myCode, index: myIndex, token: myToken, cap: roomCap(), ts: Date.now() })); } catch {} }
   function getRoomHandoff() { try { const r = JSON.parse(localStorage.getItem("bg_room") || "null"); if (r && r.code && r.token != null && (Date.now() - r.ts) < ROOM_HANDOFF_MS) return r; } catch {} return null; }
   function clearRoomHandoff() { try { localStorage.removeItem("bg_room"); } catch {} }
   function handoffUrl(file) { const cur = new URLSearchParams(location.search); const q = new URLSearchParams(); q.set("room", "1"); if (cur.get("server")) q.set("server", cur.get("server")); if (cur.has("debug")) q.set("debug", cur.get("debug") || "1"); return file + "?" + q.toString(); }
   function gotoGame(key) { const g = ROOM_GAMES.find((x) => x.key === key); if (!g) return; if (missingPeers.size > 0) { toast("접속이 끊긴 사람이 있어 방을 유지할 수 없어요. 새 방을 만들어 주세요."); return; } saveRoomHandoff(); send({ type: "goto", game: key }); intentionalNav = true; setTimeout(() => { location.href = handoffUrl(g.file); }, 150); }
-  function maybeStartHandoff(count) { if (!handoffMode || !isHost) return; if (count >= (handoffCap || 2)) { handoffMode = false; newOnlineGame(); sendNick(); } }
+  function maybeStartHandoff(count) { if (!handoffMode || !isHost) return; if (count >= (handoffCap || 2)) { handoffMode = false; optCount = handoffCap || optCount; newOnlineGame(); sendNick(); } }
   function openGamePicker() {
     if (missingPeers.size > 0) { toast("접속이 끊긴 사람이 있어 방을 유지한 채 다른 게임을 시작할 수 없어요. 재접속을 기다리거나 새 방을 만들어 주세요."); return; }
     const cap = roomCap();
@@ -619,8 +634,8 @@
   connect();
 
   if (location.search.includes("debug")) {
-    window.__grid = () => ({ screen, soloMode, onlineMode, isHost, myIndex, myCode, G, lastView, handoffMode, intentionalNav, missing: missingPeers.size });
-    window.__gact = (a) => dispatch(a);
+    window.__oc = () => ({ screen, soloMode, onlineMode, isHost, myIndex, myCode, G, lastView, handoffMode, intentionalNav, missing: missingPeers.size });
+    window.__ocact = (a) => dispatch(a);
     window.__goto = (k) => gotoGame(k);
     window.__st = () => ({ screen, isHost, myIndex, myCode, handoffMode, intentionalNav });
   }
