@@ -259,7 +259,9 @@
   #chatToggle:hover, #chatToggle:focus { opacity: 1; }
   #chatBadge { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; border-radius: 9px; background: #a6402f; color: #fff; font-size: 11px; line-height: 18px; padding: 0 4px; }
   #chatPanel { position: fixed; left: 12px; bottom: calc(70px + env(safe-area-inset-bottom)); z-index: 46; width: min(300px, calc(100vw - 24px)); background: rgba(20,14,7,0.98); border: 1px solid var(--warm-border); border-radius: 12px; padding: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 8px; }
-  #chatFeed { max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+  #chatHead { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--muted); }
+  #chatClose { background: rgba(166,64,47,0.85); border: 1px solid var(--warm-border); color: #fff; font-size: 12px; font-weight: 700; border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+  #chatFeed { max-height: 160px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
   .cmsg { background: rgba(13,10,5,0.5); border-radius: 6px; padding: 4px 7px; line-height: 1.4; word-break: break-word; }
   .cmsg.mine { background: rgba(201,162,39,0.14); }
   .cmsg b { color: var(--gold-soft); margin-right: 5px; }
@@ -270,6 +272,8 @@
   #chatSend { font-family: var(--serif); border: 1px solid var(--gold); border-radius: 8px; background: rgba(201,162,39,0.14); color: var(--gold-bright); padding: 0 12px; cursor: pointer; }
   /* 숫자패드(하단 시트)가 열리면 채팅 버튼이 겹치지 않도록 숨긴다 */
   body.numpad-open #chatToggle, body.numpad-open #chatPanel { display: none; }
+  /* 채팅 패널이 열리면 아래 여백을 확보해 내 손패를 패널 위로 스크롤해 볼 수 있게 한다 */
+  body.chat-open #stage { padding-bottom: 340px; }
   /* 결과(승/패)는 중앙 팝업(모달) */
   #over {
     position: fixed; inset: 0; z-index: 50;
@@ -623,6 +627,7 @@
 
   <button id="chatToggle" class="hidden" title="채팅">💬<span id="chatBadge" class="hidden"></span></button>
   <div id="chatPanel" class="hidden">
+    <div id="chatHead"><span>채팅</span><button id="chatClose" title="닫기">✕ 닫기</button></div>
     <div id="chatFeed"></div>
     <div id="chatEmojis"></div>
     <div id="chatInputRow"><input id="chatInput" maxlength="60" placeholder="메시지…" autocomplete="off" /><button id="chatSend">보내기</button></div>
@@ -1564,7 +1569,7 @@
     // 채팅은 온라인 방(솔로 아님)에서 플레이/결과 화면일 때만 노출
     const inGame = !soloMode && (s === SCREEN.PLAYING || s === SCREEN.OVER);
     $("chatToggle").classList.toggle("hidden", !inGame);
-    if (!inGame) $("chatPanel").classList.add("hidden");
+    if (!inGame) { $("chatPanel").classList.add("hidden"); document.body.classList.remove("chat-open"); }
     updateHistoryGuard(s);  // 게임/로비면 뒤로가기 잠금 arm, 아니면 해제
   }
   function showMenuWithError(text) { $("menuErr").textContent = text || ""; setScreen(SCREEN.MENU); }
@@ -1801,7 +1806,13 @@
   function sendChat(text) { text = String(text).trim().slice(0, 60); if (!text || !myCode) return; send({ type: "chat", name: myNick, text }); addChatMsg(myNick || "나", text, true); }
   (function initChat() {
     const er = $("chatEmojis"); EMOJIS.forEach((e) => { const b = document.createElement("button"); b.className = "chatEmoji"; b.textContent = e; b.addEventListener("click", () => sendChat(e)); er.appendChild(b); });
-    $("chatToggle").addEventListener("click", () => { const p = $("chatPanel"); const willOpen = p.classList.contains("hidden"); p.classList.toggle("hidden"); if (willOpen) { chatUnread = 0; $("chatBadge").classList.add("hidden"); $("chatInput").focus(); } });
+    function setChat(open) {
+      $("chatPanel").classList.toggle("hidden", !open);
+      document.body.classList.toggle("chat-open", open);
+      if (open) { chatUnread = 0; $("chatBadge").classList.add("hidden"); const ms = $("mySide"); if (ms) ms.scrollIntoView({ block: "start", behavior: "smooth" }); }
+    }
+    $("chatToggle").addEventListener("click", () => setChat($("chatPanel").classList.contains("hidden")));
+    $("chatClose").addEventListener("click", () => setChat(false));
     $("chatSend").addEventListener("click", () => { sendChat($("chatInput").value); $("chatInput").value = ""; });
     $("chatInput").addEventListener("keydown", (e) => { if (e.key === "Enter") { sendChat($("chatInput").value); $("chatInput").value = ""; } });
   })();
