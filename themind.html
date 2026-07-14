@@ -155,7 +155,7 @@
         <div id="myCards"></div>
         <button id="playBtn">▲ 가장 낮은 카드 내기</button>
       </div>
-      <div class="backHome"><a href="./index.html">🎲 다른 게임 (메인으로)</a></div>
+      <div class="backHome"><button id="toMenuBtn" style="background:none;border:none;color:var(--gold-bright);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">↩ 게임 메뉴</button> · <a href="./index.html">🎲 메인</a></div>
     </div>
   </div>
 
@@ -399,6 +399,7 @@
   $("copyBtn").addEventListener("click", () => { navigator.clipboard?.writeText($("roomCode").textContent).then(() => { const b = $("copyBtn"), o = b.textContent; b.textContent = "복사됨!"; setTimeout(() => b.textContent = o, 1200); }).catch(() => {}); });
   $("gameCodeWrap").addEventListener("click", () => { if (myCode) navigator.clipboard?.writeText(myCode).then(() => toast("코드 복사됨: " + myCode)).catch(() => {}); });
   $("cancelBtn").addEventListener("click", () => { clearSession(); if (ws) { try { ws.close(); } catch {} } onlineMode = false; isHost = false; myIndex = myCode = myToken = null; setScreen(SCREEN.MENU); connect(); });
+  $("toMenuBtn").addEventListener("click", () => { clearSession(); intentionalNav = true; const cur = new URLSearchParams(location.search); const q = new URLSearchParams(); if (cur.get("server")) q.set("server", cur.get("server")); if (cur.has("debug")) q.set("debug", cur.get("debug") || "1"); location.href = location.pathname + (q.toString() ? "?" + q.toString() : ""); });
   $("playBtn").addEventListener("click", () => { if (!$("playBtn").disabled) dispatch({ action: "play" }); });
   $("againBtn").addEventListener("click", () => { if (isHost) newOnlineGame(); else send({ type: "restart", to: 0 }); });
 

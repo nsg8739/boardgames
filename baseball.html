@@ -186,6 +186,7 @@
       <div class="entry" id="entry"></div>
       <div class="pad" id="pad"></div>
       <div class="actions"><button id="clearBtn">지우기</button><button id="submitBtn" disabled>확인 ▶</button></div>
+      <div class="backHome" style="text-align:center;margin-top:14px;"><button id="toMenuBtn" style="background:none;border:none;color:var(--gold-bright);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">↩ 게임 메뉴</button> · <a href="./index.html" style="color:var(--gold-bright);font-size:13px;font-weight:700;text-decoration:none;">🎲 메인</a></div>
     </div>
   </div>
 
@@ -546,6 +547,7 @@
   $("nickInput").addEventListener("input", () => { myNick = $("nickInput").value.trim().slice(0, 8); try { localStorage.setItem("bg_nick", myNick); } catch {} });
   $("copyBtn").addEventListener("click", () => { navigator.clipboard?.writeText($("roomCode").textContent).then(() => { const b = $("copyBtn"), o = b.textContent; b.textContent = "복사됨!"; setTimeout(() => (b.textContent = o), 1200); }).catch(() => {}); });
   $("cancelBtn").addEventListener("click", () => { clearSession(); if (ws) { try { ws.close(); } catch {} } onlineMode = false; isHost = false; myIndex = myCode = myToken = null; setScreen(SCREEN.MENU); connect(); });
+  $("toMenuBtn").addEventListener("click", () => { clearSession(); intentionalNav = true; const cur = new URLSearchParams(location.search); const q = new URLSearchParams(); if (cur.get("server")) q.set("server", cur.get("server")); if (cur.has("debug")) q.set("debug", cur.get("debug") || "1"); location.href = location.pathname + (q.toString() ? "?" + q.toString() : ""); });
   $("codeWrap").addEventListener("click", () => { if (myCode) navigator.clipboard?.writeText(myCode).then(() => { const b = $("codeLabel"), o = b.textContent; b.textContent = "복사됨"; setTimeout(() => (b.textContent = myCode), 1000); }).catch(() => {}); });
 
   $("clearBtn").addEventListener("click", () => { if (!canInput()) return; entry = []; renderPad(); renderEntry(); });
