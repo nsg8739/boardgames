@@ -155,6 +155,7 @@
         <span id="metaMode">혼자</span>
       </div>
       <div id="statusBar"></div>
+      <div id="eventMsg" style="text-align:center; font-size:14px; font-weight:700; min-height:20px; margin-bottom:6px;"></div>
 
       <!-- 배치 단계 -->
       <div id="setupBox" class="hidden">
@@ -353,6 +354,19 @@
     $("setupBox").classList.toggle("hidden", !setup);
     $("battleBox").classList.toggle("hidden", setup);
 
+    // 포격 결과/침몰 안내
+    let em = "", emc = "var(--parchment)";
+    if (!setup && v.last) {
+      const iShot = v.last.by === v.myIndex;
+      if (v.last.result === "hit") {
+        if (v.last.sunk) {
+          if (iShot) { em = `🔥 상대의 ${v.last.shipName}이(가) 침몰되었습니다!`; emc = "var(--gold-soft)"; }
+          else { em = `💥 내 ${v.last.shipName}이(가) 침몰되었습니다.`; emc = "var(--hit)"; }
+        } else { em = iShot ? "🎯 명중!" : "💥 피격!"; emc = iShot ? "var(--gold-soft)" : "var(--hit)"; }
+      } else { em = iShot ? "…빗나감" : "상대 포격이 빗나갔습니다"; emc = "var(--muted)"; }
+    }
+    $("eventMsg").textContent = em; $("eventMsg").style.color = emc;
+
     if (setup) {
       $("statusBar").textContent = v.myReady ? "상대가 배치를 마치길 기다리는 중…" : "함대를 배치하세요";
       renderGrid($("setupGrid"), v.myBoard, "mine", null);
@@ -388,7 +402,7 @@
   function showOver(v) {
     const iWon = v.winner === v.myIndex;
     $("overTitle").textContent = iWon ? "🎉 승리!" : "😢 패배";
-    $("overSub").textContent = iWon ? "상대 함대를 모두 침몰시켰습니다!" : `${nmv(v, v.winner)}님이 내 함대를 모두 침몰시켰습니다.`;
+    $("overSub").textContent = iWon ? "상대 전 함대가 침몰하여 승리하였습니다." : "전 함대가 침몰하여 패배하였습니다.";
     $("gamePicker").classList.add("hidden");
     $("otherGameBtn").classList.toggle("hidden", !(isHost && isOnlineRoom()));
     setScreen(SCREEN.OVER);
