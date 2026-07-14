@@ -101,6 +101,7 @@
   #chatToggle:hover, #chatToggle:focus { opacity: 1; }
   #chatBadge { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; border-radius: 9px; background: #a6402f; color: #fff; font-size: 11px; line-height: 18px; padding: 0 4px; }
   #chatPanel { position: fixed; left: 12px; bottom: calc(70px + env(safe-area-inset-bottom)); z-index: 46; width: min(300px, calc(100vw - 24px)); background: rgba(20,14,7,0.98); border: 1px solid var(--warm-border); border-radius: 12px; padding: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 8px; }
+  body:has(#chatPanel:not(.hidden)) { padding-bottom: 340px; }
   #chatHead { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--muted); }
   #chatClose { background: rgba(166,64,47,0.85); border: 1px solid var(--warm-border); color: #fff; font-size: 12px; font-weight: 700; border-radius: 6px; padding: 4px 10px; cursor: pointer; }
   #chatFeed { max-height: 160px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }

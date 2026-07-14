@@ -1790,7 +1790,9 @@
   // (3) bfcache 복원(뒤로/앞으로 이동으로 얼어붙었던 페이지가 되살아난 경우): 소켓이 죽어 있으면
   //     재접속 → open 시 세션이 있으면 자동 rejoin.
   window.addEventListener("pageshow", (e) => {
-    if (e.persisted && (!ws || ws.readyState > WebSocket.OPEN)) connect();
+    // 솔로(vs 컴퓨터)는 서버가 필요 없다. bfcache 복원 시 재접속하면 진행 중이던 솔로 게임이
+    // 메뉴로 초기화되므로, 온라인 세션(myToken 보유)일 때만 재연결한다.
+    if (e.persisted && !soloMode && myToken != null && (!ws || ws.readyState > WebSocket.OPEN)) connect();
   });
 
   // 간단 토스트(자동 사라짐)
@@ -1905,7 +1907,9 @@
 
   // ===== 시작 =====
   setScreen(SCREEN.MENU);
-  connect();
+  // 방 유지 이동(?room)이나 재접속할 최근 세션이 있을 때만 즉시 연결한다.
+  // 순수 솔로(vs 컴퓨터) 방문에선 불필요한 연결 시도와 "연결 실패" 배지를 피한다(온라인 선택 시 연결).
+  { const _room = new URLSearchParams(location.search).get("room"); const _s = getSession(); if (_room || (_s && sessionFresh(_s))) connect(); }
 })();
 </script>
 </body>

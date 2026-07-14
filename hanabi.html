@@ -77,6 +77,8 @@
   .hcard.r { background: var(--cr); } .hcard.y { background: var(--cy); } .hcard.g { background: var(--cg); } .hcard.b { background: var(--cb); } .hcard.w { background: var(--cw); color: #333; }
   .hcard.back { background: repeating-linear-gradient(45deg,#2a1d10,#2a1d10 5px,#3a2a16 5px,#3a2a16 10px); color: var(--gold-soft); }
   .hcard .hintbar { position: absolute; bottom: 2px; font-size: 8px; font-weight: 700; color: rgba(255,255,255,0.9); background: rgba(0,0,0,0.4); border-radius: 3px; padding: 0 2px; }
+  /* 색맹 보조: 배경색만으로 색을 구분하지 않도록, 색이 확정된 카드에 색 이니셜(빨/노/초/파/흰)을 표기 */
+  .hcard .csuit { position: absolute; top: 2px; left: 3px; font-size: 9px; font-weight: 800; color: #fff; background: rgba(0,0,0,0.42); border-radius: 3px; padding: 0 2px; line-height: 1.3; }
   .hcard.sel { outline: 3px solid var(--gold-soft); }
   .hcard.clickable { cursor: pointer; }
   .hcard.clickable:hover { transform: translateY(-3px); }
@@ -103,6 +105,7 @@
   #chatToggle:hover, #chatToggle:focus { opacity: 1; }
   #chatBadge { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; border-radius: 9px; background: #a6402f; color: #fff; font-size: 11px; line-height: 18px; padding: 0 4px; }
   #chatPanel { position: fixed; left: 12px; bottom: calc(70px + env(safe-area-inset-bottom)); z-index: 46; width: min(300px, calc(100vw - 24px)); background: rgba(20,14,7,0.98); border: 1px solid var(--warm-border); border-radius: 12px; padding: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 8px; }
+  body:has(#chatPanel:not(.hidden)) { padding-bottom: 340px; }
   #chatHead { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--muted); }
   #chatClose { background: rgba(166,64,47,0.85); border: 1px solid var(--warm-border); color: #fff; font-size: 12px; font-weight: 700; border-radius: 6px; padding: 4px 10px; cursor: pointer; }
   #chatFeed { max-height: 160px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
@@ -312,6 +315,9 @@
         } else {
           cardEl.className = "hcard " + cd.c; cardEl.textContent = cd.n;
         }
+        // 색맹 보조: 색이 확정된 카드(남의 카드=실색, 내 카드=색 힌트 받음)에 색 이니셜 표기
+        const knownColor = isMe ? cd.hc : cd.c;
+        if (knownColor) { const cs = document.createElement("div"); cs.className = "csuit"; cs.textContent = CNAME[knownColor][0]; cardEl.appendChild(cs); }
         // 힌트 표시(받은 정보)
         const hints = []; if (cd.hc) hints.push(CNAME[cd.hc][0]); if (cd.hn) hints.push(cd.hn);
         if (hints.length && !isMe) { const hb = document.createElement("div"); hb.className = "hintbar"; hb.textContent = hints.join(""); cardEl.appendChild(hb); }
