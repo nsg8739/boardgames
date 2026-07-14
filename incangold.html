@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>배틀십 — 보드게임 모음</title>
+<title>잉카의 황금 — 보드게임 모음</title>
 <meta property="og:type" content="website" /><meta property="og:locale" content="ko_KR" />
 <meta property="og:site_name" content="보드게임 모음" />
-<meta property="og:title" content="배틀십 — 함선 포격 추리" />
-<meta property="og:description" content="바다에 숨긴 상대 함선을 좌표 포격으로 침몰시키는 2인 추리 대전. 혼자(vs 컴퓨터)도, 온라인 2인도." />
-<meta property="og:url" content="https://nsg8739.github.io/boardgames/battleship.html" />
+<meta property="og:title" content="잉카의 황금 — 배짱 탐험 게임" />
+<meta property="og:description" content="유적을 탐험하며 전진할지 복귀할지! 같은 함정이 두 번 나오면 빈손. 혼자도, 온라인 2~4인도." />
+<meta property="og:url" content="https://nsg8739.github.io/boardgames/incangold.html" />
 <meta property="og:image" content="https://nsg8739.github.io/boardgames/og.png" />
 <meta property="og:image:width" content="1200" /><meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" /><meta name="twitter:image" content="https://nsg8739.github.io/boardgames/og.png" />
@@ -19,19 +19,19 @@
     --bg: #17110a; --card: rgba(26, 19, 11, 0.94); --warm-bg: #241a0e; --warm-bg2: #2e2211;
     --warm-border: #3a2c15; --gold: #c9a227; --gold-bright: #e6c04a; --gold-soft: #f2cc60; --gold-deep: #6b5417;
     --parchment: #e9dcc0; --muted: #9c8a63; --ink: #201607;
-    --sea: #163a5c; --sea2: #1d4a72; --ship: #8a97a3; --hit: #d1493a; --miss: #cfe3f2; --sunk: #7a2418;
     --serif: "Georgia", "Nanum Myeongjo", serif;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; min-height: 100%; width: 100%; background: var(--bg); color: var(--parchment); font-family: "Segoe UI", "Malgun Gothic", sans-serif; }
   body { display: flex; flex-direction: column; align-items: center; padding: 14px 12px 40px; }
-  .wrap { width: 100%; max-width: 480px; }
+  .wrap { width: 100%; max-width: 500px; }
   #conn { position: fixed; top: 8px; right: 10px; z-index: 20; font-size: 11px; color: var(--muted); background: rgba(13,10,5,0.72); border: 1px solid var(--warm-border); border-radius: 999px; padding: 4px 10px; max-width: 62vw; text-align: right; }
   #conn .ok { color: #7fd18f; } #conn .bad { color: #e08a7a; }
   .top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
   .home { text-decoration: none; color: var(--gold-bright); font-size: 13px; font-weight: 700; } .home:hover { color: var(--gold-soft); }
-  h1 { font-family: var(--serif); font-size: clamp(20px, 6vw, 26px); font-weight: 800; margin: 0; color: var(--gold-bright); text-align: center; letter-spacing: .5px; flex: 1; }
+  h1 { font-family: var(--serif); font-size: clamp(19px, 5.5vw, 24px); font-weight: 800; margin: 0; color: var(--gold-bright); text-align: center; letter-spacing: .5px; flex: 1; }
   .panel { background: var(--card); border: 1px solid var(--warm-border); border-radius: 12px; padding: 18px 16px; margin-top: 6px; display: flex; flex-direction: column; gap: 14px; }
+  .rules { font-size: 12px; color: var(--muted); line-height: 1.6; text-align: center; }
   .optRow { display: flex; flex-direction: column; gap: 6px; }
   .optLabel { font-size: 13px; color: var(--parchment); font-weight: 700; }
   .seg { display: flex; width: 100%; border: 1px solid var(--warm-border); border-radius: 8px; overflow: hidden; }
@@ -57,38 +57,43 @@
   #rosterInfo { color: var(--muted); font-size: 13px; }
   .hint { font-size: 12px; color: var(--muted); line-height: 1.6; }
 
-  .gameMeta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; padding: 8px 10px; border: 1px solid rgba(201,162,39,0.35); border-radius: 8px; background: rgba(13,10,5,0.46); font-family: var(--serif); font-size: 12px; margin-bottom: 8px; }
+  .gameMeta { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px; border: 1px solid rgba(201,162,39,0.35); border-radius: 8px; background: rgba(13,10,5,0.46); font-family: var(--serif); font-size: 13px; margin-bottom: 8px; }
   .gameMeta b { color: var(--gold-bright); font-weight: 800; }
-  #gameCodeWrap { cursor: pointer; white-space: nowrap; }
-  #statusBar { text-align: center; font-family: var(--serif); font-size: 16px; font-weight: 700; color: var(--gold-bright); margin: 4px 0 8px; min-height: 22px; }
+  #gameCodeWrap { cursor: pointer; white-space: nowrap; font-size: 12px; }
 
-  .boardLabel { font-size: 12px; color: var(--muted); text-align: center; margin: 8px 0 4px; font-weight: 700; }
-  .gridBox { display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px; background: rgba(13,10,5,0.4); border: 1px solid var(--warm-border); border-radius: 6px; padding: 4px; margin: 0 auto; }
-  .gridBox.target { max-width: 100%; }
-  .gridBox.mine { max-width: 240px; }
-  .gc { aspect-ratio: 1/1; border-radius: 3px; background: var(--sea); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; color: #fff; padding: 0; border: none; }
-  .gridBox.mine .gc { font-size: 10px; }
-  .gc.ship { background: var(--ship); }
-  .gc.miss { background: var(--sea2); color: var(--miss); }
-  .gc.miss::after { content: "•"; }
-  .gc.hit { background: var(--hit); } .gc.hit::after { content: "✕"; }
-  .gc.sunk { background: var(--sunk); } .gc.sunk::after { content: "✕"; }
-  .gridBox.target .gc.fireable { cursor: pointer; }
-  .gridBox.target .gc.fireable:hover { outline: 2px solid var(--gold-soft); outline-offset: -2px; }
+  .path { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; min-height: 52px; padding: 8px; background: rgba(13,10,5,0.4); border: 1px solid var(--warm-border); border-radius: 8px; margin-bottom: 6px; }
+  .pcard { min-width: 40px; height: 48px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-weight: 800; font-size: 18px; }
+  .pcard.tr { background: linear-gradient(180deg,#f3e6c6,#e2cf9f); color: #4a2f14; }
+  .pcard.hz { background: #3a1b16; color: #f0a; border: 1px solid #7a2418; font-size: 22px; }
+  .pathgems { text-align: center; font-size: 14px; color: var(--gold-soft); font-weight: 700; margin-bottom: 8px; }
+  #eventLog { font-size: 12px; color: var(--muted); text-align: center; line-height: 1.5; min-height: 30px; margin-bottom: 6px; }
+  #eventLog div:last-child { color: var(--parchment); }
 
-  .fleet { display: flex; flex-wrap: wrap; gap: 5px 10px; justify-content: center; margin: 8px 0; font-size: 12px; }
-  .fleet .fs { color: var(--parchment); } .fleet .fs.sunk { color: var(--muted); text-decoration: line-through; }
-  .setupBtns { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
-  .setupBtns button { font-family: var(--serif); font-size: 15px; font-weight: 700; padding: 11px 18px; border-radius: 8px; cursor: pointer; }
-  #rerollBtn { border: 1px solid var(--warm-border); background: linear-gradient(180deg, var(--warm-bg2), var(--warm-bg)); color: var(--parchment); }
-  #readyBtn { border: 1px solid var(--gold-deep); background: linear-gradient(180deg, var(--gold-bright), var(--gold-deep)); color: var(--ink); }
+  .players { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+  .prow { display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--warm-border); border-radius: 8px; padding: 6px 10px; font-size: 13px; }
+  .prow.me { background: rgba(201,162,39,0.08); }
+  .prow.out { opacity: 0.5; }
+  .prow .pn { font-weight: 700; color: var(--gold-bright); }
+  .prow .pg { color: var(--parchment); }
+  .prow .badge { font-size: 11px; padding: 2px 6px; border-radius: 6px; }
+  .prow .din { background: rgba(126,209,143,0.2); color: #7fd18f; }
+  .prow .dout { background: rgba(156,138,99,0.2); color: var(--muted); }
+  .prow .ddec { background: rgba(201,162,39,0.2); color: var(--gold-soft); }
+
+  #statusBar { text-align: center; font-family: var(--serif); font-size: 16px; font-weight: 700; color: var(--gold-bright); min-height: 24px; margin: 6px 0; }
+  .decideBtns { display: flex; gap: 10px; justify-content: center; margin-top: 6px; }
+  .decideBtns button { flex: 1; max-width: 180px; font-family: var(--serif); font-size: 16px; font-weight: 800; padding: 14px 0; border-radius: 10px; cursor: pointer; }
+  #goBtn { border: 1px solid #7b2419; background: linear-gradient(180deg,#b5442f,#7b2419); color: #fff; }
+  #leaveBtn { border: 1px solid var(--gold-deep); background: linear-gradient(180deg, var(--gold-bright), var(--gold-deep)); color: var(--ink); }
   .backHome { text-align: center; margin-top: 14px; } .backHome a { color: var(--gold-bright); font-size: 13px; font-weight: 700; text-decoration: none; }
 
   #over { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 18px; background: rgba(8,5,2,0.72); }
   #over.hidden { display: none; }
-  .overCard { width: min(340px, 100%); background: var(--card); border: 2px solid var(--warm-border); border-radius: 12px; padding: 24px 22px; text-align: center; box-shadow: 0 16px 44px rgba(0,0,0,0.7); }
-  .overCard h2 { font-family: var(--serif); font-size: 26px; margin: 0 0 8px; color: var(--gold-bright); }
-  .overCard .sub { font-size: 14px; color: var(--parchment); margin-bottom: 14px; }
+  .overCard { width: min(360px, 100%); background: var(--card); border: 2px solid var(--warm-border); border-radius: 12px; padding: 22px; text-align: center; box-shadow: 0 16px 44px rgba(0,0,0,0.7); }
+  .overCard h2 { font-family: var(--serif); font-size: 24px; margin: 0 0 10px; color: var(--gold-bright); }
+  #scoreTable { font-size: 14px; margin-bottom: 14px; }
+  #scoreTable .sr { display: flex; justify-content: space-between; padding: 4px 8px; border-bottom: 1px solid rgba(201,162,39,0.15); }
+  #scoreTable .sr.win { color: var(--gold-soft); font-weight: 800; }
   .overCard button { width: 100%; font-family: var(--serif); font-size: 16px; font-weight: 800; padding: 13px 0; border-radius: 9px; cursor: pointer; border: 1px solid var(--gold-deep); background: linear-gradient(180deg, var(--gold-bright), var(--gold) 55%, var(--gold-deep)); color: var(--ink); }
   .hidden { display: none !important; }
 
@@ -112,26 +117,26 @@
   <div class="wrap">
     <div class="top">
       <a class="home" href="./index.html">🎲 메인</a>
-      <h1>배틀십</h1>
+      <h1>잉카의 황금</h1>
       <span style="width:44px"></span>
     </div>
 
     <div id="menu" class="panel">
+      <div class="rules">유적을 탐험하며 보석을 나눠 갖습니다.<br>매 카드마다 <b>계속 전진</b>할지 <b>복귀</b>할지 동시에 결정!<br>같은 함정이 <b>두 번</b> 나오면 남은 탐험가는 빈손. 5번 탐험 후 최다 보석 승.</div>
+      <div class="optRow">
+        <span class="optLabel">인원</span>
+        <div class="seg" id="segCount"><button data-v="2" class="on">2명</button><button data-v="3">3명</button><button data-v="4">4명</button></div>
+      </div>
       <div class="optRow">
         <span class="optLabel">방식</span>
-        <div class="seg" id="segMode">
-          <button data-v="solo" class="on">혼자 (vs 컴퓨터)</button><button data-v="online">온라인 2인</button>
-        </div>
+        <div class="seg" id="segMode"><button data-v="solo" class="on">혼자 (vs 컴퓨터)</button><button data-v="online">온라인</button></div>
       </div>
       <button id="startSoloBtn" class="cta">게임 시작</button>
       <div id="onlineBox" class="hidden">
         <input id="nickInput" class="nick" maxlength="8" placeholder="닉네임 (예: 아빠)" autocomplete="off" />
         <div class="orDivider"><span>온라인</span></div>
         <button id="createBtn" class="cta">방 만들기</button>
-        <div class="joinGroup">
-          <input id="codeInput" maxlength="4" placeholder="방 코드" autocomplete="off" />
-          <button id="joinBtn" class="cta2">입장</button>
-        </div>
+        <div class="joinGroup"><input id="codeInput" maxlength="4" placeholder="방 코드" autocomplete="off" /><button id="joinBtn" class="cta2">입장</button></div>
       </div>
       <div class="menuErr" id="menuErr"></div>
       <div class="menuHome"><a href="./index.html">← 다른 게임 고르기</a></div>
@@ -139,52 +144,34 @@
 
     <div id="lobby" class="panel hidden">
       <div id="lobbyTitle">상대를 기다리는 중…</div>
-      <div id="lobbyCodeWrap">
-        <div class="hint">이 코드를 상대에게 알려주세요</div>
-        <div id="roomCode">----</div>
-        <button id="copyBtn" class="btn">코드 복사</button>
-      </div>
+      <div id="lobbyCodeWrap"><div class="hint">이 코드를 상대에게 알려주세요</div><div id="roomCode">----</div><button id="copyBtn" class="btn">코드 복사</button></div>
       <div id="rosterInfo"></div>
       <button id="cancelBtn" class="btn" style="margin-top:12px;">나가기</button>
     </div>
 
     <div id="board" class="hidden">
       <div class="gameMeta">
-        <span>🚢 배틀십</span>
+        <span>탐험 <b id="metaRound">1</b> / 5</span>
         <span id="gameCodeWrap" class="hidden" title="탭하면 코드 복사">CODE <b id="metaCode">----</b></span>
         <span id="metaMode">혼자</span>
       </div>
+      <div class="path" id="path"></div>
+      <div class="pathgems" id="pathGems">바닥 보석 0💎</div>
+      <div id="eventLog"></div>
+      <div class="players" id="players"></div>
       <div id="statusBar"></div>
-
-      <!-- 배치 단계 -->
-      <div id="setupBox" class="hidden">
-        <div class="boardLabel">내 함대 배치 (자동)</div>
-        <div class="gridBox mine" id="setupGrid" style="max-width:320px;"></div>
-        <div class="fleet" id="setupFleet"></div>
-        <div class="setupBtns">
-          <button id="rerollBtn">🔄 재배치</button>
-          <button id="readyBtn">⚓ 준비 완료</button>
-        </div>
+      <div class="decideBtns" id="decideBtns">
+        <button id="goBtn">⛏️ 계속 전진</button>
+        <button id="leaveBtn">🏃 복귀</button>
       </div>
-
-      <!-- 전투 단계 -->
-      <div id="battleBox" class="hidden">
-        <div class="boardLabel">🎯 상대 바다 — 좌표를 눌러 포격</div>
-        <div class="gridBox target" id="targetGrid"></div>
-        <div class="fleet" id="foeFleet"></div>
-        <div class="boardLabel">내 바다</div>
-        <div class="gridBox mine" id="myGrid"></div>
-        <div class="fleet" id="myFleet"></div>
-      </div>
-
       <div class="backHome"><a href="./index.html">🎲 다른 게임 (메인으로)</a></div>
     </div>
   </div>
 
   <div id="over" class="hidden">
     <div class="overCard">
-      <h2 id="overTitle">🎉 승리!</h2>
-      <div class="sub" id="overSub"></div>
+      <h2 id="overTitle">탐험 종료</h2>
+      <div id="scoreTable"></div>
       <button id="againBtn">다시 하기</button>
       <button id="otherGameBtn" class="hidden" style="margin-top:8px;background:linear-gradient(180deg,var(--warm-bg2),var(--warm-bg));border:1px solid var(--warm-border);color:var(--parchment);">🔀 다른 게임</button>
       <div id="gamePicker" class="hidden" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;"></div>
@@ -207,22 +194,22 @@
   const isLocal = ["localhost", "127.0.0.1"].includes(location.hostname) || location.protocol === "file:";
   const SERVER_URL = override || (isLocal ? "ws://localhost:8080" : RENDER_URL);
 
-  const N = 10;
-  const FLEET = [{ n: "항공모함", s: 5 }, { n: "전함", s: 4 }, { n: "순양함", s: 3 }, { n: "잠수함", s: 3 }, { n: "구축함", s: 2 }];
-
+  const HAZ = ["🐍", "🕷️", "🧟", "🔥", "🪨"];
+  const HAZ_KR = ["뱀", "거미", "미라", "불", "돌"];
+  const TREASURES = [1, 2, 3, 4, 5, 5, 7, 7, 9, 11, 11, 13, 14, 15, 17];
+  const ROUNDS = 5;
   const SCREEN = { MENU: "menu", LOBBY: "lobby", PLAYING: "playing", OVER: "over" };
   let screen = SCREEN.MENU;
   let ws = null, myIndex = null, isHost = false, myCode = null, myToken = null;
-  let optMode = "solo", onlineMode = false;
+  let optCount = 2, optMode = "solo", onlineMode = false;
   let soloMode = false, aiTimer = null;
   let G = null, lastView = null;
-  let aiMem = { queue: [] };
   let myNick = ""; try { myNick = (localStorage.getItem("bg_nick") || "").trim().slice(0, 8); } catch (e) {}
   let hostNames = {};
   let handoffMode = false, handoffCap = 0, intentionalNav = false;
   const missingPeers = new Set();
 
-  const SESS_KEY = "battleship_session", STATE_KEY = "battleship_state", REJOIN_WINDOW_MS = 300000;
+  const SESS_KEY = "incan_session", STATE_KEY = "incan_state", REJOIN_WINDOW_MS = 300000;
   function saveSession() { try { localStorage.setItem(SESS_KEY, JSON.stringify({ code: myCode, index: myIndex, token: myToken, isHost, ts: Date.now() })); } catch {} }
   function touchSession() { try { const s = JSON.parse(localStorage.getItem(SESS_KEY) || "null"); if (s) { s.ts = Date.now(); localStorage.setItem(SESS_KEY, JSON.stringify(s)); } } catch {} }
   function getSession() { try { return JSON.parse(localStorage.getItem(SESS_KEY) || "null"); } catch { return null; } }
@@ -233,101 +220,100 @@
   function restoreConn() { $("conn").innerHTML = "<span class='ok'>● 서버 연결됨</span>"; }
 
   // ===== 엔진 =====
-  function emptyGrid(fill) { return Array.from({ length: N }, () => Array(N).fill(fill)); }
-  function placeShips() {
-    const occ = emptyGrid(-1); const ships = [];
-    FLEET.forEach((sp, si) => {
-      let placed = false, tries = 0;
-      while (!placed && tries < 800) {
-        tries++;
-        const horiz = Math.random() < 0.5;
-        const r = Math.floor(Math.random() * N), c = Math.floor(Math.random() * N);
-        const cells = []; let ok = true;
-        for (let k = 0; k < sp.s; k++) { const rr = horiz ? r : r + k, cc = horiz ? c + k : c; if (rr >= N || cc >= N || occ[rr][cc] !== -1) { ok = false; break; } cells.push([rr, cc]); }
-        if (ok) { cells.forEach(([rr, cc]) => occ[rr][cc] = si); ships.push({ name: sp.n, size: sp.s, cells, hits: 0 }); placed = true; }
-      }
-    });
-    return { ships, occ };
+  function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+  function buildDeck() { const d = TREASURES.map((v) => ({ t: "tr", v })); for (let h = 0; h < 5; h++) for (let k = 0; k < 3; k++) d.push({ t: "hz", h }); return d; }
+  function inCount() { return G.inTemple.filter(Boolean).length; }
+  function log(msg) { G.log.push(msg); if (G.log.length > 20) G.log.shift(); }
+  function newGame(count) {
+    G = { count, round: 1, phase: "decide", deck: buildDeck(), roundDeck: [], path: [], seenHaz: {}, pathGems: 0,
+      inTemple: new Array(count).fill(true), roundGems: new Array(count).fill(0), banked: new Array(count).fill(0),
+      decisions: new Array(count).fill(null), log: [], winner: null };
+    startRound();
   }
-  function freshBoard() { const b = placeShips(); return { ships: b.ships, occ: b.occ, incoming: emptyGrid(null), ready: false }; }
-  function newGame() {
-    G = { phase: "setup", count: 2, turn: 0, winner: null, last: null, boards: [freshBoard(), freshBoard()] };
-    aiMem = { queue: [] };
-    if (soloMode) G.boards[1].ready = true;  // 컴퓨터는 자동 준비
+  function startRound() {
+    G.roundDeck = shuffle(G.deck.slice());
+    G.path = []; G.seenHaz = {}; G.pathGems = 0;
+    G.inTemple = new Array(G.count).fill(true);
+    G.roundGems = new Array(G.count).fill(0);
+    G.decisions = new Array(G.count).fill(null);
+    log(`── ${G.round}번째 탐험 시작 ──`);
+    revealNext();
   }
-  function shipSunk(s) { return s.hits >= s.size; }
-  function allSunk(b) { return b.ships.every(shipSunk); }
-
+  function revealNext() {
+    if (G.roundDeck.length === 0) { endRound(false); return; }
+    const c = G.roundDeck.pop(); G.path.push(c);
+    if (c.t === "tr") {
+      const n = inCount(); const share = n > 0 ? Math.floor(c.v / n) : 0;
+      if (n > 0) { for (let i = 0; i < G.count; i++) if (G.inTemple[i]) G.roundGems[i] += share; G.pathGems += c.v - share * n; }
+      else G.pathGems += c.v;
+      log(`💎 보물 ${c.v} — 탐험가 각자 +${share} (바닥에 ${c.v - share * n})`);
+      G.decisions = new Array(G.count).fill(null); G.phase = "decide";
+    } else {
+      if (G.seenHaz[c.h]) {
+        log(`${HAZ[c.h]} ${HAZ_KR[c.h]} 두 번째 등장! 남은 탐험가 전멸 — 소득 상실`);
+        const idx = G.deck.findIndex((x) => x.t === "hz" && x.h === c.h); if (idx >= 0) G.deck.splice(idx, 1);
+        endRound(true);
+      } else { G.seenHaz[c.h] = true; log(`${HAZ[c.h]} ${HAZ_KR[c.h]} 등장 — 또 나오면 위험!`); G.decisions = new Array(G.count).fill(null); G.phase = "decide"; }
+    }
+  }
+  function decidedAll() { for (let i = 0; i < G.count; i++) if (G.inTemple[i] && G.decisions[i] == null) return false; return true; }
+  function resolveDecisions() {
+    const leavers = []; for (let i = 0; i < G.count; i++) if (G.inTemple[i] && G.decisions[i] === "leave") leavers.push(i);
+    if (leavers.length) {
+      const share = Math.floor(G.pathGems / leavers.length);
+      leavers.forEach((i) => { G.banked[i] += G.roundGems[i] + share; G.roundGems[i] = 0; G.inTemple[i] = false; });
+      G.pathGems -= share * leavers.length;
+      log(`🏃 ${leavers.map((i) => nm(i)).join(", ")} 복귀! 바닥 보석 나눔 (+${share}씩, 소득 안전 확보)`);
+    }
+    G.decisions = new Array(G.count).fill(null);
+    if (inCount() === 0) endRound(false);
+    else revealNext();
+  }
+  function endRound(byHazard) {
+    if (byHazard) { for (let i = 0; i < G.count; i++) if (G.inTemple[i]) G.roundGems[i] = 0; }
+    G.pathGems = 0; G.inTemple = new Array(G.count).fill(false);
+    if (G.round >= ROUNDS) { G.phase = "over"; let best = -1, w = 0; G.banked.forEach((b, i) => { if (b > best) { best = b; w = i; } }); G.winner = w; }
+    else { G.round++; startRound(); }
+  }
   function applyAction(a) {
-    if (!G || G.winner != null) return;
+    if (!G || G.phase !== "decide") return;
+    if (a.action !== "decide") return;
     const pi = a.from;
-    if (G.phase === "setup") {
-      const b = G.boards[pi];
-      if (a.action === "reroll" && !b.ready) { const nb = placeShips(); b.ships = nb.ships; b.occ = nb.occ; broadcast(); }
-      else if (a.action === "ready") { b.ready = true; if (G.boards[0].ready && G.boards[1].ready) { G.phase = "battle"; G.turn = 0; } broadcast(); }
-      return;
-    }
-    if (G.phase === "battle" && a.action === "fire") {
-      if (pi !== G.turn) return;
-      const foe = G.boards[1 - pi];
-      const r = a.r, c = a.c;
-      if (r == null || c == null || r < 0 || r >= N || c < 0 || c >= N || foe.incoming[r][c] != null) return;
-      const sid = foe.occ[r][c];
-      if (sid >= 0) {
-        foe.incoming[r][c] = "hit"; const ship = foe.ships[sid]; ship.hits++;
-        const sunk = shipSunk(ship);
-        G.last = { by: pi, r, c, result: "hit", sunk, shipName: sunk ? ship.name : null };
-        if (allSunk(foe)) G.winner = pi;
-      } else { foe.incoming[r][c] = "miss"; G.last = { by: pi, r, c, result: "miss" }; }
-      if (G.winner == null) G.turn = 1 - pi;   // 한 발 쏘고 교대
-      broadcast();
-    }
+    if (!G.inTemple[pi] || G.decisions[pi] != null) return;
+    if (a.choice !== "go" && a.choice !== "leave") return;
+    G.decisions[pi] = a.choice;
+    if (soloMode) { fillAI(); }
+    if (decidedAll()) resolveDecisions();
+    broadcast();
   }
   function dispatch(a) { a.from = myIndex; if (isHost) applyAction(a); else send({ type: "act", to: 0, a }); }
 
-  // ===== AI(솔로, 컴퓨터=1) =====
-  function aiTurn() {
-    const foe = G.boards[0];
-    const shot = (r, c) => foe.incoming[r][c] != null;
-    let cell = null;
-    while (aiMem.queue.length) { const [r, c] = aiMem.queue.shift(); if (r >= 0 && r < N && c >= 0 && c < N && !shot(r, c)) { cell = { r, c }; break; } }
-    if (!cell) {
-      const par = [], any = [];
-      for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (!shot(r, c)) { any.push([r, c]); if ((r + c) % 2 === 0) par.push([r, c]); }
-      const pool = par.length ? par : any;
-      if (!pool.length) return;
-      const [r, c] = pool[Math.floor(Math.random() * pool.length)]; cell = { r, c };
-    }
-    applyAction({ from: 1, action: "fire", r: cell.r, c: cell.c });
-    const last = G.last;
-    if (last && last.by === 1 && last.result === "hit") {
-      if (last.sunk) aiMem.queue = [];
-      else { const { r, c } = last; [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]].forEach((rc) => aiMem.queue.push(rc)); }
-    }
+  // ===== AI(솔로, 컴퓨터=1..) =====
+  function aiDecision(i) {
+    const seen = Object.keys(G.seenHaz).length; const held = G.roundGems[i];
+    if (held > 0 && (seen >= 2 || (seen >= 1 && Math.random() < 0.45) || Math.random() < 0.08)) return "leave";
+    return "go";
   }
-  function maybeAI() {
-    if (!soloMode || !G || G.winner != null || G.phase !== "battle" || G.turn !== 1) return;
+  function fillAI() { for (let i = 1; i < G.count; i++) if (G.inTemple[i] && G.decisions[i] == null) G.decisions[i] = aiDecision(i); }
+  function soloTick() {
+    if (!soloMode || !G || G.phase !== "over") { /* noop */ }
+    // 사람이 이미 탐험에서 빠졌는데 컴퓨터만 남아 결정 대기 중이면 자동 진행
+    if (!soloMode || !G || G.phase !== "decide") return;
+    if (G.inTemple[0]) return;      // 사람이 아직 탐험 중 → 사람 결정 대기
+    if (inCount() === 0) return;
     if (aiTimer) clearTimeout(aiTimer);
-    aiTimer = setTimeout(() => { aiTimer = null; if (soloMode && G && G.winner == null && G.phase === "battle" && G.turn === 1) aiTurn(); }, 700);
+    aiTimer = setTimeout(() => { aiTimer = null; if (!soloMode || !G || G.phase !== "decide" || G.inTemple[0] || inCount() === 0) return; fillAI(); if (decidedAll()) resolveDecisions(); broadcast(); }, 750);
   }
 
   // ===== 뷰 =====
   function viewFor(pi) {
-    const me = G.boards[pi], foe = G.boards[1 - pi];
-    const myBoard = emptyGrid(null), target = emptyGrid(null);
-    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
-      myBoard[r][c] = { ship: me.occ[r][c] >= 0, shot: me.incoming[r][c] };
-      target[r][c] = foe.incoming[r][c];  // null / miss / hit
-    }
-    foe.ships.forEach((s) => { if (shipSunk(s)) s.cells.forEach(([r, c]) => target[r][c] = "sunk"); });
     return {
-      phase: G.phase, count: 2, myIndex: pi, turn: G.turn, winner: G.winner, last: G.last,
-      myReady: me.ready, oppReady: foe.ready,
-      myTurn: G.phase === "battle" && G.turn === pi && G.winner == null,
-      online: !soloMode, myBoard, target,
-      myFleet: me.ships.map((s) => ({ name: s.name, size: s.size, sunk: shipSunk(s) })),
-      foeFleet: foe.ships.map((s) => ({ name: s.name, size: s.size, sunk: shipSunk(s) })),
-      names: [hostNames[0] || null, hostNames[1] || null],
+      online: !soloMode, count: G.count, round: G.round, phase: G.phase, winner: G.winner,
+      path: G.path.slice(), pathGems: G.pathGems, seenHaz: Object.keys(G.seenHaz).length,
+      inTemple: G.inTemple.slice(), roundGems: G.roundGems.slice(), banked: G.banked.slice(),
+      decided: G.decisions.map((d) => d != null), myIndex: pi,
+      canDecide: G.phase === "decide" && G.inTemple[pi] && G.decisions[pi] == null && G.winner == null,
+      names: Array.from({ length: G.count }, (_, i) => hostNames[i] || null), log: G.log.slice(-4),
     };
   }
   function broadcast() {
@@ -336,59 +322,50 @@
     renderView(viewFor(0));
     saveState();
     if (!soloMode) touchSession();
-    if (soloMode) maybeAI();
+    if (soloMode) soloTick();
   }
 
   // ===== 렌더 =====
-  function nmv(v, idx) { if (soloMode) return idx === v.myIndex ? "나" : "컴퓨터"; const n = v.names[idx]; if (idx === v.myIndex) return n || "나"; return n || "상대"; }
+  function nm(i) { if (soloMode) return i === 0 ? "나" : "컴퓨터" + i; return hostNames[i] || ("P" + (i + 1)); }
+  function nmv(v, i) { if (soloMode) return i === 0 ? "나" : "컴퓨터" + i; const n = v.names[i]; if (i === v.myIndex) return n || "나"; return n || ("P" + (i + 1)); }
   function renderView(v) {
-    if (!v || !Array.isArray(v.myBoard)) return;
+    if (!v || !Array.isArray(v.path) || !Array.isArray(v.inTemple)) return;
     lastView = v;
     if (screen !== SCREEN.PLAYING && screen !== SCREEN.OVER) setScreen(SCREEN.PLAYING);
-    $("metaMode").textContent = v.online ? "온라인 2인" : "혼자";
+    $("metaRound").textContent = v.round;
+    $("metaMode").textContent = v.online ? "온라인 " + v.count + "인" : "혼자";
     $("gameCodeWrap").classList.toggle("hidden", !(v.online && myCode));
     if (v.online && myCode) $("metaCode").textContent = myCode;
+    $("path").innerHTML = v.path.map((c) => c.t === "tr" ? `<div class="pcard tr">${c.v}</div>` : `<div class="pcard hz">${HAZ[c.h]}</div>`).join("");
+    $("pathGems").textContent = `바닥 보석 ${v.pathGems}💎`;
+    $("eventLog").innerHTML = (v.log || []).map((l) => `<div>${escapeHtml(l)}</div>`).join("");
 
-    const setup = v.phase === "setup";
-    $("setupBox").classList.toggle("hidden", !setup);
-    $("battleBox").classList.toggle("hidden", setup);
-
-    if (setup) {
-      $("statusBar").textContent = v.myReady ? "상대가 배치를 마치길 기다리는 중…" : "함대를 배치하세요";
-      renderGrid($("setupGrid"), v.myBoard, "mine", null);
-      $("setupFleet").innerHTML = FLEET.map((f) => `<span class="fs">${f.n}(${f.s})</span>`).join("");
-      $("rerollBtn").disabled = v.myReady; $("readyBtn").disabled = v.myReady;
-      $("readyBtn").textContent = v.myReady ? "대기 중…" : "⚓ 준비 완료";
-    } else {
-      if (v.winner != null) $("statusBar").textContent = "";
-      else $("statusBar").textContent = v.myTurn ? "🎯 내 차례 — 포격하세요" : `${nmv(v, v.turn)} 차례…`;
-      renderGrid($("targetGrid"), v.target, "target", v.myTurn ? onFire : null);
-      renderGrid($("myGrid"), v.myBoard, "mine", null);
-      $("foeFleet").innerHTML = "<span style='color:var(--muted)'>상대 함대:</span> " + v.foeFleet.map((f) => `<span class="fs ${f.sunk ? "sunk" : ""}">${f.n}${f.sunk ? " 침몰" : ""}</span>`).join("");
-      $("myFleet").innerHTML = "<span style='color:var(--muted)'>내 함대:</span> " + v.myFleet.map((f) => `<span class="fs ${f.sunk ? "sunk" : ""}">${f.n}</span>`).join("");
-    }
-    if (v.winner != null) showOver(v);
-    else if (screen === SCREEN.OVER) setScreen(SCREEN.PLAYING);
-  }
-  function renderGrid(box, cells, kind, onClick) {
-    box.className = "gridBox " + kind;
-    box.innerHTML = "";
-    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
-      const el = document.createElement("button"); el.className = "gc";
-      const cell = cells[r][c];
-      if (kind === "mine") { if (cell && cell.ship) el.classList.add("ship"); if (cell && cell.shot) el.classList.add(cell.shot); }
-      else { if (cell) el.classList.add(cell); if (onClick && !cell) el.classList.add("fireable"); }
-      if (onClick && kind === "target" && !cell) el.addEventListener("click", () => onClick(r, c));
-      else el.disabled = (kind === "target");
+    const box = $("players"); box.innerHTML = "";
+    for (let i = 0; i < v.count; i++) {
+      const el = document.createElement("div");
+      el.className = "prow" + (i === v.myIndex ? " me" : "") + (!v.inTemple[i] ? " out" : "");
+      let badge;
+      if (!v.inTemple[i]) badge = '<span class="badge dout">복귀함</span>';
+      else if (v.decided[i]) badge = '<span class="badge ddec">결정함 ✓</span>';
+      else badge = '<span class="badge din">탐험 중</span>';
+      el.innerHTML = `<span class="pn">${escapeHtml(nmv(v, i))}</span><span class="pg">금고 ${v.banked[i]}💎 · 이번 ${v.roundGems[i]}💎 ${badge}</span>`;
       box.appendChild(el);
     }
-  }
-  function onFire(r, c) { if (!lastView || !lastView.myTurn) return; dispatch({ action: "fire", r, c }); }
 
+    if (v.phase !== "over") {
+      if (v.canDecide) $("statusBar").textContent = "계속 전진할까요, 복귀할까요?";
+      else if (!v.inTemple[v.myIndex]) $("statusBar").textContent = "복귀 완료 — 다른 탐험가를 기다리는 중…";
+      else $("statusBar").textContent = "다른 탐험가의 결정을 기다리는 중…";
+    } else $("statusBar").textContent = "";
+    $("decideBtns").style.display = v.canDecide ? "flex" : "none";
+
+    if (v.phase === "over") showOver(v);
+    else if (screen === SCREEN.OVER) setScreen(SCREEN.PLAYING);
+  }
   function showOver(v) {
-    const iWon = v.winner === v.myIndex;
-    $("overTitle").textContent = iWon ? "🎉 승리!" : "😢 패배";
-    $("overSub").textContent = iWon ? "상대 함대를 모두 침몰시켰습니다!" : `${nmv(v, v.winner)}님이 내 함대를 모두 침몰시켰습니다.`;
+    $("overTitle").textContent = v.winner === v.myIndex ? "🎉 승리!" : "탐험 종료";
+    const rows = Array.from({ length: v.count }, (_, i) => ({ i, s: v.banked[i] })).sort((a, b) => b.s - a.s);
+    $("scoreTable").innerHTML = rows.map((r) => `<div class="sr ${r.i === v.winner ? "win" : ""}">${escapeHtml(nmv(v, r.i))}${r.i === v.winner ? " 🏆" : ""}<span>${r.s}💎</span></div>`).join("");
     $("gamePicker").classList.add("hidden");
     $("otherGameBtn").classList.toggle("hidden", !(isHost && isOnlineRoom()));
     setScreen(SCREEN.OVER);
@@ -408,11 +385,9 @@
     updateHistoryGuard(s);
   }
   function showMenuWithError(msg) { $("menuErr").textContent = msg || ""; onlineMode = false; setScreen(SCREEN.MENU); }
+  function startSolo() { soloMode = true; isHost = true; myIndex = 0; myCode = myToken = null; onlineMode = false; hostNames = {}; newGame(optCount); setScreen(SCREEN.PLAYING); broadcast(); }
+  function newOnlineGame() { const c = G ? G.count : optCount; newGame(c); broadcast(); }
 
-  function startSolo() { soloMode = true; isHost = true; myIndex = 0; myCode = myToken = null; onlineMode = false; hostNames = {}; newGame(); setScreen(SCREEN.PLAYING); broadcast(); }
-  function newOnlineGame() { newGame(); broadcast(); }
-
-  // ===== 네트워크 =====
   function send(obj) { if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj)); }
   function sendNick() { if (isHost) { if (myIndex != null) hostNames[myIndex] = myNick; if (G) broadcast(); } else if (myNick) { send({ type: "nick", name: myNick, to: 0 }); } }
   function connect() {
@@ -426,7 +401,7 @@
         clearRoomHandoff();
         handoffMode = true; handoffCap = ho.cap || 2; onlineMode = true;
         isHost = (ho.index === 0); myIndex = ho.index; myCode = ho.code; myToken = ho.token;
-        $("lobbyTitle").textContent = "방 유지 — 상대 대기 중…"; $("lobbyCodeWrap").style.display = "none";
+        $("lobbyTitle").textContent = "방 유지 — 다른 플레이어 대기 중…"; $("lobbyCodeWrap").style.display = "none";
         setScreen(SCREEN.LOBBY); send({ type: "rejoin", code: ho.code, index: ho.index, token: ho.token }); return;
       }
       const s = getSession();
@@ -442,21 +417,11 @@
   }
   function onMessage(m) {
     switch (m.type) {
-      case "created":
-        onlineMode = true; isHost = true; myIndex = 0; myCode = m.code; myToken = m.token; saveSession();
-        $("roomCode").textContent = m.code; $("lobbyTitle").textContent = "상대를 기다리는 중…"; $("lobbyCodeWrap").style.display = "";
-        setScreen(SCREEN.LOBBY); sendNick(); break;
-      case "joined":
-        onlineMode = true; isHost = false; myIndex = m.index; myCode = m.code; myToken = m.token; saveSession();
-        $("lobbyTitle").textContent = "입장 완료! 시작 대기 중…"; $("lobbyCodeWrap").style.display = "none"; setScreen(SCREEN.LOBBY); sendNick(); break;
+      case "created": onlineMode = true; isHost = true; myIndex = 0; myCode = m.code; myToken = m.token; saveSession(); $("roomCode").textContent = m.code; $("lobbyTitle").textContent = "상대를 기다리는 중…"; $("lobbyCodeWrap").style.display = ""; setScreen(SCREEN.LOBBY); sendNick(); break;
+      case "joined": onlineMode = true; isHost = false; myIndex = m.index; myCode = m.code; myToken = m.token; saveSession(); $("lobbyTitle").textContent = "입장 완료! 시작 대기 중…"; $("lobbyCodeWrap").style.display = "none"; setScreen(SCREEN.LOBBY); sendNick(); break;
       case "rejoined":
         onlineMode = true; myIndex = m.index; myCode = m.code; myToken = m.token; isHost = (m.index === 0); saveSession(); restoreConn();
-        if (handoffMode) {
-          handoffCap = m.capacity || 2;
-          if (isHost) { $("lobbyTitle").textContent = "방 유지 — 상대 대기 중…"; setScreen(SCREEN.LOBBY); maybeStartHandoff(m.count); }
-          else { $("lobbyTitle").textContent = "방 유지됨 — 방장이 곧 새 게임을 시작합니다…"; setScreen(SCREEN.LOBBY); }
-          sendNick(); break;
-        }
+        if (handoffMode) { handoffCap = m.capacity || 2; if (isHost) { $("lobbyTitle").textContent = "방 유지 — 다른 플레이어 대기 중…"; setScreen(SCREEN.LOBBY); maybeStartHandoff(m.count); } else { $("lobbyTitle").textContent = "방 유지됨 — 방장이 곧 새 게임을 시작합니다…"; setScreen(SCREEN.LOBBY); } sendNick(); break; }
         if (isHost) { try { hostNames = JSON.parse(localStorage.getItem(STATE_KEY + "_n") || "{}"); } catch { hostNames = {}; } const g = loadState(); if (g) { G = g; broadcast(); } else { $("roomCode").textContent = m.code; $("lobbyCodeWrap").style.display = ""; $("lobbyTitle").textContent = "상대를 기다리는 중…"; setScreen(SCREEN.LOBBY); } }
         else { $("lobbyTitle").textContent = "재접속됨 — 동기화 중…"; setScreen(SCREEN.LOBBY); }
         sendNick(); break;
@@ -476,7 +441,6 @@
     }
   }
 
-  // ===== 뒤로가기 잠금 =====
   let armed = false, lastBackAt = 0, toastTimer = null;
   function updateHistoryGuard(s) { const inGame = (s === SCREEN.PLAYING || s === SCREEN.LOBBY); if (inGame && !armed) { history.pushState({ g: 1 }, ""); armed = true; } else if (!inGame) armed = false; }
   function toast(msg) { let t = $("toast"); if (!t) { t = document.createElement("div"); t.id = "toast"; t.style.cssText = "position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:60;background:rgba(13,10,5,0.96);color:var(--parchment);border:1px solid var(--gold-deep);border-radius:999px;padding:10px 18px;font-size:13px;max-width:90vw;text-align:center;transition:opacity .2s;"; document.body.appendChild(t); } t.textContent = msg; t.style.opacity = "1"; clearTimeout(toastTimer); toastTimer = setTimeout(() => t.style.opacity = "0", 2200); }
@@ -484,13 +448,13 @@
   window.addEventListener("pageshow", (e) => { if (e.persisted && onlineMode && (!ws || ws.readyState > WebSocket.OPEN)) connect(); });
   window.addEventListener("beforeunload", (e) => { if (intentionalNav) return; if (onlineMode && (screen === SCREEN.PLAYING || screen === SCREEN.LOBBY)) { e.preventDefault(); e.returnValue = ""; } });
 
-  // ===== 메뉴/버튼 =====
   function initSeg(id, cb) { $(id).addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; [...$(id).children].forEach((c) => c.classList.remove("on")); b.classList.add("on"); cb(b.getAttribute("data-v")); }); }
+  initSeg("segCount", (v) => { optCount = +v; });
   initSeg("segMode", (v) => { optMode = v; $("startSoloBtn").classList.toggle("hidden", v !== "solo"); $("onlineBox").classList.toggle("hidden", v !== "online"); if (v === "online" && (!ws || ws.readyState !== WebSocket.OPEN)) connect(); });
   $("startSoloBtn").addEventListener("click", startSolo);
   $("nickInput").value = myNick;
   $("nickInput").addEventListener("input", () => { myNick = $("nickInput").value.trim().slice(0, 8); try { localStorage.setItem("bg_nick", myNick); } catch {} });
-  $("createBtn").addEventListener("click", () => { $("menuErr").textContent = ""; if (!ws || ws.readyState !== WebSocket.OPEN) { $("menuErr").textContent = "서버 연결 중… 잠시 후 다시 시도하세요."; connect(); return; } send({ type: "create", capacity: 2, reconnect: true }); });
+  $("createBtn").addEventListener("click", () => { $("menuErr").textContent = ""; if (!ws || ws.readyState !== WebSocket.OPEN) { $("menuErr").textContent = "서버 연결 중… 잠시 후 다시 시도하세요."; connect(); return; } send({ type: "create", capacity: optCount, reconnect: true }); });
   $("joinBtn").addEventListener("click", () => {
     const code = $("codeInput").value.trim().toUpperCase();
     if (code.length !== 4) { $("menuErr").textContent = "4자리 코드를 입력하세요."; return; }
@@ -504,11 +468,10 @@
   $("copyBtn").addEventListener("click", () => { navigator.clipboard?.writeText($("roomCode").textContent).then(() => { const b = $("copyBtn"), o = b.textContent; b.textContent = "복사됨!"; setTimeout(() => b.textContent = o, 1200); }).catch(() => {}); });
   $("gameCodeWrap").addEventListener("click", () => { if (myCode) navigator.clipboard?.writeText(myCode).then(() => toast("코드 복사됨: " + myCode)).catch(() => {}); });
   $("cancelBtn").addEventListener("click", () => { clearSession(); if (ws) { try { ws.close(); } catch {} } onlineMode = false; isHost = false; myIndex = myCode = myToken = null; setScreen(SCREEN.MENU); connect(); });
-  $("rerollBtn").addEventListener("click", () => { if (!$("rerollBtn").disabled) dispatch({ action: "reroll" }); });
-  $("readyBtn").addEventListener("click", () => { if (!$("readyBtn").disabled) dispatch({ action: "ready" }); });
+  $("goBtn").addEventListener("click", () => { if (lastView && lastView.canDecide) dispatch({ action: "decide", choice: "go" }); });
+  $("leaveBtn").addEventListener("click", () => { if (lastView && lastView.canDecide) dispatch({ action: "decide", choice: "leave" }); });
   $("againBtn").addEventListener("click", () => { if (soloMode) startSolo(); else if (onlineMode) { if (isHost) newOnlineGame(); else send({ type: "restart", to: 0 }); } });
 
-  // ===== 채팅 =====
   const EMOJIS = ["👍", "😂", "😮", "😢", "🎉", "❤️"];
   let chatUnread = 0;
   function escapeHtml(s) { return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
@@ -526,8 +489,7 @@
     $("chatInput").addEventListener("keydown", (e) => { if (e.key === "Enter") { sendChat($("chatInput").value); $("chatInput").value = ""; } });
   })();
 
-  // ===== 방 유지 =====
-  const THIS_GAME = "battleship";
+  const THIS_GAME = "incan";
   const ROOM_GAMES = [
     { key: "davinci",    file: "davinci.html",    label: "🔎 다빈치코드", min: 2, max: 4 },
     { key: "loveletter", file: "loveletter.html", label: "💌 러브레터",   min: 2, max: 4 },
@@ -542,14 +504,14 @@
     { key: "battleship", file: "battleship.html", label: "🚢 배틀십",     min: 2, max: 2 },
   ];
   const ROOM_HANDOFF_MS = 90 * 1000;
-  function roomCap() { return 2; }
+  function roomCap() { return (G && G.count) || handoffCap || optCount || 2; }
   function isOnlineRoom() { return onlineMode && !!myCode && myIndex != null && myToken != null; }
   function saveRoomHandoff() { if (!isOnlineRoom()) return; try { localStorage.setItem("bg_room", JSON.stringify({ code: myCode, index: myIndex, token: myToken, cap: roomCap(), ts: Date.now() })); } catch {} }
   function getRoomHandoff() { try { const r = JSON.parse(localStorage.getItem("bg_room") || "null"); if (r && r.code && r.token != null && (Date.now() - r.ts) < ROOM_HANDOFF_MS) return r; } catch {} return null; }
   function clearRoomHandoff() { try { localStorage.removeItem("bg_room"); } catch {} }
   function handoffUrl(file) { const cur = new URLSearchParams(location.search); const q = new URLSearchParams(); q.set("room", "1"); if (cur.get("server")) q.set("server", cur.get("server")); if (cur.has("debug")) q.set("debug", cur.get("debug") || "1"); return file + "?" + q.toString(); }
   function gotoGame(key) { const g = ROOM_GAMES.find((x) => x.key === key); if (!g) return; if (missingPeers.size > 0) { toast("접속이 끊긴 사람이 있어 방을 유지할 수 없어요. 새 방을 만들어 주세요."); return; } saveRoomHandoff(); send({ type: "goto", game: key }); intentionalNav = true; setTimeout(() => { location.href = handoffUrl(g.file); }, 150); }
-  function maybeStartHandoff(count) { if (!handoffMode || !isHost) return; if (count >= (handoffCap || 2)) { handoffMode = false; newOnlineGame(); sendNick(); } }
+  function maybeStartHandoff(count) { if (!handoffMode || !isHost) return; if (count >= (handoffCap || 2)) { handoffMode = false; optCount = handoffCap || optCount; newOnlineGame(); sendNick(); } }
   function openGamePicker() {
     if (missingPeers.size > 0) { toast("접속이 끊긴 사람이 있어 방을 유지한 채 다른 게임을 시작할 수 없어요. 재접속을 기다리거나 새 방을 만들어 주세요."); return; }
     const cap = roomCap();
@@ -562,15 +524,14 @@
   }
   $("otherGameBtn").addEventListener("click", openGamePicker);
 
-  // ===== 시작 =====
   setScreen(SCREEN.MENU);
   connect();
 
   if (location.search.includes("debug")) {
-    window.__bs = () => ({ screen, soloMode, onlineMode, isHost, myIndex, myCode, G, lastView, handoffMode, intentionalNav, missing: missingPeers.size });
-    window.__bsact = (a) => dispatch(a);
+    window.__ig = () => ({ screen, soloMode, onlineMode, isHost, myIndex, myCode, G, lastView, handoffMode, intentionalNav, missing: missingPeers.size });
+    window.__igact = (a) => dispatch(a);
     window.__goto = (k) => gotoGame(k);
-    window.__st = () => ({ screen, isHost, myIndex, myCode, handoffMode, intentionalNav, phase: G && G.phase });
+    window.__st = () => ({ screen, isHost, myIndex, myCode, handoffMode, intentionalNav, phase: G && G.phase, round: G && G.round });
   }
 })();
 </script>
