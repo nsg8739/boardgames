@@ -407,7 +407,7 @@
   $("copyBtn").addEventListener("click", () => { navigator.clipboard?.writeText($("roomCode").textContent).then(() => { const b = $("copyBtn"), o = b.textContent; b.textContent = "복사됨!"; setTimeout(() => b.textContent = o, 1200); }).catch(() => {}); });
   $("gameCodeWrap").addEventListener("click", () => { if (myCode) navigator.clipboard?.writeText(myCode).then(() => toast("코드 복사됨: " + myCode)).catch(() => {}); });
   $("cancelBtn").addEventListener("click", () => { clearSession(); if (ws) { try { ws.close(); } catch {} } onlineMode = false; isHost = false; myIndex = myCode = myToken = null; setScreen(SCREEN.MENU); connect(); });
-  $("toMenuBtn").addEventListener("click", () => { clearSession(); intentionalNav = true; const cur = new URLSearchParams(location.search); const q = new URLSearchParams(); if (cur.get("server")) q.set("server", cur.get("server")); if (cur.has("debug")) q.set("debug", cur.get("debug") || "1"); location.href = location.pathname + (q.toString() ? "?" + q.toString() : ""); });
+  $("toMenuBtn").addEventListener("click", () => { if (!confirm("게임을 종료하고 게임 메뉴로 나갈까요?")) return; clearSession(); intentionalNav = true; const cur = new URLSearchParams(location.search); const q = new URLSearchParams(); if (cur.get("server")) q.set("server", cur.get("server")); if (cur.has("debug")) q.set("debug", cur.get("debug") || "1"); location.href = location.pathname + (q.toString() ? "?" + q.toString() : ""); });
   $("againBtn").addEventListener("click", () => { if (soloMode) startSolo(); else if (onlineMode) { if (isHost) newOnlineGame(); else send({ type: "restart", to: 0 }); } });
 
   const EMOJIS = ["👍", "😂", "😮", "😢", "🎉", "❤️"];

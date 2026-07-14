@@ -1720,6 +1720,7 @@
     isHost = false; myIndex = myCode = myToken = null; connect();
   });
   $("toMenuBtn").addEventListener("click", () => {
+    if (!confirm("게임을 종료하고 게임 메뉴로 나갈까요?")) return;
     clearSession(); intentionalNav = true;  // 세션 폐기 후 이 게임을 새로(방 코드 없이) 로드 → 게임 메뉴
     const cur = new URLSearchParams(location.search); const q = new URLSearchParams();
     if (cur.get("server")) q.set("server", cur.get("server"));
