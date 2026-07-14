@@ -3,7 +3,7 @@
 const CACHE = "boardgames-v2";
 const SHELL = [
   "./", "./index.html",
-  "./davinci.html", "./baseball.html", "./loveletter.html", "./gridgames.html", "./oncard.html", "./battleship.html", "./dobble.html", "./versus.html", "./pong.html",
+  "./davinci.html", "./baseball.html", "./loveletter.html", "./gridgames.html", "./oncard.html", "./battleship.html", "./nothanks.html", "./dobble.html", "./versus.html", "./pong.html",
   "./manifest.json", "./icon.svg"
 ];
 
