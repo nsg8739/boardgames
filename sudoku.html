@@ -81,7 +81,8 @@
         <div class="optLabel">난이도</div>
         <div class="seg" id="segDiff"><button data-v="easy" class="on">쉬움</button><button data-v="normal">보통</button><button data-v="hard">어려움</button></div>
       </div>
-      <button id="startBtn" class="cta">퍼즐 시작</button>
+      <button id="startBtn" class="cta">새 퍼즐 시작</button>
+      <button id="resumeBtn" class="cta hidden" style="background:linear-gradient(180deg,var(--warm-bg2),var(--warm-bg));border:1px solid var(--gold-deep);color:var(--gold-bright);">이어 하기</button>
       <div class="menuHome"><a href="./index.html">← 다른 게임 고르기</a></div>
     </div>
 
@@ -119,7 +120,15 @@
   let given = null;      // 9x9 bool
   let board = null;      // 9x9 현재 입력
   let sel = null;        // {r,c}
-  let timerId = null, startTs = 0, solved = false;
+  let timerId = null, startTs = 0, elapsedBase = 0, solved = false;
+  const SAVE_KEY = "sudoku_save";
+
+  function curSec() { return elapsedBase + Math.floor((performance.now() - startTs) / 1000); }
+  function fmtTime(s) { return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0"); }
+  function saveGame() { if (solved || !board) return; try { localStorage.setItem(SAVE_KEY, JSON.stringify({ diff: optDiff, solution, given, board, elapsed: curSec() })); } catch {} }
+  function clearSave() { try { localStorage.removeItem(SAVE_KEY); } catch {} }
+  function loadSave() { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || "null"); if (s && Array.isArray(s.board) && Array.isArray(s.solution) && Array.isArray(s.given)) return s; } catch {} return null; }
+  function refreshResume() { const s = loadSave(); const btn = $("resumeBtn"); if (s) { btn.classList.remove("hidden"); btn.textContent = `이어 하기 (${DIFF_KR[s.diff] || ""} · ${fmtTime(s.elapsed || 0)})`; } else btn.classList.add("hidden"); }
 
   function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
   // 유효한 완성 스도쿠 생성(패턴 + 무작위화)
@@ -146,7 +155,7 @@
     board = solution.map((row, r) => row.map((v, c) => given[r][c] ? v : 0));
     puzzle = board.map((row) => row.slice());
     sel = null; solved = false;
-    startTs = performance.now();
+    elapsedBase = 0; startTs = performance.now();
     if (timerId) clearInterval(timerId);
     timerId = setInterval(updateTimer, 1000);
     $("diffLabel").textContent = DIFF_KR[optDiff];
@@ -155,7 +164,7 @@
     renderGrid();
     updateTimer();
   }
-  function updateTimer() { const s = Math.floor((performance.now() - startTs) / 1000); const mm = String(Math.floor(s / 60)).padStart(2, "0"); const ss = String(s % 60).padStart(2, "0"); $("timer").textContent = mm + ":" + ss; }
+  function updateTimer() { $("timer").textContent = fmtTime(curSec()); saveGame(); }
 
   function conflicts() {
     const bad = Array.from({ length: 9 }, () => Array(9).fill(false));
@@ -196,14 +205,15 @@
     board[r][c] = (board[r][c] === n) ? 0 : n;  // 같은 숫자 다시 누르면 지움
     renderGrid();
     checkWin();
+    saveGame();
   }
-  function erase() { if (!sel || solved) return; const { r, c } = sel; if (given[r][c]) return; board[r][c] = 0; renderGrid(); }
+  function erase() { if (!sel || solved) return; const { r, c } = sel; if (given[r][c]) return; board[r][c] = 0; renderGrid(); saveGame(); }
   function checkWin() {
     for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) if (!board[r][c]) return;
     const bad = conflicts();
     for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) if (bad[r][c]) return;
     // 완성
-    solved = true; if (timerId) clearInterval(timerId);
+    solved = true; if (timerId) clearInterval(timerId); clearSave();
     $("overSub").textContent = `${DIFF_KR[optDiff]} 난이도를 ${$("timer").textContent} 만에 완성했어요!`;
     $("over").classList.remove("hidden");
   }
@@ -215,9 +225,19 @@
   }
   function initSeg() { $("segDiff").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; [...$("segDiff").children].forEach((x) => x.classList.remove("on")); b.classList.add("on"); optDiff = b.getAttribute("data-v"); }); }
   function start() { $("menu").classList.add("hidden"); $("board").classList.remove("hidden"); newPuzzle(); }
+  function resumeGame() {
+    const s = loadSave(); if (!s) return;
+    optDiff = s.diff || "easy"; solution = s.solution; given = s.given; board = s.board.map((r) => r.slice()); puzzle = board.map((r) => r.slice());
+    sel = null; solved = false; elapsedBase = s.elapsed || 0; startTs = performance.now();
+    $("menu").classList.add("hidden"); $("board").classList.remove("hidden");
+    $("diffLabel").textContent = DIFF_KR[optDiff]; $("msg").textContent = ""; $("over").classList.add("hidden");
+    if (timerId) clearInterval(timerId); timerId = setInterval(updateTimer, 1000);
+    renderGrid(); updateTimer();
+  }
 
-  initSeg(); initPad();
+  initSeg(); initPad(); refreshResume();
   $("startBtn").addEventListener("click", start);
+  $("resumeBtn").addEventListener("click", resumeGame);
   $("newBtn").addEventListener("click", newPuzzle);
   $("againBtn").addEventListener("click", newPuzzle);
   document.addEventListener("keydown", (e) => { if ($("board").classList.contains("hidden")) return; if (e.key >= "1" && e.key <= "9") place(+e.key); else if (e.key === "Backspace" || e.key === "Delete" || e.key === "0") erase(); });
