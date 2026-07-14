@@ -364,8 +364,8 @@
       else $("statusBar").textContent = v.myTurn ? "🎯 내 차례 — 포격하세요" : `${nmv(v, v.turn)} 차례…`;
       renderGrid($("targetGrid"), v.target, "target", v.myTurn ? onFire : null);
       renderGrid($("myGrid"), v.myBoard, "mine", null);
-      $("foeFleet").innerHTML = "<span style='color:var(--muted)'>상대 함대:</span> " + v.foeFleet.map((f) => `<span class="fs ${f.sunk ? "sunk" : ""}">${f.n}${f.sunk ? " 침몰" : ""}</span>`).join("");
-      $("myFleet").innerHTML = "<span style='color:var(--muted)'>내 함대:</span> " + v.myFleet.map((f) => `<span class="fs ${f.sunk ? "sunk" : ""}">${f.n}</span>`).join("");
+      $("foeFleet").innerHTML = "<span style='color:var(--muted)'>상대 함대:</span> " + v.foeFleet.map((f) => `<span class="fs ${f.sunk ? "sunk" : ""}">${f.name}(${f.size})${f.sunk ? " 침몰" : ""}</span>`).join("");
+      $("myFleet").innerHTML = "<span style='color:var(--muted)'>내 함대:</span> " + v.myFleet.map((f) => `<span class="fs ${f.sunk ? "sunk" : ""}">${f.name}(${f.size})</span>`).join("");
     }
     if (v.winner != null) showOver(v);
     else if (screen === SCREEN.OVER) setScreen(SCREEN.PLAYING);
