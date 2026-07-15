@@ -295,15 +295,23 @@
     const opp = 1 - a.from;
     const r = judge(d, G.secrets[opp]);
     G.guesses[a.from].push({ g: d, s: r.s, b: r.b });
-    if (r.s === N) G.winner = a.from;
-    else G.turn = opp;
+    // 선공(0)이 먼저 맞히면 후공(1)에게 같은 회차의 동점 시도 1회를 준다(야구의 말 공격).
+    if (r.s === N) {
+      if (a.from === 0) { G.pendingWin = true; G.turn = 1; }        // 선공 정답 → 후공 마지막 기회
+      else if (G.pendingWin) G.winner = "draw";                      // 후공도 정답 → 무승부
+      else G.winner = 1;                                             // 후공이 자기 차례에 먼저 맞힘 → 후공 승
+    } else if (G.pendingWin) {
+      G.winner = 0;                                                  // 후공 동점 실패 → 선공 승
+    } else {
+      G.turn = opp;
+    }
     broadcast();
   }
   function viewFor(pi) {
     const opp = 1 - pi;
     return {
       online: true, digits: G.N, myIndex: pi, turn: G.turn, myTurn: G.turn === pi && G.winner == null,
-      winner: G.winner, iWon: G.winner === pi,
+      winner: G.winner, iWon: G.winner === pi, draw: G.winner === "draw",
       mySecret: G.secrets[pi], myGuesses: G.guesses[pi], oppGuesses: G.guesses[opp],
       oppReveal: G.winner != null ? G.secrets[opp] : null,
       oppNick: hostNames[opp] || null,
@@ -411,11 +419,16 @@
     }
   }
   function showOver(v) {
-    $("overTitle").textContent = v.iWon ? "🎉 승리!" : "😢 패배";
     const who = v.online ? (v.oppNick || "상대") : "컴퓨터";
-    $("overSub").innerHTML = v.iWon
-      ? `${who}의 숫자 <span class="reveal">${fmt(v.oppReveal)}</span> 를 먼저 맞혔어요!`
-      : `${who}가 내 숫자 <span class="reveal">${fmt(v.mySecret)}</span> 를 먼저 맞혔어요.`;
+    if (v.draw) {
+      $("overTitle").textContent = "🤝 무승부!";
+      $("overSub").innerHTML = `양쪽 모두 같은 회에 정답을 맞혔어요! ${who}의 숫자 <span class="reveal">${fmt(v.oppReveal)}</span>`;
+    } else {
+      $("overTitle").textContent = v.iWon ? "🎉 승리!" : "😢 패배";
+      $("overSub").innerHTML = v.iWon
+        ? `${who}의 숫자 <span class="reveal">${fmt(v.oppReveal)}</span> 를 맞혔어요!`
+        : `${who}가 내 숫자 <span class="reveal">${fmt(v.mySecret)}</span> 를 맞혔어요.`;
+    }
     // 방 유지: 방장·온라인에서만 '다른 게임' 노출(피커 초기화)
     $("gamePicker").classList.add("hidden");
     $("otherGameBtn").classList.toggle("hidden", !(isHost && isOnlineRoom()));
@@ -672,6 +685,7 @@
 
   if (location.search.includes("debug")) {
     window.__bb = () => ({ screen, onlineMode, isHost, myIndex, myCode, G, solo, lastView });
+    window.__bbact = (a) => dispatch(a);
     window.__goto = (k) => gotoGame(k);
     window.__st = () => ({ screen, isHost, myIndex, myCode, handoffMode, intentionalNav });
   }

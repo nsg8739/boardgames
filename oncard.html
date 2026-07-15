@@ -329,6 +329,7 @@
     if (!playable(card, G.top, G.color)) return;
     if (card.c === "w" && !COLORS.includes(chosen)) return;
     hand.splice(idx, 1);
+    G.stuck = 0;  // 정상 진행 → 교착 카운터 초기화
     G.pile.push(G.top);
     G.top = card;
     G.color = card.c === "w" ? chosen : card.c;
@@ -346,12 +347,25 @@
   }
   function doDraw(pi) {
     if (G.drawnThisTurn) return;
+    const before = G.players[pi].hand.length;
     drawFor(pi, 1);
+    const drew = G.players[pi].hand.length > before;
     G.drawnThisTurn = true;
     const hand = G.players[pi].hand;
     const hasPlay = hand.some((c) => playable(c, G.top, G.color));
-    log(`${nm(pi)} 카드 뽑음`);
-    if (!hasPlay) { G.drawnThisTurn = false; G.turn = step(G.turn); }  // 낼 게 없으면 자동 패스
+    if (drew) { G.stuck = 0; log(`${nm(pi)} 카드 뽑음`); }
+    if (!hasPlay) {  // 낼 게 없으면 자동 패스
+      G.drawnThisTurn = false;
+      if (!drew) {  // 덱·버린 더미 모두 소진돼 뽑지도 못함 → 교착 감지
+        G.stuck = (G.stuck || 0) + 1;
+        if (G.stuck >= G.count) {  // 전원이 연속으로 막힘 → 손패가 가장 적은 사람 승리로 종료
+          let best = Infinity, w = 0;
+          G.players.forEach((p, i) => { if (p.hand.length < best) { best = p.hand.length; w = i; } });
+          G.winner = w; log(`🏁 더 낼 카드가 없어 손패가 가장 적은 ${nm(w)} 승리!`); broadcast(); return;
+        }
+      }
+      G.turn = step(G.turn);
+    }
     broadcast();
   }
   function doPass(pi) { if (!G.drawnThisTurn) return; G.drawnThisTurn = false; G.turn = step(G.turn); broadcast(); }

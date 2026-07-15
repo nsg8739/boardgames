@@ -75,6 +75,7 @@
   .gc.sunk { background: var(--sunk); } .gc.sunk::after { content: "✕"; }
   .gridBox.target .gc.fireable { cursor: pointer; }
   .gridBox.target .gc.fireable:hover { outline: 2px solid var(--gold-soft); outline-offset: -2px; }
+  .gridBox.target .gc.aim { outline: 3px solid var(--gold-soft); outline-offset: -3px; background: rgba(242,204,96,0.28); }  /* 조준(1차 탭) — 한 번 더 눌러야 발사 */
 
   .fleet { display: flex; flex-wrap: wrap; gap: 5px 10px; justify-content: center; margin: 8px 0; font-size: 12px; }
   .fleet .fs { color: var(--parchment); } .fleet .fs.sunk { color: var(--muted); text-decoration: line-through; }
@@ -385,6 +386,7 @@
       $("rerollBtn").disabled = v.myReady; $("readyBtn").disabled = v.myReady;
       $("readyBtn").textContent = v.myReady ? "대기 중…" : "⚓ 준비 완료";
     } else {
+      if (!v.myTurn) aimSel = null;  // 내 차례가 아니면 조준 해제
       if (v.winner != null) $("statusBar").textContent = "";
       else $("statusBar").textContent = v.myTurn ? "🎯 내 차례 — 포격하세요" : `${nmv(v, v.turn)} 차례…`;
       renderGrid($("targetGrid"), v.target, "target", v.myTurn ? onFire : null);
@@ -395,6 +397,8 @@
     if (v.winner != null) showOver(v);
     else if (screen === SCREEN.OVER) setScreen(SCREEN.PLAYING);
   }
+  let aimSel = null;  // 조준 중인 좌표(1차 탭). 같은 칸을 다시 눌러야 발사(오발사 방지)
+  function coordLabel(r, c) { return String.fromCharCode(65 + r) + (c + 1); }
   function renderGrid(box, cells, kind, onClick) {
     box.className = "gridBox " + kind;
     box.innerHTML = "";
@@ -402,13 +406,30 @@
       const el = document.createElement("button"); el.className = "gc";
       const cell = cells[r][c];
       if (kind === "mine") { if (cell && cell.ship) el.classList.add("ship"); if (cell && cell.shot) el.classList.add(cell.shot); }
-      else { if (cell) el.classList.add(cell); if (onClick && !cell) el.classList.add("fireable"); }
+      else {
+        if (cell) el.classList.add(cell);
+        if (onClick && !cell) {
+          el.classList.add("fireable");
+          el.setAttribute("aria-label", coordLabel(r, c));
+          if (aimSel && aimSel.r === r && aimSel.c === c) el.classList.add("aim");
+        }
+      }
       if (onClick && kind === "target" && !cell) el.addEventListener("click", () => onClick(r, c));
       else el.disabled = (kind === "target");
       box.appendChild(el);
     }
   }
-  function onFire(r, c) { if (!lastView || !lastView.myTurn) return; dispatch({ action: "fire", r, c }); }
+  function onFire(r, c) {
+    if (!lastView || !lastView.myTurn) return;
+    if (aimSel && aimSel.r === r && aimSel.c === c) {  // 같은 칸 재탭 → 발사 확정
+      aimSel = null;
+      dispatch({ action: "fire", r, c });
+    } else {  // 첫 탭 → 조준만(실수 발사 방지)
+      aimSel = { r, c };
+      renderView(lastView);
+      $("statusBar").textContent = `🎯 ${coordLabel(r, c)} 조준 — 한 번 더 누르면 발사`;
+    }
+  }
 
   function showOver(v) {
     const iWon = v.winner === v.myIndex;
