@@ -567,6 +567,14 @@
         </div>
       </div>
 
+      <!-- 3단계: 컴퓨터 난이도(혼자 전용) -->
+      <div class="section hidden" id="diffSection">
+        <div class="sectionHead"><span class="stepNo">3</span>컴퓨터 난이도</div>
+        <div class="seg" id="segDiff">
+          <button data-v="easy">쉬움</button><button data-v="normal" class="on">보통</button><button data-v="hard">어려움</button>
+        </div>
+      </div>
+
       <!-- 닉네임(온라인에서 상대에게 표시) -->
       <input id="nickInput" maxlength="8" placeholder="닉네임 (예: 아빠)" autocomplete="off" style="width:100%;font-family:var(--serif);font-size:15px;text-align:center;padding:11px;border-radius:8px;border:1px solid var(--warm-border);background:#0d0b05;color:var(--gold-bright);box-sizing:border-box;" />
 
@@ -654,7 +662,8 @@
   let isHost = false;
   const JOKERS = 2;  // 조커는 옵션에서 제외 — 모든 버전 고정 2개(더미에 포함, 뽑기로 등장)
   const cfg = { count: 2, jokers: JOKERS, version: "basic" };  // 호스트가 방 만들 때 선택 → 게임 초기화에 사용
-  let optPlayers = 2, optVersion = "basic";  // 메뉴 세그먼트 선택값
+  let optPlayers = 2, optVersion = "basic", optDiff = "normal";  // 메뉴 세그먼트 선택값
+  let soloDiff = "normal";  // 솔로 시작 시 확정된 컴퓨터 난이도
   let soloMode = false, aiTimer = null;       // 1명(솔로) = 나 vs 컴퓨터(AI). 서버 없이 로컬 진행
   let myNick = ""; try { myNick = (localStorage.getItem("bg_nick") || "").trim().slice(0, 8); } catch (e) {}
   let hostNames = {};  // 호스트: 슬롯 index → 닉네임
@@ -1027,12 +1036,14 @@
   // ========================================================================
   function startSolo() {
     soloMode = true; isHost = true; myIndex = 0; myCode = myToken = null;
+    soloDiff = optDiff;
     cfg.count = 2; cfg.jokers = JOKERS; cfg.version = optVersion;
     resetSel();
     newGame();  // broadcast → 화면 전환(PLAYING) + 컴퓨터 선공이면 자동 진행
   }
   function updateCreateLabel() {
     $("createBtn").textContent = optPlayers === 1 ? "혼자 시작 (vs 컴퓨터)" : "방 만들기";
+    $("diffSection").classList.toggle("hidden", optPlayers !== 1);  // 난이도는 혼자일 때만
   }
   function maybeAI() {  // 컴퓨터 차례면 잠깐 뒤 두게 한다(사람처럼 딜레이)
     if (aiTimer) { clearTimeout(aiTimer); aiTimer = null; }
@@ -1080,53 +1091,39 @@
       taken.add(t.color + ":" + t.value);
     }
     const tiles = opp.hand;
+    const colorVals = (t) => { const vs = []; for (let v = 0; v <= 11; v++) if (!taken.has(t.color + ":" + v)) vs.push(v); return vs; };
+    // 쉬움: 순서 추리 없이 무작위 위치·값 지목(자주 틀림 → 약한 상대)
+    if (soloDiff === "easy") {
+      const hid = []; tiles.forEach((t, k) => { if (!t.faceUp && !t.joker) hid.push(k); });
+      if (hid.length) { const k = hid[Math.floor(Math.random() * hid.length)]; const vs = colorVals(tiles[k]); return { action: { target: 0, index: k, number: vs.length ? vs[Math.floor(Math.random() * vs.length)] : 0 }, certain: false }; }
+      const jk0 = tiles.findIndex((t) => !t.faceUp); return jk0 >= 0 ? { action: { target: 0, index: jk0, joker: true }, certain: false } : null;
+    }
     // 각 위치의 가능 숫자: 공개=확정, 히든=색으로 가능한 값(taken 제외). 공개 조커는 순서에서 제외.
-    const cand = tiles.map((t) => {
-      if (t.faceUp) return t.joker ? { joker: true, vals: [] } : { vals: [t.value] };
-      const vals = [];
-      for (let v = 0; v <= 11; v++) if (!taken.has(t.color + ":" + v)) vals.push(v);
-      return { vals };
-    });
-    // 오름차순 제약 양방향 전파 — 히든도 숫자로 가정해 이웃과 순서를 강제(사람의 추리와 동일) → 후보 대폭 축소.
+    const cand = tiles.map((t) => { if (t.faceUp) return t.joker ? { joker: true, vals: [] } : { vals: [t.value] }; return { vals: colorVals(t) }; });
+    // 오름차순 제약 양방향 전파 → 후보 대폭 축소(보통/어려움 공통)
     const seq = [];
     for (let k = 0; k < tiles.length; k++) if (!cand[k].joker) seq.push(k);
     let lo = -1;
-    for (const k of seq) {
-      const t = tiles[k];
-      cand[k].vals = cand[k].vals.filter((v) => keyCV(t.color, v) > lo);
-      if (cand[k].vals.length) lo = Math.min.apply(null, cand[k].vals.map((v) => keyCV(t.color, v)));
-    }
+    for (const k of seq) { const t = tiles[k]; cand[k].vals = cand[k].vals.filter((v) => keyCV(t.color, v) > lo); if (cand[k].vals.length) lo = Math.min.apply(null, cand[k].vals.map((v) => keyCV(t.color, v))); }
     let hi = 24;
-    for (let i = seq.length - 1; i >= 0; i--) {
-      const k = seq[i], t = tiles[k];
-      cand[k].vals = cand[k].vals.filter((v) => keyCV(t.color, v) < hi);
-      if (cand[k].vals.length) hi = Math.max.apply(null, cand[k].vals.map((v) => keyCV(t.color, v)));
-    }
-    // 값 선택: 같은 색의 다른 히든 위치와 덜 겹치는(더 확정적인) 값을 우선.
+    for (let i = seq.length - 1; i >= 0; i--) { const k = seq[i], t = tiles[k]; cand[k].vals = cand[k].vals.filter((v) => keyCV(t.color, v) < hi); if (cand[k].vals.length) hi = Math.max.apply(null, cand[k].vals.map((v) => keyCV(t.color, v))); }
+    // 값 선택: 어려움=같은 색과 덜 겹치는(더 확정적) 값, 보통=후보 중 무작위(가끔 틀림)
     const share = {};
     for (let k = 0; k < tiles.length; k++) { if (tiles[k].faceUp) continue; for (const v of cand[k].vals) { const key = tiles[k].color + ":" + v; share[key] = (share[key] || 0) + 1; } }
     const pickVal = (k) => { const t = tiles[k]; let best = cand[k].vals[0], bs = Infinity; for (const v of cand[k].vals) { const s = share[t.color + ":" + v]; if (s < bs) { bs = s; best = v; } } return best; };
-    function bestSingle() {
-      let best = null;
-      for (let k = 0; k < tiles.length; k++) {
-        if (tiles[k].faceUp) continue;
-        const vs = cand[k].vals; if (!vs.length) continue;
-        if (!best || vs.length < best.count) best = { k, v: pickVal(k), count: vs.length, certain: vs.length === 1 };
-      }
-      return best;
-    }
-    if (G.version === "zion") {
-      // 실제 더블은 드물다 → '확실한 더블'(양쪽 후보가 동일 단일값)만 더블로 지목, 나머지는 단일.
+    const chooseVal = (k) => soloDiff === "hard" ? pickVal(k) : cand[k].vals[Math.floor(Math.random() * cand[k].vals.length)];
+    // 어려움 + Zion: 인접 검정-흰색이 동일 단일 후보면 '더블'로 지목(확실할 때만)
+    if (soloDiff === "hard" && G.version === "zion") {
       for (let k = 0; k + 1 < tiles.length; k++) {
         const a = tiles[k], b = tiles[k + 1];
         if (a.faceUp || b.faceUp || a.color !== "b" || b.color !== "w") continue;
         const ca = cand[k].vals, cb = cand[k + 1].vals;
-        if (ca.length === 1 && cb.length === 1 && ca[0] === cb[0])
-          return { action: { target: 0, index: k, number: ca[0], double: true }, certain: true };
+        if (ca.length === 1 && cb.length === 1 && ca[0] === cb[0]) return { action: { target: 0, index: k, number: ca[0], double: true }, certain: true };
       }
     }
-    const single = bestSingle();
-    if (single) return { action: { target: 0, index: single.k, number: single.v }, certain: single.certain };
+    let best = null;
+    for (let k = 0; k < tiles.length; k++) { if (tiles[k].faceUp) continue; const vs = cand[k].vals; if (!vs.length) continue; if (!best || vs.length < best.count) best = { k, count: vs.length, certain: vs.length === 1 }; }
+    if (best) return { action: { target: 0, index: best.k, number: chooseVal(best.k) }, certain: best.certain };
     const jk = tiles.findIndex((t) => !t.faceUp);  // 숫자 후보 소진 → 조커로 추정
     if (jk >= 0) return { action: { target: 0, index: jk, joker: true }, certain: false };
     return null;
@@ -1684,6 +1681,7 @@
   }
   function closeRuleModal() { $("ruleModal").classList.add("hidden"); }
   initSeg("segPlayers", (v) => { optPlayers = Number(v); updateCreateLabel(); });
+  initSeg("segDiff", (v) => { optDiff = v; });
   initSeg("segVersion", (v) => { optVersion = v; updateModeSummary(); });
   // 종료 화면의 모드 선택(호스트) — 새 방 없이 모드만 바꿔 재시작. cfg.version에 바로 반영.
   initSeg("segVersionOver", (v) => { optVersion = v; cfg.version = v; setSegActive("segVersion", v); updateModeSummary(); });
@@ -1766,6 +1764,8 @@
       othersCounts: lastView && lastView.others.map((o) => o.tiles.length),
     });
     window.__act = (a) => dispatch(a);
+    window.__aiplan = () => aiPlanGuess();
+    window.__soloDiff = () => soloDiff;
     window.__view = () => lastView;
     window.__truth = () => (isHost ? G : null);  // 호스트만: 테스트가 정답을 알도록
     window.__goto = (k) => gotoGame(k);           // 방 유지 이동 테스트용
