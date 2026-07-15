@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>루미큐브 — 보드게임 모음</title>
+<title>우봉고 — 보드게임 모음</title>
 <meta property="og:type" content="website" /><meta property="og:locale" content="ko_KR" />
 <meta property="og:site_name" content="보드게임 모음" />
-<meta property="og:title" content="루미큐브 — 숫자 타일 게임" />
-<meta property="og:description" content="같은 색 연속(런)·같은 숫자 세트(그룹)를 만들어 타일을 먼저 다 내려놓기! 혼자(vs 컴퓨터)도, 온라인 2~4인도." />
-<meta property="og:url" content="https://nsg8739.github.io/boardgames/rummikub.html" />
+<meta property="og:title" content="우봉고 — 조각 퍼즐 스피드" />
+<meta property="og:description" content="조각을 돌리고 뒤집어 판을 가장 빨리 채우면 승리! 실시간 퍼즐 대결. 혼자(vs 컴퓨터)도, 온라인 2~4인도." />
+<meta property="og:url" content="https://nsg8739.github.io/boardgames/ubongo.html" />
 <meta property="og:image" content="https://nsg8739.github.io/boardgames/og.png" />
 <meta property="og:image:width" content="1200" /><meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" /><meta name="twitter:image" content="https://nsg8739.github.io/boardgames/og.png" />
@@ -24,9 +24,9 @@
   * { box-sizing: border-box; }
   html, body { margin: 0; min-height: 100%; width: 100%; background: var(--bg); color: var(--parchment); font-family: "Segoe UI", "Malgun Gothic", sans-serif; }
   body { display: flex; flex-direction: column; align-items: center; padding: 14px 12px 40px; }
-  .wrap { width: 100%; max-width: 600px; }
   #conn { position: fixed; top: 8px; right: 10px; z-index: 20; font-size: 11px; color: var(--muted); background: rgba(13,10,5,0.72); border: 1px solid var(--warm-border); border-radius: 999px; padding: 4px 10px; max-width: 62vw; text-align: right; }
   #conn .ok { color: #7fd18f; } #conn .bad { color: #e08a7a; }
+  .wrap { width: 100%; max-width: 520px; }
   .top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
   .home { text-decoration: none; color: var(--gold-bright); font-size: 13px; font-weight: 700; } .home:hover { color: var(--gold-soft); }
   h1 { font-family: var(--serif); font-size: clamp(18px, 5.5vw, 24px); font-weight: 800; margin: 0; color: var(--gold-bright); text-align: center; letter-spacing: .5px; flex: 1; }
@@ -61,32 +61,29 @@
   .gameMeta b { color: var(--gold-bright); font-weight: 800; }
   #gameCodeWrap { cursor: pointer; white-space: nowrap; }
   #statusBar { text-align: center; font-family: var(--serif); font-size: 15px; font-weight: 700; color: var(--gold-bright); min-height: 22px; margin: 4px 0 8px; }
-  .sectLabel { font-size: 12px; color: var(--muted); font-weight: 700; margin: 8px 0 4px; display: flex; justify-content: space-between; }
+  .sectLabel { font-size: 12px; color: var(--muted); font-weight: 700; margin: 8px 0 4px; text-align: center; }
 
-  /* 타일 */
-  .tile { width: 30px; height: 40px; border-radius: 5px; background: linear-gradient(180deg,#f3ecdd,#e4d8bd); border: 1px solid #b6a884; display: inline-flex; align-items: center; justify-content: center; font-family: var(--serif); font-weight: 800; font-size: 17px; box-shadow: 0 1px 2px rgba(0,0,0,0.35); flex: none; user-select: none; }
-  .tile.c0 { color: #c0392b; } .tile.c1 { color: #2d6fc9; } .tile.c2 { color: #cf7d1c; } .tile.c3 { color: #2a2a2a; }
-  .tile.joker { color: #7a2e8a; font-size: 15px; }
-  .tile.sel { outline: 3px solid var(--gold-soft); outline-offset: 1px; transform: translateY(-4px); }
+  #boardWrap { display: flex; justify-content: center; margin: 6px 0; }
+  #board2 { display: grid; gap: 3px; padding: 6px; border: 2px solid var(--warm-border); border-radius: 10px; background: rgba(13,10,5,0.4); }
+  .bcell { width: 42px; height: 42px; border-radius: 6px; background: rgba(243,236,221,0.09); border: 1px solid rgba(201,162,39,0.2); cursor: pointer; }
+  .bcell.filled { border-color: rgba(0,0,0,0.35); box-shadow: inset 0 -3px 5px rgba(0,0,0,0.25); }
+  .tray { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 8px 0; min-height: 60px; }
+  .piece { display: grid; gap: 2px; padding: 5px; border: 2px solid transparent; border-radius: 8px; cursor: pointer; background: rgba(13,10,5,0.3); }
+  .piece.sel { border-color: var(--gold-soft); background: rgba(201,162,39,0.14); }
+  .piece.placed { opacity: 0.25; }
+  .pcell { width: 16px; height: 16px; border-radius: 3px; }
+  .pcell.empty { background: transparent; }
+  .controls { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin: 6px 0; }
+  .cbtn { font-family: var(--serif); font-size: 13px; font-weight: 700; padding: 9px 14px; border-radius: 8px; cursor: pointer; border: 1px solid var(--gold-deep); background: linear-gradient(180deg,var(--warm-bg2),var(--warm-bg)); color: var(--gold-bright); }
+  .cbtn:disabled { opacity: 0.4; cursor: default; }
+  #ubongoBtn { display: block; width: 100%; max-width: 260px; margin: 10px auto 4px; font-family: var(--serif); font-size: 20px; font-weight: 800; padding: 14px 0; border-radius: 12px; cursor: pointer; border: 1px solid #7b2419; background: linear-gradient(180deg,#e0b93a,#b5442f); color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+  #ubongoBtn:disabled { opacity: 0.4; cursor: default; }
+  .bigMsg { font-family: var(--serif); font-size: 18px; font-weight: 800; color: var(--gold-bright); text-align: center; margin: 6px 0; }
 
-  #table { min-height: 60px; border: 1px dashed var(--warm-border); border-radius: 10px; padding: 6px; background: rgba(13,10,5,0.35); display: flex; flex-direction: column; gap: 5px; }
-  .tset { display: flex; gap: 3px; flex-wrap: wrap; padding: 4px; border: 1px solid transparent; border-radius: 8px; background: rgba(201,162,39,0.05); cursor: pointer; }
-  .tset.selT { border-color: var(--gold-soft); background: rgba(201,162,39,0.16); }
-  .tset .tsv { align-self: center; font-size: 10px; color: var(--muted); margin-left: 3px; }
-  #tableEmpty { color: var(--muted); font-size: 12px; text-align: center; padding: 14px; }
-
-  #rack { display: flex; gap: 3px; flex-wrap: wrap; padding: 8px; border: 1px solid var(--gold-deep); border-radius: 10px; background: rgba(40,30,14,0.5); min-height: 52px; }
-  .actionBar { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin: 10px 0; }
-  .actBtn { font-family: var(--serif); font-size: 13px; font-weight: 800; padding: 10px 12px; border-radius: 9px; cursor: pointer; border: 1px solid #7b2419; background: linear-gradient(180deg,#b5442f,#7b2419); color: #fff; }
-  .actBtn.sub { border: 1px solid var(--gold-deep); background: linear-gradient(180deg,var(--warm-bg2),var(--warm-bg)); color: var(--gold-bright); }
-  .actBtn:disabled { opacity: 0.4; cursor: default; }
-  .meldInfo { text-align: center; font-size: 12px; color: var(--gold-soft); min-height: 16px; }
-
-  .players { display: flex; gap: 6px; flex-wrap: wrap; }
-  .pl { border: 1px solid var(--warm-border); border-radius: 8px; padding: 5px 9px; background: rgba(13,10,5,0.4); font-size: 12px; min-width: 84px; }
-  .pl.active { border-color: var(--gold-soft); } .pl.me { background: rgba(201,162,39,0.08); }
-  .pl .pn { font-weight: 700; color: var(--gold-bright); } .pl .pc { color: var(--parchment); margin-top: 3px; }
-  .pl .badge2 { color: var(--gold-soft); font-size: 10px; }
+  .players { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+  .pl { border: 1px solid var(--warm-border); border-radius: 8px; padding: 6px 10px; background: rgba(13,10,5,0.4); font-size: 12px; text-align: center; min-width: 78px; }
+  .pl.me { background: rgba(201,162,39,0.08); } .pl.won { border-color: var(--gold-soft); box-shadow: 0 0 8px rgba(242,204,96,0.4); }
+  .pl .pn { font-weight: 700; color: var(--gold-bright); } .pl .pc { color: var(--gold-soft); font-weight: 800; font-size: 16px; margin-top: 2px; }
   .backHome { text-align: center; margin-top: 14px; } .backHome a { color: var(--gold-bright); font-size: 13px; font-weight: 700; text-decoration: none; }
 
   #over { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 18px; background: rgba(8,5,2,0.72); }
@@ -124,12 +121,12 @@
   <div class="wrap">
     <div class="top">
       <a class="home" href="./index.html">🎲 메인</a>
-      <h1>루미큐브</h1>
+      <h1>우봉고</h1>
       <span style="width:44px"></span>
     </div>
 
     <div id="menu" class="panel">
-      <div class="rules">타일로 <b>런</b>(같은 색 연속 3장↑)이나 <b>그룹</b>(같은 숫자·다른 색 3~4장)을 만들어 내려놓습니다.<br><b>첫 등록은 합계 30점 이상</b>이어야 하며, 이후엔 이미 놓인 세트에 이어붙일 수 있습니다.<br>손 타일을 가장 먼저 다 내려놓으면 승리! (조커는 아무 타일 대용)</div>
+      <div class="rules">주어진 <b>조각들</b>을 돌리고 뒤집어 <b>판을 빈칸 없이</b> 채우세요.<br>가장 먼저 완성한 사람이 라운드를 획득! 조각은 회전·뒤집기 가능.<br><b>먼저 3라운드</b>를 이기면 승리! (실시간 퍼즐 대결)</div>
       <div class="optRow">
         <span class="optLabel">인원</span>
         <div class="seg" id="segCount"><button data-v="2" class="on">2명</button><button data-v="3">3명</button><button data-v="4">4명</button></div>
@@ -159,18 +156,21 @@
     <div id="board" class="hidden">
       <div id="peerAlert" class="hidden"></div>
       <div class="gameMeta">
-        <span>🁴 루미큐브</span>
+        <span>🧩 우봉고</span>
         <span id="gameCodeWrap" class="hidden" title="탭하면 코드 복사">CODE <b id="metaCode">----</b></span>
-        <span>남은 타일 <b id="deckLeft">0</b></span>
+        <span>라운드 <b id="roundNo">0</b></span>
       </div>
       <div id="statusBar" role="status" aria-live="polite"></div>
-      <div class="sectLabel"><span>테이블 (세트를 눌러 이어붙일 대상 선택)</span></div>
-      <div id="table"></div>
-      <div class="sectLabel"><span>내 타일</span><span id="rackCount"></span></div>
-      <div id="rack"></div>
-      <div class="meldInfo" id="meldInfo"></div>
-      <div class="actionBar" id="actionBar"></div>
-      <div class="sectLabel"><span>플레이어</span></div>
+      <div id="boardWrap"><div id="board2"></div></div>
+      <div class="sectLabel">조각 — 눌러 고르고, 돌리기/뒤집기 후 판의 <b>좌상단 칸</b>을 누르세요</div>
+      <div class="tray" id="tray"></div>
+      <div class="controls" id="controls">
+        <button class="cbtn" id="rotBtn">↻ 돌리기</button>
+        <button class="cbtn" id="flipBtn">⇋ 뒤집기</button>
+        <button class="cbtn" id="clearBtn">전부 빼기</button>
+      </div>
+      <button id="ubongoBtn" disabled>🧩 우봉고!</button>
+      <div class="sectLabel">점수판 (3라운드 먼저 승)</div>
       <div class="players" id="players"></div>
       <div class="backHome"><button id="toMenuBtn" style="background:none;border:none;color:var(--gold-bright);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">↩ 게임 메뉴</button> · <a href="./index.html">🎲 메인</a></div>
     </div>
@@ -203,15 +203,18 @@
   const isLocal = ["localhost", "127.0.0.1"].includes(location.hostname) || location.protocol === "file:";
   const SERVER_URL = override || (isLocal ? "ws://localhost:8080" : RENDER_URL);
 
-  const COLORS = ["#c0392b", "#2d6fc9", "#cf7d1c", "#2a2a2a"];  // 빨강·파랑·주황·검정
-  const MELD_MIN = 30;
+  const PC = ["#d1493a", "#3f7fd8", "#3ea35a", "#e0b93a", "#9b59b6"];  // 조각 색
+  const WIN_ROUNDS = 3;
+  const NEXT_DELAY = 2200;
+  const LAYOUTS = [{ W: 4, H: 3, sizes: [4, 4, 4] }, { W: 3, H: 3, sizes: [3, 3, 3] }, { W: 4, H: 3, sizes: [3, 4, 5] }, { W: 4, H: 3, sizes: [3, 3, 3, 3] }];
   const SCREEN = { MENU: "menu", LOBBY: "lobby", PLAYING: "playing", OVER: "over" };
   let screen = SCREEN.MENU;
   let ws = null, myIndex = null, isHost = false, myCode = null, myToken = null;
   let optCount = 2, optMode = "solo", onlineMode = false;
-  let soloMode = false, aiTimer = null;
+  let soloMode = false;
   let G = null, lastView = null;
-  let selRack = new Set(), selSet = null;  // 선택한 손 타일 id / 이어붙일 테이블 세트 index
+  let place = [], activePiece = null, activeOffs = null, lastRound = -1;   // 내 배치 상태
+  let nextTimer = null, aiTimers = [];
   let myNick = ""; try { myNick = (localStorage.getItem("bg_nick") || "").trim().slice(0, 8); } catch (e) {}
   let hostNames = {};
   let handoffMode = false, handoffCap = 0, intentionalNav = false;
@@ -221,7 +224,7 @@
   function hidePeerAlert() { const el = $("peerAlert"); if (!el) return; el.classList.add("hidden"); el.innerHTML = ""; }
   function endGameByHost() { try { send({ type: "ended" }); } catch (e) {} clearSession(); if (ws) { try { ws.close(); } catch (e) {} } onlineMode = false; isHost = false; myIndex = myCode = myToken = null; hidePeerAlert(); showMenuWithError("게임을 종료했습니다."); }
 
-  const SESS_KEY = "rummikub_session", STATE_KEY = "rummikub_state", REJOIN_WINDOW_MS = 300000;
+  const SESS_KEY = "ubongo_session", STATE_KEY = "ubongo_state", REJOIN_WINDOW_MS = 300000;
   function saveSession() { try { localStorage.setItem(SESS_KEY, JSON.stringify({ code: myCode, index: myIndex, token: myToken, isHost, ts: Date.now() })); } catch {} }
   function touchSession() { try { const s = JSON.parse(localStorage.getItem(SESS_KEY) || "null"); if (s) { s.ts = Date.now(); localStorage.setItem(SESS_KEY, JSON.stringify(s)); } } catch {} }
   function getSession() { try { return JSON.parse(localStorage.getItem(SESS_KEY) || "null"); } catch { return null; } }
@@ -231,193 +234,113 @@
   function loadState() { try { return JSON.parse(localStorage.getItem(STATE_KEY) || "null"); } catch { return null; } }
   function restoreConn() { $("conn").innerHTML = "<span class='ok'>● 서버 연결됨</span>"; }
 
+  // ===== 기하 =====
+  function normalize(cells) { let mr = Infinity, mc = Infinity; cells.forEach(([r, c]) => { if (r < mr) mr = r; if (c < mc) mc = c; }); return cells.map(([r, c]) => [r - mr, c - mc]).sort((a, b) => a[0] - b[0] || a[1] - b[1]); }
+  function keyOf(cells) { return JSON.stringify(normalize(cells)); }
+  function rot(cells) { return normalize(cells.map(([r, c]) => [c, -r])); }
+  function flip(cells) { return normalize(cells.map(([r, c]) => [r, -c])); }
+  function orientKeys(base) { const set = {}; let cur = normalize(base); for (let i = 0; i < 4; i++) { set[keyOf(cur)] = 1; set[keyOf(flip(cur))] = 1; cur = rot(cur); } return Object.keys(set); }
+
   // ===== 엔진 =====
   function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-  // 세트 검증: 런(같은 색 연속) 또는 그룹(같은 숫자·다른 색). 조커 대체 지원. {ok, kind, value}
-  function validateSet(tiles) {
-    if (!tiles || tiles.length < 3) return { ok: false };
-    const real = tiles.filter((t) => !t.joker); const jok = tiles.length - real.length;
-    if (real.length === 0) return { ok: false };
-    // 그룹: 같은 숫자, 다른 색, 3~4장
-    if (tiles.length <= 4 && real.every((t) => t.num === real[0].num)) {
-      const cols = real.map((t) => t.color);
-      if (new Set(cols).size === cols.length && jok <= 4 - real.length) return { ok: true, kind: "group", value: real[0].num * tiles.length };
-    }
-    // 런: 같은 색, 연속 숫자(조커로 빈칸 채움)
-    if (real.every((t) => t.color === real[0].color)) {
-      const nums = real.map((t) => t.num);
-      if (new Set(nums).size === nums.length) {
-        const L = tiles.length, lo = Math.min.apply(null, nums), hi = Math.max.apply(null, nums);
-        if (hi - lo + 1 <= L) {
-          let start = Math.min(lo, 14 - L); if (start < 1) start = 1;
-          if (start <= lo && start + L - 1 >= hi && start >= 1 && start + L - 1 <= 13) {
-            let value = 0; for (let x = start; x <= start + L - 1; x++) value += x;
-            return { ok: true, kind: "run", value };
-          }
-        }
-      }
-    }
-    return { ok: false };
-  }
-  function setValue(tiles) { const r = validateSet(tiles); return r.ok ? r.value : 0; }
-  function tilePoints(t) { return t.joker ? 30 : t.num; }
-  function rackPoints(p) { return p.rack.reduce((s, t) => s + tilePoints(t), 0); }
-
-  function newGame(count) {
-    let id = 0; const deck = [];
-    for (let cp = 0; cp < 2; cp++) for (let c = 0; c < 4; c++) for (let n = 1; n <= 13; n++) deck.push({ id: id++, color: c, num: n });
-    deck.push({ id: id++, joker: true }); deck.push({ id: id++, joker: true });
-    shuffle(deck);
-    const players = []; for (let i = 0; i < count; i++) { const rack = []; for (let k = 0; k < 14; k++) rack.push(deck.pop()); players.push({ rack, melded: false }); }
-    G = { count, deck, table: [], players, turn: 0, phase: "play", winner: null, turnPoints: 0, playedThisTurn: false, passes: 0, snap: null, log: [] };
-    takeSnap();
-    log("게임 시작 — 첫 등록 30점 이상!");
-  }
-  function takeSnap() { G.snap = { rack: G.players[G.turn].rack.map((t) => ({ ...t })), table: G.table.map((s) => s.map((t) => ({ ...t }))) }; G.turnPoints = 0; G.playedThisTurn = false; }
+  function ri(n) { return Math.floor(Math.random() * n); }
+  function clearTimers() { if (nextTimer) { clearTimeout(nextTimer); nextTimer = null; } aiTimers.forEach((t) => clearTimeout(t)); aiTimers = []; }
   function nm(i) { if (soloMode) return i === 0 ? "나" : "컴퓨터" + i; return hostNames[i] || ("P" + (i + 1)); }
   function log(m) { G.log.push(m); if (G.log.length > 20) G.log.shift(); }
 
-  function advanceTurn() { G.turn = (G.turn + 1) % G.count; takeSnap(); }
-  function endGame(winner) {
-    G.phase = "over";
-    if (winner == null) { let best = Infinity; G.players.forEach((p, i) => { const pt = rackPoints(p); if (pt < best) { best = pt; winner = i; } }); }
-    G.winner = winner;
+  // 판(W×H 사각형)을 조각으로 분할해 항상 풀리는 퍼즐 생성
+  function makePuzzle() {
+    for (let attempt = 0; attempt < 300; attempt++) {
+      const L = LAYOUTS[ri(LAYOUTS.length)]; const W = L.W, H = L.H, sizes = shuffle(L.sizes.slice());
+      const assign = Array.from({ length: H }, () => Array(W).fill(-1));
+      const key = (r, c) => r * W + c;
+      const unassigned = new Set(); for (let r = 0; r < H; r++) for (let c = 0; c < W; c++) unassigned.add(key(r, c));
+      const solution = []; let ok = true;
+      for (let pi = 0; pi < sizes.length && ok; pi++) {
+        const target = sizes[pi];
+        const seedK = [...unassigned][ri(unassigned.size)]; if (seedK == null) { ok = false; break; }
+        const cells = [[Math.floor(seedK / W), seedK % W]]; unassigned.delete(seedK); assign[cells[0][0]][cells[0][1]] = pi;
+        while (cells.length < target) {
+          const front = [];
+          cells.forEach(([r, c]) => { [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]].forEach(([rr, cc]) => { if (rr >= 0 && rr < H && cc >= 0 && cc < W && unassigned.has(key(rr, cc))) front.push([rr, cc]); }); });
+          if (!front.length) { ok = false; break; }
+          const [nr, nc] = front[ri(front.length)]; cells.push([nr, nc]); unassigned.delete(key(nr, nc)); assign[nr][nc] = pi;
+        }
+        solution.push(cells);
+      }
+      if (ok && unassigned.size === 0 && solution.length === sizes.length) {
+        const pieces = solution.map((cells, i) => ({ size: cells.length, base: normalize(cells), orients: orientKeys(cells), color: i % PC.length }));
+        // 조각 순서 섞기(해답과 표시 순서 분리)
+        const order = shuffle(pieces.map((_, i) => i));
+        return { W, H, pieces: order.map((i) => pieces[i]), solution: order.map((i) => solution[i]) };
+      }
+    }
+    // 폴백: 3x3 세 줄
+    return { W: 3, H: 3, pieces: [0, 1, 2].map((i) => ({ size: 3, base: [[0, 0], [0, 1], [0, 2]], orients: orientKeys([[0, 0], [0, 1], [0, 2]]), color: i })), solution: [[[0, 0], [0, 1], [0, 2]], [[1, 0], [1, 1], [1, 2]], [[2, 0], [2, 1], [2, 2]]] };
   }
 
-  // 손에서 tile id들을 꺼내 (없으면 null) 반환
-  function pullFromRack(pi, ids) {
-    const rack = G.players[pi].rack; const out = [];
-    for (const id of ids) { const idx = rack.findIndex((t) => t.id === id); if (idx < 0) return null; out.push(rack[idx]); }
-    return out;
+  function newGame(count) {
+    G = { count, scores: new Array(count).fill(0), W: 0, H: 0, pieces: [], solution: [], roundWinner: null, round: 0, phase: "reveal", winner: null, log: [] };
+    log("게임 시작 — 곧 첫 퍼즐이 나옵니다");
+    scheduleNext(600);
   }
-  function removeFromRack(pi, tiles) { const rack = G.players[pi].rack; tiles.forEach((t) => { const i = rack.findIndex((x) => x.id === t.id); if (i >= 0) rack.splice(i, 1); }); }
-
-  function doLay(pi, ids) {
-    const p = G.players[pi]; const tiles = pullFromRack(pi, ids);
-    if (!tiles || tiles.length < 3) return false;
-    const v = validateSet(tiles); if (!v.ok) return false;
-    removeFromRack(pi, tiles); G.table.push(tiles); G.turnPoints += v.value; G.playedThisTurn = true; G.passes = 0;
-    log(`${nm(pi)}: ${v.kind === "group" ? "그룹" : "런"} 등록`);
-    return true;
+  function startRound() {
+    if (!G || G.winner != null) return;
+    clearTimers();
+    const pz = makePuzzle();
+    G.round++; G.W = pz.W; G.H = pz.H; G.pieces = pz.pieces; G.solution = pz.solution; G.roundWinner = null; G.phase = "race";
+    log(`라운드 ${G.round} 시작!`);
+    broadcast();
+    if (soloMode) scheduleAISolve();
   }
-  function doAppend(pi, setIdx, ids) {
-    const p = G.players[pi]; if (!p.melded) return false;               // 첫 등록 전엔 이어붙이기 불가
-    const set = G.table[setIdx]; if (!set) return false;
-    const tiles = pullFromRack(pi, ids); if (!tiles || !tiles.length) return false;
-    const combined = set.concat(tiles); if (!validateSet(combined).ok) return false;
-    removeFromRack(pi, tiles); G.table[setIdx] = combined; G.playedThisTurn = true; G.passes = 0;
-    log(`${nm(pi)}: 세트에 ${tiles.length}장 추가`);
-    return true;
+  function scheduleNext(delay) {
+    if (!isHost && !soloMode) return;
+    clearTimers();
+    nextTimer = setTimeout(() => { nextTimer = null; startRound(); }, delay != null ? delay : NEXT_DELAY);
   }
-  function doUndo(pi) {
-    if (!G.snap) return false;
-    G.players[pi].rack = G.snap.rack.map((t) => ({ ...t }));
-    G.table = G.snap.table.map((s) => s.map((t) => ({ ...t })));
-    G.turnPoints = 0; G.playedThisTurn = false;
-    return true;
+  function inBounds(r, c) { return r >= 0 && r < G.H && c >= 0 && c < G.W; }
+  // 제출된 배치 검증: 각 조각이 자기 모양(회전/뒤집기 포함)이고, 판을 겹침 없이 정확히 채우는가
+  function validateSolution(placements) {
+    if (!Array.isArray(placements) || placements.length !== G.pieces.length) return false;
+    const covered = new Set();
+    for (let i = 0; i < G.pieces.length; i++) {
+      const cells = placements[i];
+      if (!Array.isArray(cells) || cells.length !== G.pieces[i].size) return false;
+      if (G.pieces[i].orients.indexOf(keyOf(cells)) < 0) return false;   // 모양 일치
+      for (const cell of cells) { const [r, c] = cell; if (!inBounds(r, c)) return false; const k = r * G.W + c; if (covered.has(k)) return false; covered.add(k); }
+    }
+    return covered.size === G.W * G.H;
   }
-  function doDraw(pi) {
-    if (G.playedThisTurn) return false;
-    if (G.deck.length) { G.players[pi].rack.push(G.deck.pop()); G.passes = 0; log(`${nm(pi)}: 타일 뽑음`); }
-    else { G.passes++; log(`${nm(pi)}: 뽑을 타일 없음(패스)`); if (G.passes >= G.count) { endGame(null); return true; } }
-    advanceTurn(); return true;
+  function doSolve(pi, placements) {
+    if (!G || G.phase !== "race" || G.roundWinner != null) return false;
+    if (!validateSolution(placements)) return false;
+    G.roundWinner = pi; G.scores[pi]++; G.phase = "reveal";
+    log(`🧩 ${nm(pi)} 완성! (+1)`);
+    if (G.scores[pi] >= WIN_ROUNDS) { clearTimers(); G.winner = pi; G.phase = "over"; broadcast(); return true; }
+    broadcast(); scheduleNext(); return true;
   }
-  function doEndTurn(pi) {
-    if (!G.playedThisTurn) return false;
-    const p = G.players[pi];
-    if (!p.melded && G.turnPoints < MELD_MIN) return false;   // 첫 등록 30점 미달 → 커밋 불가(되돌리거나 채워야 함)
-    if (!p.melded) { p.melded = true; log(`${nm(pi)} 첫 등록 완료(${G.turnPoints}점)`); }
-    if (p.rack.length === 0) { endGame(pi); return true; }
-    advanceTurn(); return true;
-  }
-
-  function applyAction(a) {
-    if (!G || G.phase !== "play") return;
-    const pi = a.from; if (pi !== G.turn) return;
-    let ok = false;
-    if (a.action === "lay") ok = doLay(pi, a.ids || []);
-    else if (a.action === "append") ok = doAppend(pi, a.setIdx, a.ids || []);
-    else if (a.action === "undo") ok = doUndo(pi);
-    else if (a.action === "draw") ok = doDraw(pi);
-    else if (a.action === "endTurn") ok = doEndTurn(pi);
-    if (ok) broadcast();
-  }
+  function applyAction(a) { if (!G) return; if (a.action === "solve") doSolve(a.from, a.placements); }
   function dispatch(a) { a.from = myIndex; if (isHost) applyAction(a); else send({ type: "act", to: 0, a }); }
 
-  // ===== AI(솔로) — 기본 그리디: 그룹/런을 찾아 첫 등록 30점↑이면 등록, 아니면 뽑기 =====
-  function findSets(rack) {
-    let pool = rack.map((t) => ({ ...t })); const sets = [];
-    // 그룹: 숫자별 3색 이상
-    for (let n = 1; n <= 13; n++) {
-      const grp = []; for (let c = 0; c < 4; c++) { const t = pool.find((x) => !x.joker && x.num === n && x.color === c); if (t) grp.push(t); }
-      if (grp.length >= 3) { grp.forEach((t) => pool.splice(pool.findIndex((x) => x.id === t.id), 1)); sets.push(grp); }
+  // ===== AI(솔로) — 정답(생성 해답)을 랜덤 지연 후 제출 =====
+  function scheduleAISolve() {
+    aiTimers.forEach((t) => clearTimeout(t)); aiTimers = [];
+    const round = G.round;
+    for (let i = 1; i < G.count; i++) {
+      const delay = 4500 + Math.random() * 7000;   // 4.5~11.5초
+      const idx = i;
+      const t = setTimeout(() => { if (!G || G.round !== round || G.phase !== "race" || G.roundWinner != null) return; doSolve(idx, G.solution.map((s) => s.map((c) => c.slice()))); }, delay);
+      aiTimers.push(t);
     }
-    // 런: 색별 연속 3장 이상
-    for (let c = 0; c < 4; c++) {
-      let nums = [...new Set(pool.filter((x) => !x.joker && x.color === c).map((x) => x.num))].sort((a, b) => a - b);
-      let k = 0;
-      while (k < nums.length) {
-        let run = [nums[k]], m = k + 1;
-        while (m < nums.length && nums[m] === run[run.length - 1] + 1) { run.push(nums[m]); m++; }
-        if (run.length >= 3) { const st = run.map((nn) => pool.find((x) => !x.joker && x.color === c && x.num === nn)).filter(Boolean); st.forEach((t) => pool.splice(pool.findIndex((x) => x.id === t.id), 1)); sets.push(st); }
-        k = m;
-      }
-    }
-    // 조커 활용: 2장짜리 그룹/런을 조커로 완성(3장)
-    let jokers = pool.filter((t) => t.joker);
-    const take = (t) => { const i = pool.findIndex((x) => x.id === t.id); if (i >= 0) pool.splice(i, 1); };
-    for (let n = 1; n <= 13 && jokers.length; n++) {
-      const g = []; for (let c = 0; c < 4; c++) { const t = pool.find((x) => !x.joker && x.num === n && x.color === c); if (t) g.push(t); }
-      if (g.length === 2) { const jk = jokers.shift(); const st = g.concat([jk]); st.forEach(take); sets.push(st); }
-    }
-    for (let c = 0; c < 4 && jokers.length; c++) {
-      const nums = [...new Set(pool.filter((x) => !x.joker && x.color === c).map((x) => x.num))].sort((a, b) => a - b);
-      for (let k = 0; k + 1 < nums.length && jokers.length; k++) {
-        if (nums[k + 1] === nums[k] + 1 || nums[k + 1] === nums[k] + 2) {  // 연속 또는 한 칸 사이
-          const t1 = pool.find((x) => !x.joker && x.color === c && x.num === nums[k]);
-          const t2 = pool.find((x) => !x.joker && x.color === c && x.num === nums[k + 1]);
-          if (t1 && t2 && validateSet([t1, t2, jokers[0]]).ok) { const jk = jokers.shift(); const st = [t1, t2, jk]; st.forEach(take); sets.push(st); }
-        }
-      }
-    }
-    return sets;
-  }
-  function aiTurn(i) {
-    const p = G.players[i]; const sets = findSets(p.rack);
-    const pts = sets.reduce((a, s) => a + setValue(s), 0);
-    if (sets.length && (p.melded || pts >= MELD_MIN)) {
-      sets.forEach((s) => doLay(i, s.map((t) => t.id)));
-      // 이미 등록했다면 테이블에 이어붙이기 시도(간단): 각 남은 타일을 붙일 수 있는 세트에
-      if (p.melded || G.turnPoints >= MELD_MIN) {
-        let changed = true;
-        while (changed) {
-          changed = false;
-          for (const t of p.rack.slice()) {
-            for (let si = 0; si < G.table.length; si++) { if (validateSet(G.table[si].concat([t])).ok) { G.table[si] = G.table[si].concat([t]); removeFromRack(i, [t]); G.playedThisTurn = true; changed = true; break; } }
-            if (changed) break;
-          }
-        }
-      }
-      if (!doEndTurn(i)) { doUndo(i); doDraw(i); }
-      broadcast();
-    } else { doDraw(i); broadcast(); }
-  }
-  function maybeAI() {
-    if (!soloMode || !G || G.phase !== "play" || G.turn === 0) return;
-    if (aiTimer) clearTimeout(aiTimer);
-    aiTimer = setTimeout(() => { aiTimer = null; if (soloMode && G && G.phase === "play" && G.turn !== 0) aiTurn(G.turn); }, 800);
   }
 
   // ===== 뷰 =====
   function viewFor(pi) {
-    const p = G.players[pi];
     return {
-      online: !soloMode, count: G.count, turn: G.turn, myIndex: pi, phase: G.phase, winner: G.winner, deckLeft: G.deck.length,
-      myTurn: G.turn === pi && G.phase === "play",
-      table: G.table.map((s) => ({ tiles: s.map((t) => ({ ...t })), value: setValue(s) })),
-      myRack: p.rack.map((t) => ({ ...t })), myMelded: p.melded,
-      turnPoints: G.turnPoints, playedThisTurn: G.playedThisTurn,
-      players: G.players.map((pp, i) => ({ idx: i, rackCount: pp.rack.length, melded: pp.melded })),
+      online: !soloMode, count: G.count, myIndex: pi, phase: G.phase, round: G.round, winner: G.winner,
+      W: G.W, H: G.H, roundWinner: G.roundWinner,
+      pieces: (G.phase === "race" || G.phase === "reveal") ? G.pieces.map((p) => ({ size: p.size, base: p.base.map((c) => c.slice()), orients: p.orients.slice(), color: p.color })) : [],
+      scores: G.scores.slice(), winCards: WIN_ROUNDS,
       names: Array.from({ length: G.count }, (_, i) => hostNames[i] || null), log: G.log.slice(-3),
     };
   }
@@ -427,89 +350,90 @@
     renderView(viewFor(0));
     saveState();
     if (!soloMode) touchSession();
-    if (soloMode) maybeAI();
   }
 
   // ===== 렌더 =====
   function nmv(v, i) { if (soloMode) return i === 0 ? "나" : "컴퓨터" + i; const n = v.names[i]; if (i === v.myIndex) return n || "나"; return n || ("P" + (i + 1)); }
-  function tileHtml(t, sel) { if (t.joker) return `<div class="tile joker${sel ? " sel" : ""}" data-id="${t.id}">🃏</div>`; return `<div class="tile c${t.color}${sel ? " sel" : ""}" data-id="${t.id}">${t.num}</div>`; }
-  function sortRack(rack) { return rack.slice().sort((a, b) => { if (a.joker) return 1; if (b.joker) return -1; return a.color - b.color || a.num - b.num; }); }
+  function pieceOfCell(r, c) { for (let i = 0; i < place.length; i++) { const cells = place[i]; if (cells && cells.some((x) => x[0] === r && x[1] === c)) return i; } return -1; }
+  function racing(v) { return v.phase === "race"; }
   function renderView(v) {
-    if (!v || !Array.isArray(v.myRack)) return;
+    if (!v || typeof v.round !== "number") return;
     lastView = v;
     if (screen !== SCREEN.PLAYING && screen !== SCREEN.OVER) setScreen(SCREEN.PLAYING);
-    $("deckLeft").textContent = v.deckLeft;
+    $("roundNo").textContent = v.round;
     $("gameCodeWrap").classList.toggle("hidden", !(v.online && myCode)); if (v.online && myCode) $("metaCode").textContent = myCode;
-    if (selSet != null && selSet >= v.table.length) selSet = null;
 
-    $("statusBar").textContent = v.phase === "over" ? "" : (v.myTurn ? "내 차례 — 세트를 만들어 내려놓으세요" : `${nmv(v, v.turn)} 차례…`);
-    $("rackCount").textContent = `${v.myRack.length}장`;
+    // 새 라운드 → 배치 초기화
+    if (v.phase === "race" && v.round !== lastRound) { place = new Array(v.pieces.length).fill(null); activePiece = null; activeOffs = null; lastRound = v.round; }
+    if (v.phase !== "race" && v.phase !== "reveal") lastRound = -1;
 
-    // 테이블
-    const tb = $("table"); tb.innerHTML = "";
-    if (!v.table.length) tb.innerHTML = `<div id="tableEmpty">아직 내려놓인 세트가 없습니다</div>`;
-    v.table.forEach((s, si) => {
-      const row = document.createElement("div"); row.className = "tset" + (selSet === si ? " selT" : "");
-      row.innerHTML = s.tiles.map((t) => tileHtml(t, false)).join("") + `<span class="tsv">${s.value}점</span>`;
-      if (v.myTurn && v.myMelded) row.addEventListener("click", () => { selSet = (selSet === si ? null : si); renderView(v); });
-      tb.appendChild(row);
+    $("statusBar").textContent = v.phase === "over" ? ""
+      : v.phase === "race" ? "조각으로 판을 채우고 🧩 우봉고!를 누르세요"
+      : (v.roundWinner != null ? "🧩 " + nmv(v, v.roundWinner) + " 완성! 다음 퍼즐…" : "다음 퍼즐 준비 중…");
+
+    // 판
+    const bd = $("board2");
+    if (v.W && v.H) {
+      bd.style.gridTemplateColumns = `repeat(${v.W}, 42px)`; bd.innerHTML = "";
+      for (let r = 0; r < v.H; r++) for (let c = 0; c < v.W; c++) {
+        const el = document.createElement("div"); el.className = "bcell";
+        const pi = pieceOfCell(r, c);
+        if (pi >= 0) { el.classList.add("filled"); el.style.background = PC[v.pieces[pi].color]; }
+        if (racing(v)) el.addEventListener("click", () => onCell(v, r, c));
+        bd.appendChild(el);
+      }
+    } else bd.innerHTML = "";
+
+    // 조각 트레이
+    const tr = $("tray"); tr.innerHTML = "";
+    v.pieces.forEach((p, i) => {
+      const placed = !!place[i];
+      const offs = (activePiece === i && activeOffs) ? activeOffs : p.base;
+      const maxr = Math.max(...offs.map((o) => o[0])), maxc = Math.max(...offs.map((o) => o[1]));
+      const grid = document.createElement("div"); grid.className = "piece" + (activePiece === i ? " sel" : "") + (placed ? " placed" : "");
+      grid.style.gridTemplateColumns = `repeat(${maxc + 1}, 16px)`;
+      const occ = new Set(offs.map((o) => o[0] + "," + o[1]));
+      for (let r = 0; r <= maxr; r++) for (let c = 0; c <= maxc; c++) { const cell = document.createElement("div"); cell.className = "pcell" + (occ.has(r + "," + c) ? "" : " empty"); if (occ.has(r + "," + c)) cell.style.background = PC[p.color]; grid.appendChild(cell); }
+      if (racing(v) && !placed) grid.addEventListener("click", () => { activePiece = i; activeOffs = p.base.map((o) => o.slice()); renderView(v); });
+      tr.appendChild(grid);
     });
 
-    // 내 손(정렬)
-    const rk = $("rack"); rk.innerHTML = "";
-    sortRack(v.myRack).forEach((t) => {
-      const w = document.createElement("div"); w.innerHTML = tileHtml(t, selRack.has(t.id)); const node = w.firstElementChild;
-      if (v.myTurn) node.addEventListener("click", () => { if (selRack.has(t.id)) selRack.delete(t.id); else selRack.add(t.id); renderView(v); });
-      rk.appendChild(node);
-    });
+    const canAct = racing(v);
+    $("rotBtn").disabled = !(canAct && activePiece != null); $("flipBtn").disabled = !(canAct && activePiece != null); $("clearBtn").disabled = !canAct;
+    const allPlaced = v.pieces.length > 0 && place.length === v.pieces.length && place.every((x) => x);
+    $("ubongoBtn").disabled = !(canAct && allPlaced);
 
-    // 첫 등록 안내
-    $("meldInfo").textContent = v.myTurn && !v.myMelded ? `첫 등록 점수: ${v.turnPoints} / ${MELD_MIN}` : "";
-
-    renderActionBar(v);
-
-    // 플레이어
+    // 점수판
     const box = $("players"); box.innerHTML = "";
     for (let i = 0; i < v.count; i++) {
-      const p = v.players[i]; const el = document.createElement("div"); el.className = "pl" + (v.turn === i ? " active" : "") + (i === v.myIndex ? " me" : "");
-      el.innerHTML = `<div class="pn">${escapeHtml(nmv(v, i))}</div><div class="pc">타일 ${p.rackCount}장 ${p.melded ? '<span class="badge2">·등록✓</span>' : ""}</div>`;
+      const el = document.createElement("div"); el.className = "pl" + (i === v.myIndex ? " me" : "") + (v.roundWinner === i ? " won" : "");
+      el.innerHTML = `<div class="pn">${escapeHtml(nmv(v, i))}</div><div class="pc">${v.scores[i]}</div>`;
       box.appendChild(el);
     }
     if (v.phase === "over") showOver(v);
     else if (screen === SCREEN.OVER) setScreen(SCREEN.PLAYING);
   }
-  function renderActionBar(v) {
-    const bar = $("actionBar"); bar.innerHTML = "";
-    if (!v.myTurn) return;
-    const ids = [...selRack];
-    // 새 세트로 내기
-    const lay = document.createElement("button"); lay.className = "actBtn"; lay.textContent = "새 세트로 내기"; lay.disabled = ids.length < 3;
-    lay.addEventListener("click", () => { const s = ids.slice(); selRack.clear(); dispatch({ action: "lay", ids: s }); });
-    bar.appendChild(lay);
-    // 이어붙이기
-    if (v.myMelded) {
-      const app = document.createElement("button"); app.className = "actBtn sub"; app.textContent = "선택 세트에 붙이기"; app.disabled = selSet == null || ids.length < 1;
-      app.addEventListener("click", () => { const s = ids.slice(), si = selSet; selRack.clear(); selSet = null; dispatch({ action: "append", setIdx: si, ids: s }); });
-      bar.appendChild(app);
-    }
-    // 되돌리기 / 턴 종료 / 뽑기
-    if (v.playedThisTurn) {
-      const undo = document.createElement("button"); undo.className = "actBtn sub"; undo.textContent = "↩ 되돌리기";
-      undo.addEventListener("click", () => { selRack.clear(); selSet = null; dispatch({ action: "undo" }); });
-      bar.appendChild(undo);
-      const end = document.createElement("button"); end.className = "actBtn"; end.textContent = "턴 종료"; end.disabled = !v.myMelded && v.turnPoints < MELD_MIN;
-      end.addEventListener("click", () => { selRack.clear(); selSet = null; dispatch({ action: "endTurn" }); });
-      bar.appendChild(end);
-    } else {
-      const draw = document.createElement("button"); draw.className = "actBtn sub"; draw.textContent = "🂠 타일 뽑기";
-      draw.addEventListener("click", () => { selRack.clear(); selSet = null; dispatch({ action: "draw" }); });
-      bar.appendChild(draw);
-    }
+  function onCell(v, r, c) {
+    const pi = pieceOfCell(r, c);
+    if (pi >= 0) { place[pi] = null; renderView(v); return; }             // 놓인 조각 빼기
+    if (activePiece == null || !activeOffs || place[activePiece]) return;  // 고른 조각 없음
+    const cells = activeOffs.map((o) => [r + o[0], c + o[1]]);
+    // 판 안 + 다른 조각과 겹치지 않아야
+    for (const [rr, cc] of cells) { if (rr < 0 || rr >= v.H || cc < 0 || cc >= v.W) { toast("판을 벗어나요"); return; } if (pieceOfCell(rr, cc) >= 0) { toast("다른 조각과 겹쳐요"); return; } }
+    place[activePiece] = cells; const done = activePiece; activePiece = null; activeOffs = null; renderView(v);
   }
+  $("rotBtn").addEventListener("click", () => { if (activePiece != null && activeOffs) { activeOffs = rot(activeOffs); if (lastView) renderView(lastView); } });
+  $("flipBtn").addEventListener("click", () => { if (activePiece != null && activeOffs) { activeOffs = flip(activeOffs); if (lastView) renderView(lastView); } });
+  $("clearBtn").addEventListener("click", () => { place = new Array((lastView ? lastView.pieces.length : 0)).fill(null); activePiece = null; activeOffs = null; if (lastView) renderView(lastView); });
+  $("ubongoBtn").addEventListener("click", () => {
+    if (!lastView || !racing(lastView)) return;
+    if (!(place.length && place.every((x) => x))) return;
+    dispatch({ action: "solve", placements: place.map((cells) => cells.map((c) => c.slice())) });
+  });
   function showOver(v) {
     $("overTitle").textContent = v.winner === v.myIndex ? "🎉 승리!" : "게임 종료";
-    const rows = v.players.map((p) => ({ i: p.idx, c: p.rackCount })).sort((a, b) => a.c - b.c);
-    $("scoreTable").innerHTML = rows.map((r) => `<div class="sr ${r.i === v.winner ? "win" : ""}">${escapeHtml(nmv(v, r.i))}${r.i === v.winner ? " 🏆" : ""}<span>${r.c === 0 ? "완성!" : "타일 " + r.c + "장 남음"}</span></div>`).join("");
+    const rows = v.scores.map((s, i) => ({ i, s })).sort((a, b) => b.s - a.s);
+    $("scoreTable").innerHTML = rows.map((r) => `<div class="sr ${r.i === v.winner ? "win" : ""}">${escapeHtml(nmv(v, r.i))}${r.i === v.winner ? " 🏆" : ""}<span>${r.s}승</span></div>`).join("");
     $("gamePicker").classList.add("hidden");
     $("otherGameBtn").classList.toggle("hidden", !(isHost && isOnlineRoom()));
     setScreen(SCREEN.OVER); $("over").classList.remove("hidden");
@@ -521,15 +445,15 @@
     $("lobby").classList.toggle("hidden", s !== SCREEN.LOBBY);
     $("board").classList.toggle("hidden", !(s === SCREEN.PLAYING || s === SCREEN.OVER));
     if (s !== SCREEN.OVER) $("over").classList.add("hidden");
-    if (s === SCREEN.MENU) { soloMode = false; if (aiTimer) { clearTimeout(aiTimer); aiTimer = null; } }
+    if (s === SCREEN.MENU) { soloMode = false; clearTimers(); }
     const inGame = !soloMode && (s === SCREEN.PLAYING || s === SCREEN.OVER);
     $("chatToggle").classList.toggle("hidden", !inGame);
     if (!inGame) $("chatPanel").classList.add("hidden");
     updateHistoryGuard(s);
   }
   function showMenuWithError(msg) { $("menuErr").textContent = msg || ""; onlineMode = false; setScreen(SCREEN.MENU); }
-  function startSolo() { soloMode = true; isHost = true; myIndex = 0; myCode = myToken = null; onlineMode = false; hostNames = {}; selRack.clear(); selSet = null; newGame(optCount); setScreen(SCREEN.PLAYING); broadcast(); }
-  function newOnlineGame() { const c = G ? G.count : optCount; selRack.clear(); selSet = null; newGame(c); broadcast(); }
+  function startSolo() { soloMode = true; isHost = true; myIndex = 0; myCode = myToken = null; onlineMode = false; hostNames = {}; place = []; activePiece = null; activeOffs = null; lastRound = -1; newGame(optCount); setScreen(SCREEN.PLAYING); broadcast(); }
+  function newOnlineGame() { const c = G ? G.count : optCount; place = []; activePiece = null; activeOffs = null; lastRound = -1; newGame(c); broadcast(); }
 
   function send(obj) { if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj)); }
   function sendNick() { if (isHost) { if (myIndex != null) hostNames[myIndex] = myNick; if (G) broadcast(); } else if (myNick) { send({ type: "nick", name: myNick, to: 0 }); } }
@@ -577,7 +501,7 @@
       case "rejoined":
         onlineMode = true; myIndex = m.index; myCode = m.code; myToken = m.token; isHost = (m.index === 0); saveSession(); restoreConn();
         if (handoffMode) { handoffCap = m.capacity || 2; if (isHost) { $("lobbyTitle").textContent = "방 유지 — 다른 플레이어 대기 중…"; setScreen(SCREEN.LOBBY); maybeStartHandoff(m.count); } else { $("lobbyTitle").textContent = "방 유지됨 — 방장이 곧 새 게임을 시작합니다…"; setScreen(SCREEN.LOBBY); } sendNick(); break; }
-        if (isHost) { try { hostNames = JSON.parse(localStorage.getItem(STATE_KEY + "_n") || "{}"); } catch { hostNames = {}; } const g = loadState(); if (g) { G = g; broadcast(); } else { $("roomCode").textContent = m.code; $("lobbyCodeWrap").style.display = ""; $("lobbyTitle").textContent = "상대를 기다리는 중…"; setScreen(SCREEN.LOBBY); } }
+        if (isHost) { try { hostNames = JSON.parse(localStorage.getItem(STATE_KEY + "_n") || "{}"); } catch { hostNames = {}; } const g = loadState(); if (g) { G = g; broadcast(); if (G.phase === "reveal") scheduleNext(); } else { $("roomCode").textContent = m.code; $("lobbyCodeWrap").style.display = ""; $("lobbyTitle").textContent = "상대를 기다리는 중…"; setScreen(SCREEN.LOBBY); } }
         else { $("lobbyTitle").textContent = "재접속됨 — 동기화 중…"; setScreen(SCREEN.LOBBY); }
         sendNick(); break;
       case "rejoin-failed": clearSession(); onlineMode = false; isHost = false; myIndex = myCode = myToken = null; showMenuWithError(m.message || "재접속하지 못했습니다."); break;
@@ -599,7 +523,7 @@
 
   let armed = false, lastBackAt = 0, toastTimer = null;
   function updateHistoryGuard(s) { const inGame = (s === SCREEN.PLAYING || s === SCREEN.LOBBY); if (inGame && !armed) { history.pushState({ g: 1 }, ""); armed = true; } else if (!inGame) armed = false; }
-  function toast(msg) { let t = $("toast"); if (!t) { t = document.createElement("div"); t.id = "toast"; t.style.cssText = "position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:60;background:rgba(13,10,5,0.96);color:var(--parchment);border:1px solid var(--gold-deep);border-radius:999px;padding:10px 18px;font-size:13px;max-width:90vw;text-align:center;transition:opacity .2s;"; document.body.appendChild(t); } t.textContent = msg; t.style.opacity = "1"; clearTimeout(toastTimer); toastTimer = setTimeout(() => t.style.opacity = "0", 2200); }
+  function toast(msg) { let t = $("toast"); if (!t) { t = document.createElement("div"); t.id = "toast"; t.style.cssText = "position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:60;background:rgba(13,10,5,0.96);color:var(--parchment);border:1px solid var(--gold-deep);border-radius:999px;padding:10px 18px;font-size:13px;max-width:90vw;text-align:center;transition:opacity .2s;"; document.body.appendChild(t); } t.textContent = msg; t.style.opacity = "1"; clearTimeout(toastTimer); toastTimer = setTimeout(() => t.style.opacity = "0", 1600); }
   window.addEventListener("popstate", () => { if (!(screen === SCREEN.PLAYING || screen === SCREEN.LOBBY)) return; const now = Date.now(); if (now - lastBackAt < 2500) { clearSession(); if (ws) { try { ws.close(); } catch {} } armed = false; history.back(); return; } lastBackAt = now; history.pushState({ g: 1 }, ""); toast("한 번 더 ‘뒤로가기’를 누르면 나갑니다"); });
   window.addEventListener("pageshow", (e) => { if (e.persisted && onlineMode && (!ws || ws.readyState > WebSocket.OPEN)) connect(); });
   window.addEventListener("beforeunload", (e) => { if (intentionalNav) return; if (onlineMode && (screen === SCREEN.PLAYING || screen === SCREEN.LOBBY)) { e.preventDefault(); e.returnValue = ""; } });
@@ -645,7 +569,7 @@
     $("chatInput").addEventListener("keydown", (e) => { if (e.key === "Enter") { sendChat($("chatInput").value); $("chatInput").value = ""; } });
   })();
 
-  const THIS_GAME = "rummikub";
+  const THIS_GAME = "ubongo";
   const ROOM_GAMES = [
     { key: "davinci",    file: "davinci.html",    label: "🔎 다빈치코드", min: 2, max: 4 },
     { key: "loveletter", file: "loveletter.html", label: "💌 러브레터",   min: 2, max: 4 },
@@ -689,9 +613,10 @@
   { const _room = new URLSearchParams(location.search).get("room"); const _s = getSession(); if (_room || (_s && sessionFresh(_s))) connect(); }
 
   if (location.search.includes("debug")) {
-    window.__rk = () => ({ screen, soloMode, onlineMode, isHost, myIndex, myCode, G, lastView, handoffMode, intentionalNav, missing: missingPeers.size });
-    window.__rkact = (a) => dispatch(a);
-    window.__rkai = () => { if (G) aiTurn(G.turn); };
+    window.__ub = () => ({ screen, soloMode, onlineMode, isHost, myIndex, myCode, G, lastView, place, handoffMode, intentionalNav, missing: missingPeers.size });
+    window.__ubact = (a) => dispatch(a);
+    window.__ubstart = () => startRound();
+    window.__ubsolve = () => { if (G && G.solution) dispatch({ action: "solve", placements: G.solution.map((s) => s.map((c) => c.slice())) }); };
     window.__goto = (k) => gotoGame(k);
     window.__st = () => ({ screen, isHost, myIndex, myCode, handoffMode, intentionalNav });
   }
