@@ -63,6 +63,8 @@
 
   .rows { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
   .row { display: flex; align-items: center; gap: 4px; background: rgba(13,10,5,0.4); border: 1px solid var(--warm-border); border-radius: 8px; padding: 5px 6px; min-height: 52px; }
+  .row.choosable { cursor: pointer; border-color: var(--gold); background: rgba(201,162,39,0.12); }
+  .row.choosable:hover { outline: 2px solid var(--gold-soft); outline-offset: -2px; }
   .rowcards { display: flex; gap: 3px; flex: 1; flex-wrap: wrap; }
   .cardv { position: relative; min-width: 34px; height: 44px; border-radius: 6px; background: linear-gradient(180deg,#f3e6c6,#e2cf9f); color: #4a2f14; font-family: var(--serif); font-weight: 800; font-size: 16px; display: flex; align-items: center; justify-content: center; }
   .cardv .bh { position: absolute; top: -6px; right: -5px; background: #a6402f; color: #fff; border-radius: 8px; font-size: 9px; padding: 0 3px; font-family: sans-serif; }
@@ -234,35 +236,69 @@
     G = { count, rows, hands, bulls: new Array(count).fill(0), picks: new Array(count).fill(null), round: 1, phase: "select", winner: null, log: [] };
   }
   function nm(i) { if (soloMode) return i === 0 ? "나" : "컴퓨터" + i; return hostNames[i] || ("P" + (i + 1)); }
-  function resolveRound() {
-    const plays = G.picks.map((c, pi) => ({ c, pi })).filter((x) => x.c != null).sort((a, b) => a.c - b.c);
-    const ev = [];
-    for (const { c, pi } of plays) {
+  function minBullRow() { let tr = 0, tb = Infinity; G.rows.forEach((row, ri) => { const b = rowBulls(row); if (b < tb) { tb = b; tr = ri; } }); return tr; }
+  function takeRow(pi, ri, c) { const b = rowBulls(G.rows[ri]); G.bulls[pi] += b; G.ev.push(`${nm(pi)}: ${c} 너무 낮아 ${ri + 1}번 줄 가져감 (+${b}🐂)`); G.rows[ri] = [c]; }
+  // 라운드 처리: 낸 카드를 낮은 순서로 배치한다. 어떤 카드가 모든 줄 끝보다 낮으면
+  // 그 사람이 가져갈 줄을 '직접 선택'해야 하므로 처리를 멈추고(choose) 선택을 기다린다.
+  // (솔로의 컴퓨터는 예외적으로 최소 벌점 줄을 자동 선택해 흐름을 끊지 않는다.)
+  function beginResolve() {
+    G.queue = G.picks.map((c, pi) => ({ c, pi })).filter((x) => x.c != null).sort((a, b) => a.c - b.c);
+    G.ev = [];
+    processQueue();
+  }
+  function processQueue() {
+    while (G.queue && G.queue.length) {
+      const { c, pi } = G.queue[0];
       let best = -1, bestLast = -1;
       G.rows.forEach((row, ri) => { const last = row[row.length - 1]; if (last < c && last > bestLast) { bestLast = last; best = ri; } });
       if (best === -1) {
-        let tr = 0, tb = Infinity;
-        G.rows.forEach((row, ri) => { const b = rowBulls(row); if (b < tb) { tb = b; tr = ri; } });
-        G.bulls[pi] += tb; ev.push(`${nm(pi)}: ${c} 너무 낮아 ${tr + 1}번 줄 가져감 (+${tb}🐂)`); G.rows[tr] = [c];
+        if (!soloMode || pi === 0) { G.phase = "choose"; G.chooser = pi; return; }  // 사람 → 선택 대기
+        takeRow(pi, minBullRow(), c);                                                  // 솔로 AI → 자동
       } else if (G.rows[best].length >= 5) {
-        const b = rowBulls(G.rows[best]); G.bulls[pi] += b; ev.push(`${nm(pi)}: ${c} → ${best + 1}번 줄 6번째! 가져감 (+${b}🐂)`); G.rows[best] = [c];
-      } else { G.rows[best].push(c); ev.push(`${nm(pi)}: ${c} → ${best + 1}번 줄`); }
+        const b = rowBulls(G.rows[best]); G.bulls[pi] += b; G.ev.push(`${nm(pi)}: ${c} → ${best + 1}번 줄 6번째! 가져감 (+${b}🐂)`); G.rows[best] = [c];
+      } else {
+        G.rows[best].push(c); G.ev.push(`${nm(pi)}: ${c} → ${best + 1}번 줄`);
+      }
       G.hands[pi] = G.hands[pi].filter((x) => x !== c);
+      G.queue.shift();
     }
+    finishResolve();
+  }
+  function doChooseRow(pi, ri) {
+    if (G.phase !== "choose" || pi !== G.chooser || !G.queue || !G.queue.length) return;
+    if (typeof ri !== "number" || ri < 0 || ri >= G.rows.length) return;
+    const { c } = G.queue[0];
+    takeRow(pi, ri, c);
+    G.hands[pi] = G.hands[pi].filter((x) => x !== c);
+    G.queue.shift();
+    G.chooser = null;
+    processQueue();  // 나머지 카드 이어서 처리(다음 선택이 필요하면 다시 멈춘다)
+  }
+  function finishResolve() {
     G.picks = new Array(G.count).fill(null);
-    G.log = ev; G.round++;
+    G.log = G.ev || []; G.round++;
+    G.phase = "select"; G.chooser = null; G.queue = null; G.ev = null;
     if (G.hands.every((h) => h.length === 0)) { G.phase = "over"; let best = Infinity, w = 0; G.bulls.forEach((b, i) => { if (b < best) { best = b; w = i; } }); G.winner = w; }
   }
   function applyAction(a) {
-    if (!G || G.phase !== "select") return;
-    if (a.action !== "pick") return;
-    const pi = a.from;
-    if (G.picks[pi] != null) return;
-    if (!G.hands[pi].includes(a.card)) return;
-    G.picks[pi] = a.card;
-    if (soloMode) { for (let i = 1; i < G.count; i++) if (G.picks[i] == null) G.picks[i] = aiPick(i); resolveRound(); broadcast(); return; }
-    if (G.picks.every((p) => p != null)) resolveRound();
-    broadcast();
+    if (!G) return;
+    if (a.action === "pick") {
+      if (G.phase !== "select") return;
+      const pi = a.from;
+      if (G.picks[pi] != null) return;
+      if (!G.hands[pi].includes(a.card)) return;
+      G.picks[pi] = a.card;
+      if (soloMode) { for (let i = 1; i < G.count; i++) if (G.picks[i] == null) G.picks[i] = aiPick(i); beginResolve(); broadcast(); return; }
+      if (G.picks.every((p) => p != null)) beginResolve();
+      broadcast();
+      return;
+    }
+    if (a.action === "chooseRow") {
+      if (G.phase !== "choose") return;
+      doChooseRow(a.from, a.row);
+      broadcast();
+      return;
+    }
   }
   function dispatch(a) { a.from = myIndex; if (isHost) applyAction(a); else send({ type: "act", to: 0, a }); }
 
@@ -284,6 +320,8 @@
   function viewFor(pi) {
     return {
       online: !soloMode, count: G.count, round: G.round, phase: G.phase, winner: G.winner,
+      choosing: G.phase === "choose", chooseMe: G.phase === "choose" && G.chooser === pi, chooser: G.chooser,
+      pendingCard: (G.phase === "choose" && G.queue && G.queue[0]) ? G.queue[0].c : null,
       rows: G.rows.map((r) => r.slice()), myHand: G.hands[pi].slice(), myPick: G.picks[pi],
       picked: G.picks.map((p) => p != null), bulls: G.bulls.slice(), myIndex: pi,
       names: Array.from({ length: G.count }, (_, i) => hostNames[i] || null), log: G.log.slice(),
@@ -309,11 +347,14 @@
     $("gameCodeWrap").classList.toggle("hidden", !(v.online && myCode));
     if (v.online && myCode) $("metaCode").textContent = myCode;
 
-    $("rows").innerHTML = v.rows.map((row) => `<div class="row"><div class="rowcards">${row.map((n) => cardHtml(n)).join("")}</div><div class="rowbull">${row.reduce((s, x) => s + bulls(x), 0)}🐂</div></div>`).join("");
+    $("rows").innerHTML = v.rows.map((row, ri) => `<div class="row${v.chooseMe ? " choosable" : ""}" data-row="${ri}"><div class="rowcards">${row.map((n) => cardHtml(n)).join("")}</div><div class="rowbull">${row.reduce((s, x) => s + bulls(x), 0)}🐂</div></div>`).join("");
+    if (v.chooseMe) $("rows").querySelectorAll(".row").forEach((el) => el.addEventListener("click", () => dispatch({ action: "chooseRow", row: +el.getAttribute("data-row") })));
     $("scores").innerHTML = Array.from({ length: v.count }, (_, i) => `<div class="scb ${i === v.myIndex ? "me" : ""} ${v.picked[i] ? "picked" : ""}"><span class="snm">${escapeHtml(nmv(v, i))}</span> <span class="sbl">${v.bulls[i]}🐂${v.picked[i] ? " ✓" : ""}</span></div>`).join("");
 
     const picked = v.myPick != null;
-    $("statusBar").textContent = v.phase === "over" ? "" : (picked ? "다른 플레이어를 기다리는 중…" : "낼 카드를 고르세요");
+    $("statusBar").textContent = v.phase === "over" ? ""
+      : v.choosing ? (v.chooseMe ? `낸 카드 ${v.pendingCard}가 모든 줄보다 낮아요 — 가져갈 줄을 선택하세요` : `${nmv(v, v.chooser)}가 가져갈 줄을 고르는 중…`)
+      : (picked ? "다른 플레이어를 기다리는 중…" : "낼 카드를 고르세요");
     $("logBox").innerHTML = (v.log || []).map((l) => `<div>${escapeHtml(l)}</div>`).join("");
 
     const hand = $("hand"); hand.innerHTML = v.myHand.map((n) => cardHtml(n, n === v.myPick ? "pick" : (picked ? "dim" : ""))).join("");
