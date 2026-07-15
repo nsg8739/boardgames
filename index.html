@@ -82,6 +82,16 @@
   .card.soon { opacity: .5; pointer-events: none; }
   .card.soon .go { color: var(--muted); }
 
+  /* 즐겨찾기 고정(⭐) */
+  .card .pin { position: absolute; top: 8px; right: 8px; z-index: 2; width: 34px; height: 34px; border-radius: 50%;
+    border: 1px solid var(--warm-border); background: rgba(13,10,5,0.55); color: var(--muted); font-size: 17px; line-height: 1;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: .75; transition: opacity .12s, color .12s; }
+  .card .pin:hover, .card .pin:focus-visible { opacity: 1; color: var(--gold-soft); outline: none; }
+  .card.fav { border-color: var(--gold); box-shadow: inset 0 0 0 1px rgba(230,192,74,0.30), 0 8px 26px rgba(0,0,0,0.45); }
+  .card.fav .pin { color: var(--gold-soft); opacity: 1; }
+  .favLabel { grid-column: 1 / -1; font-size: 12px; font-weight: 700; letter-spacing: 1.5px; color: var(--muted); margin: 6px 2px -6px; }
+  .favLabel.star { color: var(--gold-bright); }
+
   footer { text-align: center; margin-top: 28px; color: var(--muted); font-size: 12px; line-height: 1.7; }
   footer .divider { width: 60%; max-width: 260px; height: 1px; margin: 0 auto 14px;
     background: linear-gradient(90deg, transparent, var(--gold-deep, #6b5417), transparent); }
@@ -252,6 +262,36 @@
     </footer>
   </div>
   <script>
+    // 즐겨찾기(⭐) 상단 고정 — 카드마다 별 버튼, localStorage에 저장, 켜면 맨 위로 정렬
+    (function initFav() {
+      var grid = document.querySelector(".grid");
+      if (!grid) return;
+      var cards = [].slice.call(grid.querySelectorAll("a.card"));
+      var keyOf = function (a) { return (a.getAttribute("href") || "").replace(/^\.\//, ""); };
+      var load = function () { try { return JSON.parse(localStorage.getItem("bg_favs") || "[]"); } catch (e) { return []; } };
+      var save = function (f) { try { localStorage.setItem("bg_favs", JSON.stringify(f)); } catch (e) {} };
+      var favLabel = document.createElement("div"); favLabel.className = "favLabel star"; favLabel.textContent = "⭐ 즐겨찾기";
+      var allLabel = document.createElement("div"); allLabel.className = "favLabel"; allLabel.textContent = "전체 게임";
+      cards.forEach(function (a) {
+        var btn = document.createElement("button"); btn.className = "pin"; btn.type = "button";
+        btn.setAttribute("aria-label", "즐겨찾기 상단 고정");
+        btn.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); toggle(keyOf(a)); });
+        a.appendChild(btn);
+      });
+      function render() {
+        var favs = load(), favSet = {}; favs.forEach(function (k) { favSet[k] = true; });
+        var favCards = [], rest = [];
+        cards.forEach(function (a) { (favSet[keyOf(a)] ? favCards : rest).push(a); });
+        favCards.sort(function (a, b) { return favs.indexOf(keyOf(a)) - favs.indexOf(keyOf(b)); });
+        cards.forEach(function (a) { var f = !!favSet[keyOf(a)]; a.classList.toggle("fav", f); var pin = a.querySelector(".pin"); if (pin) pin.textContent = f ? "★" : "☆"; });
+        grid.innerHTML = "";
+        if (favCards.length) { grid.appendChild(favLabel); favCards.forEach(function (a) { grid.appendChild(a); }); grid.appendChild(allLabel); }
+        rest.forEach(function (a) { grid.appendChild(a); });
+      }
+      function toggle(k) { var f = load(), i = f.indexOf(k); if (i >= 0) f.splice(i, 1); else f.push(k); save(f); render(); }
+      render();
+    })();
+
     // PWA: 서비스워커 등록(폰 홈 화면 설치 + 오프라인 폴백)
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", function () { navigator.serviceWorker.register("./sw.js").catch(function () {}); });
