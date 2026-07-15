@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>우봉고 — 보드게임 모음</title>
+<title>카르카손 — 보드게임 모음</title>
 <meta property="og:type" content="website" /><meta property="og:locale" content="ko_KR" />
 <meta property="og:site_name" content="보드게임 모음" />
-<meta property="og:title" content="우봉고 — 조각 퍼즐 스피드" />
-<meta property="og:description" content="조각을 돌리고 뒤집어 판을 가장 빨리 채우면 승리! 실시간 퍼즐 대결. 혼자(vs 컴퓨터)도, 온라인 2~4인도." />
-<meta property="og:url" content="https://nsg8739.github.io/boardgames/ubongo.html" />
+<meta property="og:title" content="카르카손 — 타일 배치 영토 게임" />
+<meta property="og:description" content="타일을 이어 붙이고 미플을 놓아 길·도시·수도원을 완성해 점수! 혼자(vs 컴퓨터)도, 온라인 2~4인도." />
+<meta property="og:url" content="https://nsg8739.github.io/boardgames/carcassonne.html" />
 <meta property="og:image" content="https://nsg8739.github.io/boardgames/og.png" />
 <meta property="og:image:width" content="1200" /><meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" /><meta name="twitter:image" content="https://nsg8739.github.io/boardgames/og.png" />
@@ -20,13 +20,14 @@
     --warm-border: #3a2c15; --gold: #c9a227; --gold-bright: #e6c04a; --gold-soft: #f2cc60; --gold-deep: #6b5417;
     --parchment: #e9dcc0; --muted: #9c8a63; --ink: #201607;
     --serif: "Georgia", "Nanum Myeongjo", serif;
+    --field: #5f8b3a; --road: #cbbfa6; --city: #b5844a;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; min-height: 100%; width: 100%; background: var(--bg); color: var(--parchment); font-family: "Segoe UI", "Malgun Gothic", sans-serif; }
   body { display: flex; flex-direction: column; align-items: center; padding: 14px 12px 40px; }
   #conn { position: fixed; top: 8px; right: 10px; z-index: 20; font-size: 11px; color: var(--muted); background: rgba(13,10,5,0.72); border: 1px solid var(--warm-border); border-radius: 999px; padding: 4px 10px; max-width: 62vw; text-align: right; }
   #conn .ok { color: #7fd18f; } #conn .bad { color: #e08a7a; }
-  .wrap { width: 100%; max-width: 520px; }
+  .wrap { width: 100%; max-width: 560px; }
   .top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
   .home { text-decoration: none; color: var(--gold-bright); font-size: 13px; font-weight: 700; } .home:hover { color: var(--gold-soft); }
   h1 { font-family: var(--serif); font-size: clamp(18px, 5.5vw, 24px); font-weight: 800; margin: 0; color: var(--gold-bright); text-align: center; letter-spacing: .5px; flex: 1; }
@@ -60,30 +61,36 @@
   .gameMeta { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border: 1px solid rgba(201,162,39,0.35); border-radius: 8px; background: rgba(13,10,5,0.46); font-family: var(--serif); font-size: 12px; margin-bottom: 8px; }
   .gameMeta b { color: var(--gold-bright); font-weight: 800; }
   #gameCodeWrap { cursor: pointer; white-space: nowrap; }
-  #statusBar { text-align: center; font-family: var(--serif); font-size: 15px; font-weight: 700; color: var(--gold-bright); min-height: 22px; margin: 4px 0 8px; }
-  .sectLabel { font-size: 12px; color: var(--muted); font-weight: 700; margin: 8px 0 4px; text-align: center; }
+  #statusBar { text-align: center; font-family: var(--serif); font-size: 14px; font-weight: 700; color: var(--gold-bright); min-height: 20px; margin: 4px 0 6px; }
+  .sectLabel { font-size: 12px; color: var(--muted); font-weight: 700; margin: 6px 0 4px; text-align: center; }
 
-  #boardWrap { display: flex; justify-content: center; margin: 6px 0; }
-  #board2 { display: grid; gap: 3px; padding: 6px; border: 2px solid var(--warm-border); border-radius: 10px; background: rgba(13,10,5,0.4); }
-  .bcell { width: 42px; height: 42px; border-radius: 6px; background: rgba(243,236,221,0.09); border: 1px solid rgba(201,162,39,0.2); cursor: pointer; }
-  .bcell.filled { border-color: rgba(0,0,0,0.35); box-shadow: inset 0 -3px 5px rgba(0,0,0,0.25); }
-  .tray { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 8px 0; min-height: 60px; }
-  .piece { display: grid; gap: 2px; padding: 5px; border: 2px solid transparent; border-radius: 8px; cursor: pointer; background: rgba(13,10,5,0.3); }
-  .piece.sel { border-color: var(--gold-soft); background: rgba(201,162,39,0.14); }
-  .piece.placed { opacity: 0.25; }
-  .pcell { width: 16px; height: 16px; border-radius: 3px; }
-  .pcell.empty { background: transparent; }
-  .controls { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin: 6px 0; }
-  .cbtn { font-family: var(--serif); font-size: 13px; font-weight: 700; padding: 9px 14px; border-radius: 8px; cursor: pointer; border: 1px solid var(--gold-deep); background: linear-gradient(180deg,var(--warm-bg2),var(--warm-bg)); color: var(--gold-bright); }
-  .cbtn:disabled { opacity: 0.4; cursor: default; }
-  #ubongoBtn { display: block; width: 100%; max-width: 260px; margin: 10px auto 4px; font-family: var(--serif); font-size: 20px; font-weight: 800; padding: 14px 0; border-radius: 12px; cursor: pointer; border: 1px solid #7b2419; background: linear-gradient(180deg,#e0b93a,#b5442f); color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
-  #ubongoBtn:disabled { opacity: 0.4; cursor: default; }
-  .bigMsg { font-family: var(--serif); font-size: 18px; font-weight: 800; color: var(--gold-bright); text-align: center; margin: 6px 0; }
+  #curRow { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 4px 0; }
+  #boardScroll { overflow: auto; max-height: 54vh; border: 1px solid var(--warm-border); border-radius: 8px; background: #0e0a05; padding: 4px; }
+  #boardGrid { display: grid; gap: 1px; margin: 0 auto; width: max-content; }
+  .tcell { width: 44px; height: 44px; position: relative; }
+  .tcell.spot { background: rgba(201,162,39,0.10); border: 1px dashed var(--gold-deep); cursor: pointer; border-radius: 4px; }
+  .tcell.spot::after { content: "+"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--gold-soft); font-weight: 800; font-size: 18px; }
+  .tcell.pending { outline: 2px solid var(--gold-soft); }
+  .tile { position: absolute; inset: 0; background: var(--field); border-radius: 3px; overflow: hidden; }
+  .edge { position: absolute; }
+  .edge.n { top: 0; left: 25%; width: 50%; height: 22%; }
+  .edge.s { bottom: 0; left: 25%; width: 50%; height: 22%; }
+  .edge.e { right: 0; top: 25%; height: 50%; width: 22%; }
+  .edge.w { left: 0; top: 25%; height: 50%; width: 22%; }
+  .edge.road { background: var(--road); } .edge.city { background: var(--city); } .edge.field { background: transparent; }
+  .tcenter { position: absolute; inset: 30%; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+  .meep { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 15px; height: 15px; border-radius: 50%; border: 2px solid rgba(0,0,0,0.4); z-index: 3; }
 
-  .players { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
-  .pl { border: 1px solid var(--warm-border); border-radius: 8px; padding: 6px 10px; background: rgba(13,10,5,0.4); font-size: 12px; text-align: center; min-width: 78px; }
-  .pl.me { background: rgba(201,162,39,0.08); } .pl.won { border-color: var(--gold-soft); box-shadow: 0 0 8px rgba(242,204,96,0.4); }
-  .pl .pn { font-weight: 700; color: var(--gold-bright); } .pl .pc { color: var(--gold-soft); font-weight: 800; font-size: 16px; margin-top: 2px; }
+  #rotBtn { font-family: var(--serif); font-size: 14px; font-weight: 700; padding: 9px 14px; border-radius: 8px; cursor: pointer; border: 1px solid var(--gold-deep); background: linear-gradient(180deg,var(--warm-bg2),var(--warm-bg)); color: var(--gold-bright); }
+  .curTile { width: 52px; height: 52px; position: relative; border: 2px solid var(--gold-deep); border-radius: 5px; }
+  #meepBar { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin: 8px 0; min-height: 20px; }
+  .meepBtn { font-family: var(--serif); font-size: 13px; font-weight: 700; padding: 8px 12px; border-radius: 8px; cursor: pointer; border: 1px solid var(--gold-deep); background: linear-gradient(180deg,var(--warm-bg2),var(--warm-bg)); color: var(--gold-bright); }
+  .meepBtn.no { color: var(--muted); }
+
+  .players { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-top: 4px; }
+  .pl { border: 1px solid var(--warm-border); border-radius: 8px; padding: 5px 9px; background: rgba(13,10,5,0.4); font-size: 12px; text-align: center; min-width: 76px; }
+  .pl.active { border-color: var(--gold-soft); } .pl.me { background: rgba(201,162,39,0.08); }
+  .pl .pn { font-weight: 700; } .pl .psc { color: var(--gold-soft); font-weight: 800; font-size: 15px; } .pl .pm { color: var(--muted); font-size: 11px; }
   .backHome { text-align: center; margin-top: 14px; } .backHome a { color: var(--gold-bright); font-size: 13px; font-weight: 700; text-decoration: none; }
 
   #over { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 18px; background: rgba(8,5,2,0.72); }
@@ -121,12 +128,12 @@
   <div class="wrap">
     <div class="top">
       <a class="home" href="./index.html">🎲 메인</a>
-      <h1>우봉고</h1>
+      <h1>카르카손</h1>
       <span style="width:44px"></span>
     </div>
 
     <div id="menu" class="panel">
-      <div class="rules">주어진 <b>조각들</b>을 돌리고 뒤집어 <b>판을 빈칸 없이</b> 채우세요.<br>가장 먼저 완성한 사람이 라운드를 획득! 조각은 회전·뒤집기 가능.<br><b>먼저 3라운드</b>를 이기면 승리! (실시간 퍼즐 대결)</div>
+      <div class="rules">타일을 <b>가장자리가 맞게</b> 이어 붙이고, 방금 놓은 타일에 <b>미플</b>을 올려 길·도시·수도원을 만드세요.<br>영역이 완성되면 점수! (도시 2점/칸+깃발, 길 1점/칸, 수도원 9점) 미플은 완성 시 돌아옵니다.<br>타일이 다 떨어지면 미완성 영역도 점수화, 최고점 승! (평야 점수는 생략)</div>
       <div class="optRow">
         <span class="optLabel">인원</span>
         <div class="seg" id="segCount"><button data-v="2" class="on">2명</button><button data-v="3">3명</button><button data-v="4">4명</button></div>
@@ -156,21 +163,15 @@
     <div id="board" class="hidden">
       <div id="peerAlert" class="hidden"></div>
       <div class="gameMeta">
-        <span>🧩 우봉고</span>
+        <span>🏰 카르카손</span>
         <span id="gameCodeWrap" class="hidden" title="탭하면 코드 복사">CODE <b id="metaCode">----</b></span>
-        <span>라운드 <b id="roundNo">0</b></span>
+        <span>남은 타일 <b id="deckLeft">0</b></span>
       </div>
       <div id="statusBar" role="status" aria-live="polite"></div>
-      <div id="boardWrap"><div id="board2"></div></div>
-      <div class="sectLabel">조각 — 눌러 고르고, 돌리기/뒤집기 후 판의 <b>좌상단 칸</b>을 누르세요</div>
-      <div class="tray" id="tray"></div>
-      <div class="controls" id="controls">
-        <button class="cbtn" id="rotBtn">↻ 돌리기</button>
-        <button class="cbtn" id="flipBtn">⇋ 뒤집기</button>
-        <button class="cbtn" id="clearBtn">전부 빼기</button>
-      </div>
-      <button id="ubongoBtn" disabled>🧩 우봉고!</button>
-      <div class="sectLabel">점수판 (3라운드 먼저 승)</div>
+      <div id="curRow"><span class="hint">이번 타일</span><div class="curTile" id="curTile"></div><button id="rotBtn">🔄 회전</button></div>
+      <div id="boardScroll"><div id="boardGrid"></div></div>
+      <div class="sectLabel" id="meepLabel"></div>
+      <div id="meepBar"></div>
       <div class="players" id="players"></div>
       <div class="backHome"><button id="toMenuBtn" style="background:none;border:none;color:var(--gold-bright);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">↩ 게임 메뉴</button> · <a href="./index.html">🎲 메인</a></div>
     </div>
@@ -203,18 +204,34 @@
   const isLocal = ["localhost", "127.0.0.1"].includes(location.hostname) || location.protocol === "file:";
   const SERVER_URL = override || (isLocal ? "ws://localhost:8080" : RENDER_URL);
 
-  const PC = ["#d1493a", "#3f7fd8", "#3ea35a", "#e0b93a", "#9b59b6"];  // 조각 색
-  const WIN_ROUNDS = 3;
-  const NEXT_DELAY = 2200;
-  const LAYOUTS = [{ W: 4, H: 3, sizes: [4, 4, 4] }, { W: 3, H: 3, sizes: [3, 3, 3] }, { W: 4, H: 3, sizes: [3, 4, 5] }, { W: 4, H: 3, sizes: [3, 3, 3, 3] }];
+  const PCOL = ["#d1493a", "#3f7fd8", "#3ea35a", "#e0b93a"];
+  // 타일: edges="NESW"(f=평야,r=길,c=도시), segs=길/도시 세그먼트(연결된 변 그룹), mon=수도원, penn=깃발
+  const TILES = [
+    { edges: "ffff", segs: [], mon: 1, cnt: 4 },
+    { edges: "ffrf", segs: [{ t: "r", sides: [2] }], mon: 1, cnt: 2 },
+    { edges: "rfrf", segs: [{ t: "r", sides: [0, 2] }], cnt: 8 },
+    { edges: "frrf", segs: [{ t: "r", sides: [1, 2] }], cnt: 9 },
+    { edges: "rrrf", segs: [{ t: "r", sides: [0] }, { t: "r", sides: [1] }, { t: "r", sides: [2] }], cnt: 4 },
+    { edges: "rrrr", segs: [{ t: "r", sides: [0] }, { t: "r", sides: [1] }, { t: "r", sides: [2] }, { t: "r", sides: [3] }], cnt: 1 },
+    { edges: "cfff", segs: [{ t: "c", sides: [0] }], cnt: 5 },
+    { edges: "cfrf", segs: [{ t: "c", sides: [0] }, { t: "r", sides: [2] }], cnt: 4 },
+    { edges: "ccff", segs: [{ t: "c", sides: [0, 1] }], cnt: 3 },
+    { edges: "ccff", segs: [{ t: "c", sides: [0, 1] }], penn: 1, cnt: 2 },
+    { edges: "cfcf", segs: [{ t: "c", sides: [0, 2] }], cnt: 3 },
+    { edges: "cccf", segs: [{ t: "c", sides: [0, 1, 2] }], cnt: 3 },
+    { edges: "cccf", segs: [{ t: "c", sides: [0, 1, 2] }], penn: 1, cnt: 2 },
+    { edges: "cccc", segs: [{ t: "c", sides: [0, 1, 2, 3] }], penn: 1, cnt: 1 },
+  ];
+  const START_TYPE = 7;  // 도시N+길S
+  const DR = [-1, 0, 1, 0], DC = [0, 1, 0, -1], OPP = [2, 3, 0, 1];
+  const MEEPLES = 7;
   const SCREEN = { MENU: "menu", LOBBY: "lobby", PLAYING: "playing", OVER: "over" };
   let screen = SCREEN.MENU;
   let ws = null, myIndex = null, isHost = false, myCode = null, myToken = null;
   let optCount = 2, optMode = "solo", onlineMode = false;
-  let soloMode = false;
+  let soloMode = false, aiTimer = null;
   let G = null, lastView = null;
-  let place = [], activePiece = null, activeOffs = null, lastRound = -1;   // 내 배치 상태
-  let nextTimer = null, aiTimers = [];
+  let curRot = 0, pending = null;  // 클라: 현재 타일 회전 / 임시 배치 {r,c}
   let myNick = ""; try { myNick = (localStorage.getItem("bg_nick") || "").trim().slice(0, 8); } catch (e) {}
   let hostNames = {};
   let handoffMode = false, handoffCap = 0, intentionalNav = false;
@@ -224,7 +241,7 @@
   function hidePeerAlert() { const el = $("peerAlert"); if (!el) return; el.classList.add("hidden"); el.innerHTML = ""; }
   function endGameByHost() { try { send({ type: "ended" }); } catch (e) {} clearSession(); if (ws) { try { ws.close(); } catch (e) {} } onlineMode = false; isHost = false; myIndex = myCode = myToken = null; hidePeerAlert(); showMenuWithError("게임을 종료했습니다."); }
 
-  const SESS_KEY = "ubongo_session", STATE_KEY = "ubongo_state", REJOIN_WINDOW_MS = 300000;
+  const SESS_KEY = "carcassonne_session", STATE_KEY = "carcassonne_state", REJOIN_WINDOW_MS = 300000;
   function saveSession() { try { localStorage.setItem(SESS_KEY, JSON.stringify({ code: myCode, index: myIndex, token: myToken, isHost, ts: Date.now() })); } catch {} }
   function touchSession() { try { const s = JSON.parse(localStorage.getItem(SESS_KEY) || "null"); if (s) { s.ts = Date.now(); localStorage.setItem(SESS_KEY, JSON.stringify(s)); } } catch {} }
   function getSession() { try { return JSON.parse(localStorage.getItem(SESS_KEY) || "null"); } catch { return null; } }
@@ -234,114 +251,150 @@
   function loadState() { try { return JSON.parse(localStorage.getItem(STATE_KEY) || "null"); } catch { return null; } }
   function restoreConn() { $("conn").innerHTML = "<span class='ok'>● 서버 연결됨</span>"; }
 
-  // ===== 기하 =====
-  function normalize(cells) { let mr = Infinity, mc = Infinity; cells.forEach(([r, c]) => { if (r < mr) mr = r; if (c < mc) mc = c; }); return cells.map(([r, c]) => [r - mr, c - mc]).sort((a, b) => a[0] - b[0] || a[1] - b[1]); }
-  function keyOf(cells) { return JSON.stringify(normalize(cells)); }
-  function rot(cells) { return normalize(cells.map(([r, c]) => [c, -r])); }
-  function flip(cells) { return normalize(cells.map(([r, c]) => [r, -c])); }
-  function orientKeys(base) { const set = {}; let cur = normalize(base); for (let i = 0; i < 4; i++) { set[keyOf(cur)] = 1; set[keyOf(flip(cur))] = 1; cur = rot(cur); } return Object.keys(set); }
-
   // ===== 엔진 =====
   function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-  function ri(n) { return Math.floor(Math.random() * n); }
-  function clearTimers() { if (nextTimer) { clearTimeout(nextTimer); nextTimer = null; } aiTimers.forEach((t) => clearTimeout(t)); aiTimers = []; }
+  function K(r, c) { return r + "," + c; }
+  function edgeAt(tile, side) { return TILES[tile.type].edges[(side - tile.rot + 4) % 4]; }
+  function rotSegs(tile) { return TILES[tile.type].segs.map((s) => ({ t: s.t, sides: s.sides.map((k) => (k + tile.rot) % 4) })); }
   function nm(i) { if (soloMode) return i === 0 ? "나" : "컴퓨터" + i; return hostNames[i] || ("P" + (i + 1)); }
   function log(m) { G.log.push(m); if (G.log.length > 20) G.log.shift(); }
 
-  // 판(W×H 사각형)을 조각으로 분할해 항상 풀리는 퍼즐 생성
-  function makePuzzle() {
-    for (let attempt = 0; attempt < 300; attempt++) {
-      const L = LAYOUTS[ri(LAYOUTS.length)]; const W = L.W, H = L.H, sizes = shuffle(L.sizes.slice());
-      const assign = Array.from({ length: H }, () => Array(W).fill(-1));
-      const key = (r, c) => r * W + c;
-      const unassigned = new Set(); for (let r = 0; r < H; r++) for (let c = 0; c < W; c++) unassigned.add(key(r, c));
-      const solution = []; let ok = true;
-      for (let pi = 0; pi < sizes.length && ok; pi++) {
-        const target = sizes[pi];
-        const seedK = [...unassigned][ri(unassigned.size)]; if (seedK == null) { ok = false; break; }
-        const cells = [[Math.floor(seedK / W), seedK % W]]; unassigned.delete(seedK); assign[cells[0][0]][cells[0][1]] = pi;
-        while (cells.length < target) {
-          const front = [];
-          cells.forEach(([r, c]) => { [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]].forEach(([rr, cc]) => { if (rr >= 0 && rr < H && cc >= 0 && cc < W && unassigned.has(key(rr, cc))) front.push([rr, cc]); }); });
-          if (!front.length) { ok = false; break; }
-          const [nr, nc] = front[ri(front.length)]; cells.push([nr, nc]); unassigned.delete(key(nr, nc)); assign[nr][nc] = pi;
-        }
-        solution.push(cells);
-      }
-      if (ok && unassigned.size === 0 && solution.length === sizes.length) {
-        const pieces = solution.map((cells, i) => ({ size: cells.length, base: normalize(cells), orients: orientKeys(cells), color: i % PC.length }));
-        // 조각 순서 섞기(해답과 표시 순서 분리)
-        const order = shuffle(pieces.map((_, i) => i));
-        return { W, H, pieces: order.map((i) => pieces[i]), solution: order.map((i) => solution[i]) };
-      }
-    }
-    // 폴백: 3x3 세 줄
-    return { W: 3, H: 3, pieces: [0, 1, 2].map((i) => ({ size: 3, base: [[0, 0], [0, 1], [0, 2]], orients: orientKeys([[0, 0], [0, 1], [0, 2]]), color: i })), solution: [[[0, 0], [0, 1], [0, 2]], [[1, 0], [1, 1], [1, 2]], [[2, 0], [2, 1], [2, 2]]] };
+  function newGame(count) {
+    const deck = []; TILES.forEach((t, i) => { for (let k = 0; k < t.cnt; k++) deck.push(i); });
+    // 시작 타일 하나 제거
+    const si = deck.indexOf(START_TYPE); if (si >= 0) deck.splice(si, 1);
+    shuffle(deck);
+    const board = {}; board[K(0, 0)] = { type: START_TYPE, rot: 0, meeple: null };
+    G = { count, deck, board, cur: null, turn: 0, phase: "play", winner: null,
+      scores: new Array(count).fill(0), meeples: new Array(count).fill(MEEPLES), log: [] };
+    drawForTurn();
+    log("게임 시작 — 타일을 이어 붙이세요");
+  }
+  function legalAt(r, c, type, rot) {
+    if (G.board[K(r, c)]) return false;
+    let adj = false; const t = { type, rot };
+    for (let s = 0; s < 4; s++) { const nb = G.board[K(r + DR[s], c + DC[s])]; if (nb) { adj = true; if (edgeAt(t, s) !== edgeAt(nb, OPP[s])) return false; } }
+    return adj;
+  }
+  function candidateCells() {
+    const set = {}; for (const k in G.board) { const [r, c] = k.split(",").map(Number); for (let s = 0; s < 4; s++) { const rr = r + DR[s], cc = c + DC[s]; if (!G.board[K(rr, cc)]) set[K(rr, cc)] = [rr, cc]; } }
+    return Object.values(set);
+  }
+  function canPlaceAnywhere(type) { for (const [r, c] of candidateCells()) for (let rot = 0; rot < 4; rot++) if (legalAt(r, c, type, rot)) return true; return false; }
+  function drawForTurn() {
+    while (G.deck.length) { const type = G.deck.pop(); if (canPlaceAnywhere(type)) { G.cur = type; return; } log("배치 불가 타일 버림"); }
+    G.cur = null; endGame();
   }
 
-  function newGame(count) {
-    G = { count, scores: new Array(count).fill(0), W: 0, H: 0, pieces: [], solution: [], roundWinner: null, round: 0, phase: "reveal", winner: null, log: [] };
-    log("게임 시작 — 곧 첫 퍼즐이 나옵니다");
-    scheduleNext(600);
-  }
-  function startRound() {
-    if (!G || G.winner != null) return;
-    clearTimers();
-    const pz = makePuzzle();
-    G.round++; G.W = pz.W; G.H = pz.H; G.pieces = pz.pieces; G.solution = pz.solution; G.roundWinner = null; G.phase = "race";
-    log(`라운드 ${G.round} 시작!`);
-    broadcast();
-    if (soloMode) scheduleAISolve();
-  }
-  function scheduleNext(delay) {
-    if (!isHost && !soloMode) return;
-    clearTimers();
-    nextTimer = setTimeout(() => { nextTimer = null; startRound(); }, delay != null ? delay : NEXT_DELAY);
-  }
-  function inBounds(r, c) { return r >= 0 && r < G.H && c >= 0 && c < G.W; }
-  // 제출된 배치 검증: 각 조각이 자기 모양(회전/뒤집기 포함)이고, 판을 겹침 없이 정확히 채우는가
-  function validateSolution(placements) {
-    if (!Array.isArray(placements) || placements.length !== G.pieces.length) return false;
-    const covered = new Set();
-    for (let i = 0; i < G.pieces.length; i++) {
-      const cells = placements[i];
-      if (!Array.isArray(cells) || cells.length !== G.pieces[i].size) return false;
-      if (G.pieces[i].orients.indexOf(keyOf(cells)) < 0) return false;   // 모양 일치
-      for (const cell of cells) { const [r, c] = cell; if (!inBounds(r, c)) return false; const k = r * G.W + c; if (covered.has(k)) return false; covered.add(k); }
+  // 특징(길/도시) 탐색: 시작 (key,segIdx)에서 연결된 세그먼트 전부. {tiles, nodes, meeples, penn, open}
+  function feature(startKey, startSi) {
+    const t0 = rotSegs(G.board[startKey])[startSi].t;
+    const tiles = new Set(), nodes = new Set(), meeples = []; let penn = 0, open = false;
+    const stack = [[startKey, startSi]];
+    while (stack.length) {
+      const [key, si] = stack.pop(); const nk = key + "#" + si; if (nodes.has(nk)) continue; nodes.add(nk);
+      const tile = G.board[key]; const segs = rotSegs(tile); const seg = segs[si]; tiles.add(key);
+      if (seg.t === "c" && TILES[tile.type].penn) penn++;
+      if (tile.meeple && tile.meeple.loc === si) meeples.push(tile.meeple.player);
+      for (const side of seg.sides) {
+        const [r, c] = key.split(",").map(Number); const nbk = K(r + DR[side], c + DC[side]); const nb = G.board[nbk];
+        if (!nb) { open = true; continue; }
+        const nsegs = rotSegs(nb); for (let ni = 0; ni < nsegs.length; ni++) if (nsegs[ni].t === seg.t && nsegs[ni].sides.includes(OPP[side])) stack.push([nbk, ni]);
+      }
     }
-    return covered.size === G.W * G.H;
+    return { t: t0, tiles: [...tiles], nodes, meeples, penn, open };
   }
-  function doSolve(pi, placements) {
-    if (!G || G.phase !== "race" || G.roundWinner != null) return false;
-    if (!validateSolution(placements)) return false;
-    G.roundWinner = pi; G.scores[pi]++; G.phase = "reveal";
-    log(`🧩 ${nm(pi)} 완성! (+1)`);
-    if (G.scores[pi] >= WIN_ROUNDS) { clearTimers(); G.winner = pi; G.phase = "over"; broadcast(); return true; }
-    broadcast(); scheduleNext(); return true;
+  function monasteryComplete(key) { const [r, c] = key.split(",").map(Number); let n = 0; for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) if (!(dr === 0 && dc === 0) && G.board[K(r + dr, c + dc)]) n++; return n; }
+  function returnMeeples(nodes) { nodes.forEach((nk) => { const [key, si] = nk.split("#"); const tile = G.board[key]; if (tile.meeple && tile.meeple.loc === Number(si)) { G.meeples[tile.meeple.player]++; tile.meeple = null; } }); }
+  function awardFeature(f, complete) {
+    if (!f.meeples.length) return;
+    const cnt = {}; f.meeples.forEach((p) => cnt[p] = (cnt[p] || 0) + 1);
+    const mx = Math.max(...Object.values(cnt)); const winners = Object.keys(cnt).filter((p) => cnt[p] === mx).map(Number);
+    let pts;
+    if (f.t === "c") pts = complete ? f.tiles.length * 2 + f.penn * 2 : f.tiles.length + f.penn;
+    else pts = f.tiles.length;  // 길: 완성/미완성 모두 칸당 1
+    winners.forEach((p) => G.scores[p] += pts);
   }
-  function applyAction(a) { if (!G) return; if (a.action === "solve") doSolve(a.from, a.placements); }
+  function scoreAround(key) {
+    // 방금 놓은 타일의 길/도시 세그먼트 중 완성된 것 채점
+    const done = new Set();
+    const segs = rotSegs(G.board[key]);
+    for (let si = 0; si < segs.length; si++) {
+      const f = feature(key, si); const sig = [...f.nodes].sort().join("|"); if (done.has(sig)) continue; done.add(sig);
+      if (!f.open) { awardFeature(f, true); returnMeeples(f.nodes); if (f.meeples.length) log(`${f.t === "c" ? "도시" : "길"} 완성! (+${f.t === "c" ? f.tiles.length * 2 + f.penn * 2 : f.tiles.length}점)`); }
+    }
+    // 수도원 완성(놓은 타일 및 주변 8칸의 수도원)
+    const [r, c] = key.split(",").map(Number);
+    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+      const mk = K(r + dr, c + dc); const mt = G.board[mk]; if (!mt || !TILES[mt.type].mon || !mt.meeple || mt.meeple.loc !== "mon") continue;
+      if (monasteryComplete(mk) === 8) { G.scores[mt.meeple.player] += 9; G.meeples[mt.meeple.player]++; mt.meeple = null; log("수도원 완성! (+9점)"); }
+    }
+  }
+  function endGame() {
+    // 미완성 영역 + 수도원 채점
+    const seen = new Set();
+    for (const key in G.board) {
+      const tile = G.board[key]; if (!tile.meeple) continue;
+      if (tile.meeple.loc === "mon") { G.scores[tile.meeple.player] += 1 + monasteryComplete(key); tile.meeple = null; continue; }
+      const si = tile.meeple.loc; const f = feature(key, si); const sig = [...f.nodes].sort().join("|"); if (seen.has(sig)) continue; seen.add(sig);
+      awardFeature(f, false); returnMeeples(f.nodes);
+    }
+    G.phase = "over"; let best = -1, w = 0; G.scores.forEach((s, i) => { if (s > best) { best = s; w = i; } }); G.winner = w;
+  }
+
+  function applyAction(a) {
+    if (!G || G.phase !== "play" || a.from !== G.turn) return;
+    if (a.action !== "place" || G.cur == null) return;
+    const { r, c, rot } = a; if (typeof r !== "number" || typeof c !== "number") return;
+    if (!legalAt(r, c, G.cur, rot)) return;
+    const tile = { type: G.cur, rot: ((rot % 4) + 4) % 4, meeple: null };
+    G.board[K(r, c)] = tile;
+    // 미플 배치(선택)
+    const mp = a.meeple;  // null | {loc: segIdx | "mon"}
+    if (mp && G.meeples[a.from] > 0) {
+      if (mp.loc === "mon" && TILES[tile.type].mon) { tile.meeple = { player: a.from, loc: "mon" }; G.meeples[a.from]--; }
+      else if (typeof mp.loc === "number") {
+        const segs = rotSegs(tile);
+        if (segs[mp.loc]) { const f = feature(K(r, c), mp.loc); if (!f.meeples.length) { tile.meeple = { player: a.from, loc: mp.loc }; G.meeples[a.from]--; } }
+      }
+    }
+    scoreAround(K(r, c));
+    G.turn = (G.turn + 1) % G.count;
+    drawForTurn();
+    broadcast();
+  }
   function dispatch(a) { a.from = myIndex; if (isHost) applyAction(a); else send({ type: "act", to: 0, a }); }
 
-  // ===== AI(솔로) — 정답(생성 해답)을 랜덤 지연 후 제출 =====
-  function scheduleAISolve() {
-    aiTimers.forEach((t) => clearTimeout(t)); aiTimers = [];
-    const round = G.round;
-    for (let i = 1; i < G.count; i++) {
-      const delay = 4500 + Math.random() * 7000;   // 4.5~11.5초
-      const idx = i;
-      const t = setTimeout(() => { if (!G || G.round !== round || G.phase !== "race" || G.roundWinner != null) return; doSolve(idx, G.solution.map((s) => s.map((c) => c.slice()))); }, delay);
-      aiTimers.push(t);
+  // ===== AI(솔로): 첫 합법 위치에 놓고, 비어있는 세그먼트가 있으면 미플 =====
+  function aiTurn(i) {
+    if (G.cur == null) return;
+    let placed = null;
+    outer: for (const [r, c] of candidateCells()) for (let rot = 0; rot < 4; rot++) if (legalAt(r, c, G.cur, rot)) { placed = { r, c, rot }; break outer; }
+    if (!placed) { G.turn = (G.turn + 1) % G.count; drawForTurn(); broadcast(); return; }
+    // 미플: 여유 있으면 첫 자유 세그먼트/수도원
+    let meeple = null;
+    if (G.meeples[i] > 0) {
+      const tile = { type: G.cur, rot: placed.rot, meeple: null }; G.board[K(placed.r, placed.c)] = tile;  // 임시
+      const segs = rotSegs(tile);
+      for (let si = 0; si < segs.length; si++) { const f = feature(K(placed.r, placed.c), si); if (!f.meeples.length) { meeple = { loc: si }; break; } }
+      if (!meeple && TILES[tile.type].mon) meeple = { loc: "mon" };
+      delete G.board[K(placed.r, placed.c)];  // 임시 제거(applyAction이 정식 배치)
     }
+    applyAction({ from: i, action: "place", r: placed.r, c: placed.c, rot: placed.rot, meeple: Math.random() < 0.7 ? meeple : null });
+  }
+  function maybeAI() {
+    if (!soloMode || !G || G.phase !== "play" || G.turn === 0) return;
+    if (aiTimer) clearTimeout(aiTimer);
+    aiTimer = setTimeout(() => { aiTimer = null; if (soloMode && G && G.phase === "play" && G.turn !== 0) aiTurn(G.turn); }, 700);
   }
 
   // ===== 뷰 =====
   function viewFor(pi) {
     return {
-      online: !soloMode, count: G.count, myIndex: pi, phase: G.phase, round: G.round, winner: G.winner,
-      W: G.W, H: G.H, roundWinner: G.roundWinner,
-      pieces: (G.phase === "race" || G.phase === "reveal") ? G.pieces.map((p) => ({ size: p.size, base: p.base.map((c) => c.slice()), orients: p.orients.slice(), color: p.color })) : [],
-      scores: G.scores.slice(), winCards: WIN_ROUNDS,
-      names: Array.from({ length: G.count }, (_, i) => hostNames[i] || null), log: G.log.slice(-3),
+      online: !soloMode, count: G.count, myIndex: pi, turn: G.turn, phase: G.phase, winner: G.winner, deckLeft: G.deck.length,
+      myTurn: G.turn === pi && G.phase === "play", cur: G.cur,
+      board: G.board, scores: G.scores.slice(), meeplesLeft: G.meeples.slice(),
+      names: Array.from({ length: G.count }, (_, i) => hostNames[i] || null), log: G.log.slice(-2),
     };
   }
   function broadcast() {
@@ -350,90 +403,90 @@
     renderView(viewFor(0));
     saveState();
     if (!soloMode) touchSession();
+    if (soloMode) maybeAI();
   }
 
   // ===== 렌더 =====
   function nmv(v, i) { if (soloMode) return i === 0 ? "나" : "컴퓨터" + i; const n = v.names[i]; if (i === v.myIndex) return n || "나"; return n || ("P" + (i + 1)); }
-  function pieceOfCell(r, c) { for (let i = 0; i < place.length; i++) { const cells = place[i]; if (cells && cells.some((x) => x[0] === r && x[1] === c)) return i; } return -1; }
-  function racing(v) { return v.phase === "race"; }
+  function tileEl(tile) {
+    const d = document.createElement("div"); d.className = "tile";
+    ["n", "e", "s", "w"].forEach((nm2, s) => { const e = document.createElement("div"); const t = edgeAt(tile, s); e.className = "edge " + nm2 + " " + (t === "r" ? "road" : t === "c" ? "city" : "field"); d.appendChild(e); });
+    const ctr = document.createElement("div"); ctr.className = "tcenter"; if (TILES[tile.type].mon) ctr.textContent = "🏛"; if (TILES[tile.type].penn) ctr.textContent = (ctr.textContent || "") + "🛡"; d.appendChild(ctr);
+    if (tile.meeple) { const m = document.createElement("div"); m.className = "meep"; m.style.background = PCOL[tile.meeple.player]; d.appendChild(m); }
+    return d;
+  }
   function renderView(v) {
-    if (!v || typeof v.round !== "number") return;
-    lastView = v;
+    if (!v || !v.board) return;
+    G_view = v; lastView = v;
     if (screen !== SCREEN.PLAYING && screen !== SCREEN.OVER) setScreen(SCREEN.PLAYING);
-    $("roundNo").textContent = v.round;
+    $("deckLeft").textContent = v.deckLeft;
     $("gameCodeWrap").classList.toggle("hidden", !(v.online && myCode)); if (v.online && myCode) $("metaCode").textContent = myCode;
+    if (v.turn !== renderView._lastTurn) { curRot = 0; pending = null; renderView._lastTurn = v.turn; }
 
-    // 새 라운드 → 배치 초기화
-    if (v.phase === "race" && v.round !== lastRound) { place = new Array(v.pieces.length).fill(null); activePiece = null; activeOffs = null; lastRound = v.round; }
-    if (v.phase !== "race" && v.phase !== "reveal") lastRound = -1;
+    $("statusBar").textContent = v.phase === "over" ? "" : (v.myTurn ? (pending ? "미플을 놓거나 ‘미플 없이’를 누르세요" : "빈 자리(+)에 타일을 놓으세요") : `${nmv(v, v.turn)} 차례…`);
 
-    $("statusBar").textContent = v.phase === "over" ? ""
-      : v.phase === "race" ? "조각으로 판을 채우고 🧩 우봉고!를 누르세요"
-      : (v.roundWinner != null ? "🧩 " + nmv(v, v.roundWinner) + " 완성! 다음 퍼즐…" : "다음 퍼즐 준비 중…");
+    // 이번 타일 미리보기
+    const ct = $("curTile"); ct.innerHTML = "";
+    if (v.cur != null) ct.appendChild(tileEl({ type: v.cur, rot: curRot }));
+    $("rotBtn").disabled = !v.myTurn || !!pending;
 
-    // 판
-    const bd = $("board2");
-    if (v.W && v.H) {
-      bd.style.gridTemplateColumns = `repeat(${v.W}, 42px)`; bd.innerHTML = "";
-      for (let r = 0; r < v.H; r++) for (let c = 0; c < v.W; c++) {
-        const el = document.createElement("div"); el.className = "bcell";
-        const pi = pieceOfCell(r, c);
-        if (pi >= 0) { el.classList.add("filled"); el.style.background = PC[v.pieces[pi].color]; }
-        if (racing(v)) el.addEventListener("click", () => onCell(v, r, c));
-        bd.appendChild(el);
+    // 보드 범위 계산
+    let minR = 0, maxR = 0, minC = 0, maxC = 0;
+    for (const k in v.board) { const [r, c] = k.split(",").map(Number); if (r < minR) minR = r; if (r > maxR) maxR = r; if (c < minC) minC = c; if (c > maxC) maxC = c; }
+    minR--; maxR++; minC--; maxC++;
+    const grid = $("boardGrid"); grid.style.gridTemplateColumns = `repeat(${maxC - minC + 1}, 44px)`; grid.innerHTML = "";
+    const spots = {}; if (v.myTurn && v.cur != null && !pending) candidateCells2(v).forEach(([r, c]) => { if (legalAt2(v, r, c, v.cur, curRot)) spots[K(r, c)] = 1; });
+    for (let r = minR; r <= maxR; r++) for (let c = minC; c <= maxC; c++) {
+      const cell = document.createElement("div"); cell.className = "tcell";
+      const tile = v.board[K(r, c)];
+      if (pending && pending.r === r && pending.c === c) { cell.classList.add("pending"); cell.appendChild(tileEl({ type: v.cur, rot: curRot })); }
+      else if (tile) cell.appendChild(tileEl(tile));
+      else if (spots[K(r, c)]) { cell.classList.add("spot"); cell.addEventListener("click", () => { pending = { r, c }; renderView(v); }); }
+      grid.appendChild(cell);
+    }
+
+    // 미플 바
+    const bar = $("meepBar"); bar.innerHTML = ""; $("meepLabel").textContent = "";
+    if (v.myTurn && pending) {
+      $("meepLabel").textContent = "미플 놓기 (남은 미플 " + v.meeplesLeft[v.myIndex] + ")";
+      const tile = { type: v.cur, rot: curRot };
+      const segs = TILES[tile.type].segs.map((s) => ({ t: s.t }));  // 표시용
+      const rsegs = rotSegs(tile);
+      if (v.meeplesLeft[v.myIndex] > 0) {
+        // 각 세그먼트: 임시 배치 후 자유 여부 검사
+        v.board[K(pending.r, pending.c)] = { type: tile.type, rot: tile.rot, meeple: null };
+        rsegs.forEach((seg, si) => { const f = feature(K(pending.r, pending.c), si); if (!f.meeples.length) { const b = document.createElement("button"); b.className = "meepBtn"; b.textContent = (seg.t === "c" ? "🏰 도시" : "🛣 길") + (rsegs.length > 1 ? " " + (si + 1) : ""); b.addEventListener("click", () => commit(v, { loc: si })); bar.appendChild(b); } });
+        if (TILES[tile.type].mon) { const b = document.createElement("button"); b.className = "meepBtn"; b.textContent = "🏛 수도원"; b.addEventListener("click", () => commit(v, { loc: "mon" })); bar.appendChild(b); }
+        delete v.board[K(pending.r, pending.c)];
       }
-    } else bd.innerHTML = "";
-
-    // 조각 트레이
-    const tr = $("tray"); tr.innerHTML = "";
-    v.pieces.forEach((p, i) => {
-      const placed = !!place[i];
-      const offs = (activePiece === i && activeOffs) ? activeOffs : p.base;
-      const maxr = Math.max(...offs.map((o) => o[0])), maxc = Math.max(...offs.map((o) => o[1]));
-      const grid = document.createElement("div"); grid.className = "piece" + (activePiece === i ? " sel" : "") + (placed ? " placed" : "");
-      grid.style.gridTemplateColumns = `repeat(${maxc + 1}, 16px)`;
-      const occ = new Set(offs.map((o) => o[0] + "," + o[1]));
-      for (let r = 0; r <= maxr; r++) for (let c = 0; c <= maxc; c++) { const cell = document.createElement("div"); cell.className = "pcell" + (occ.has(r + "," + c) ? "" : " empty"); if (occ.has(r + "," + c)) cell.style.background = PC[p.color]; grid.appendChild(cell); }
-      if (racing(v) && !placed) grid.addEventListener("click", () => { activePiece = i; activeOffs = p.base.map((o) => o.slice()); renderView(v); });
-      tr.appendChild(grid);
-    });
-
-    const canAct = racing(v);
-    $("rotBtn").disabled = !(canAct && activePiece != null); $("flipBtn").disabled = !(canAct && activePiece != null); $("clearBtn").disabled = !canAct;
-    const allPlaced = v.pieces.length > 0 && place.length === v.pieces.length && place.every((x) => x);
-    $("ubongoBtn").disabled = !(canAct && allPlaced);
+      const no = document.createElement("button"); no.className = "meepBtn no"; no.textContent = "미플 없이 놓기"; no.addEventListener("click", () => commit(v, null)); bar.appendChild(no);
+      const cancel = document.createElement("button"); cancel.className = "meepBtn no"; cancel.textContent = "취소"; cancel.addEventListener("click", () => { pending = null; renderView(v); }); bar.appendChild(cancel);
+    }
 
     // 점수판
     const box = $("players"); box.innerHTML = "";
     for (let i = 0; i < v.count; i++) {
-      const el = document.createElement("div"); el.className = "pl" + (i === v.myIndex ? " me" : "") + (v.roundWinner === i ? " won" : "");
-      el.innerHTML = `<div class="pn">${escapeHtml(nmv(v, i))}</div><div class="pc">${v.scores[i]}</div>`;
+      const el = document.createElement("div"); el.className = "pl" + (v.turn === i ? " active" : "") + (i === v.myIndex ? " me" : "");
+      el.innerHTML = `<div class="pn" style="color:${PCOL[i]}">${escapeHtml(nmv(v, i))}</div><div class="psc">${v.scores[i]}점</div><div class="pm">미플 ${v.meeplesLeft[i]}</div>`;
       box.appendChild(el);
     }
     if (v.phase === "over") showOver(v);
     else if (screen === SCREEN.OVER) setScreen(SCREEN.PLAYING);
   }
-  function onCell(v, r, c) {
-    const pi = pieceOfCell(r, c);
-    if (pi >= 0) { place[pi] = null; renderView(v); return; }             // 놓인 조각 빼기
-    if (activePiece == null || !activeOffs || place[activePiece]) return;  // 고른 조각 없음
-    const cells = activeOffs.map((o) => [r + o[0], c + o[1]]);
-    // 판 안 + 다른 조각과 겹치지 않아야
-    for (const [rr, cc] of cells) { if (rr < 0 || rr >= v.H || cc < 0 || cc >= v.W) { toast("판을 벗어나요"); return; } if (pieceOfCell(rr, cc) >= 0) { toast("다른 조각과 겹쳐요"); return; } }
-    place[activePiece] = cells; const done = activePiece; activePiece = null; activeOffs = null; renderView(v);
-  }
-  $("rotBtn").addEventListener("click", () => { if (activePiece != null && activeOffs) { activeOffs = rot(activeOffs); if (lastView) renderView(lastView); } });
-  $("flipBtn").addEventListener("click", () => { if (activePiece != null && activeOffs) { activeOffs = flip(activeOffs); if (lastView) renderView(lastView); } });
-  $("clearBtn").addEventListener("click", () => { place = new Array((lastView ? lastView.pieces.length : 0)).fill(null); activePiece = null; activeOffs = null; if (lastView) renderView(lastView); });
-  $("ubongoBtn").addEventListener("click", () => {
-    if (!lastView || !racing(lastView)) return;
-    if (!(place.length && place.every((x) => x))) return;
-    dispatch({ action: "solve", placements: place.map((cells) => cells.map((c) => c.slice())) });
-  });
+  renderView._lastTurn = -1;
+  let G_view = null;
+  // 렌더용(뷰 기준) 헬퍼 — 게스트는 G가 없으니 view.board로 계산
+  function candidateCells2(v) { const set = {}; for (const k in v.board) { const [r, c] = k.split(",").map(Number); for (let s = 0; s < 4; s++) { const rr = r + DR[s], cc = c + DC[s]; if (!v.board[K(rr, cc)]) set[K(rr, cc)] = [rr, cc]; } } return Object.values(set); }
+  function legalAt2(v, r, c, type, rot) { if (v.board[K(r, c)]) return false; let adj = false; const t = { type, rot }; for (let s = 0; s < 4; s++) { const nb = v.board[K(r + DR[s], c + DC[s])]; if (nb) { adj = true; if (edgeAt(t, s) !== edgeAt(nb, OPP[s])) return false; } } return adj; }
+  function commit(v, meeple) { if (!pending) return; const p = pending; pending = null; dispatch({ action: "place", r: p.r, c: p.c, rot: curRot, meeple }); }
+  // feature()는 G.board를 참조 — 렌더 중에는 host는 G, guest는 view. guest도 feature 검사를 위해 임시로 G.board 대용 필요.
+  // 간단화: guest 미플 자유검사는 view.board 기반 feature로. feature는 G.board 사용하므로 guest에서 G를 view.board로 대입.
+  function ensureBoardForFeature(v) { if (!isHost) { if (!G) G = {}; G.board = v.board; } }
+
   function showOver(v) {
     $("overTitle").textContent = v.winner === v.myIndex ? "🎉 승리!" : "게임 종료";
     const rows = v.scores.map((s, i) => ({ i, s })).sort((a, b) => b.s - a.s);
-    $("scoreTable").innerHTML = rows.map((r) => `<div class="sr ${r.i === v.winner ? "win" : ""}">${escapeHtml(nmv(v, r.i))}${r.i === v.winner ? " 🏆" : ""}<span>${r.s}승</span></div>`).join("");
+    $("scoreTable").innerHTML = rows.map((r) => `<div class="sr ${r.i === v.winner ? "win" : ""}">${escapeHtml(nmv(v, r.i))}${r.i === v.winner ? " 🏆" : ""}<span>${r.s}점</span></div>`).join("");
     $("gamePicker").classList.add("hidden");
     $("otherGameBtn").classList.toggle("hidden", !(isHost && isOnlineRoom()));
     setScreen(SCREEN.OVER); $("over").classList.remove("hidden");
@@ -445,15 +498,15 @@
     $("lobby").classList.toggle("hidden", s !== SCREEN.LOBBY);
     $("board").classList.toggle("hidden", !(s === SCREEN.PLAYING || s === SCREEN.OVER));
     if (s !== SCREEN.OVER) $("over").classList.add("hidden");
-    if (s === SCREEN.MENU) { soloMode = false; clearTimers(); }
+    if (s === SCREEN.MENU) { soloMode = false; if (aiTimer) { clearTimeout(aiTimer); aiTimer = null; } }
     const inGame = !soloMode && (s === SCREEN.PLAYING || s === SCREEN.OVER);
     $("chatToggle").classList.toggle("hidden", !inGame);
     if (!inGame) $("chatPanel").classList.add("hidden");
     updateHistoryGuard(s);
   }
   function showMenuWithError(msg) { $("menuErr").textContent = msg || ""; onlineMode = false; setScreen(SCREEN.MENU); }
-  function startSolo() { soloMode = true; isHost = true; myIndex = 0; myCode = myToken = null; onlineMode = false; hostNames = {}; place = []; activePiece = null; activeOffs = null; lastRound = -1; newGame(optCount); setScreen(SCREEN.PLAYING); broadcast(); }
-  function newOnlineGame() { const c = G ? G.count : optCount; place = []; activePiece = null; activeOffs = null; lastRound = -1; newGame(c); broadcast(); }
+  function startSolo() { soloMode = true; isHost = true; myIndex = 0; myCode = myToken = null; onlineMode = false; hostNames = {}; curRot = 0; pending = null; renderView._lastTurn = -1; newGame(optCount); setScreen(SCREEN.PLAYING); broadcast(); }
+  function newOnlineGame() { const c = G ? G.count : optCount; curRot = 0; pending = null; renderView._lastTurn = -1; newGame(c); broadcast(); }
 
   function send(obj) { if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj)); }
   function sendNick() { if (isHost) { if (myIndex != null) hostNames[myIndex] = myNick; if (G) broadcast(); } else if (myNick) { send({ type: "nick", name: myNick, to: 0 }); } }
@@ -501,7 +554,7 @@
       case "rejoined":
         onlineMode = true; myIndex = m.index; myCode = m.code; myToken = m.token; isHost = (m.index === 0); saveSession(); restoreConn();
         if (handoffMode) { handoffCap = m.capacity || 2; if (isHost) { $("lobbyTitle").textContent = "방 유지 — 다른 플레이어 대기 중…"; setScreen(SCREEN.LOBBY); maybeStartHandoff(m.count); } else { $("lobbyTitle").textContent = "방 유지됨 — 방장이 곧 새 게임을 시작합니다…"; setScreen(SCREEN.LOBBY); } sendNick(); break; }
-        if (isHost) { try { hostNames = JSON.parse(localStorage.getItem(STATE_KEY + "_n") || "{}"); } catch { hostNames = {}; } const g = loadState(); if (g) { G = g; broadcast(); if (G.phase === "reveal") scheduleNext(); } else { $("roomCode").textContent = m.code; $("lobbyCodeWrap").style.display = ""; $("lobbyTitle").textContent = "상대를 기다리는 중…"; setScreen(SCREEN.LOBBY); } }
+        if (isHost) { try { hostNames = JSON.parse(localStorage.getItem(STATE_KEY + "_n") || "{}"); } catch { hostNames = {}; } const g = loadState(); if (g) { G = g; broadcast(); } else { $("roomCode").textContent = m.code; $("lobbyCodeWrap").style.display = ""; $("lobbyTitle").textContent = "상대를 기다리는 중…"; setScreen(SCREEN.LOBBY); } }
         else { $("lobbyTitle").textContent = "재접속됨 — 동기화 중…"; setScreen(SCREEN.LOBBY); }
         sendNick(); break;
       case "rejoin-failed": clearSession(); onlineMode = false; isHost = false; myIndex = myCode = myToken = null; showMenuWithError(m.message || "재접속하지 못했습니다."); break;
@@ -513,7 +566,7 @@
       case "chat": addChatMsg(m.name, m.text, false); break;
       case "goto": { const g = ROOM_GAMES.find((x) => x.key === m.game); if (g) { saveRoomHandoff(); intentionalNav = true; setTimeout(() => { location.href = handoffUrl(g.file); }, 60); } break; }
       case "peer-joined": if (isHost) newOnlineGame(); else setScreen(SCREEN.PLAYING); sendNick(); break;
-      case "view": if (!isHost) { handoffMode = false; renderView(m.view); touchSession(); } break;
+      case "view": if (!isHost) { handoffMode = false; G = { board: m.view.board }; renderView(m.view); touchSession(); } break;
       case "act": if (isHost) applyAction(m.a); break;
       case "restart": if (isHost) newOnlineGame(); break;
       case "error": $("menuErr").textContent = m.message || "오류가 발생했습니다."; break;
@@ -523,7 +576,7 @@
 
   let armed = false, lastBackAt = 0, toastTimer = null;
   function updateHistoryGuard(s) { const inGame = (s === SCREEN.PLAYING || s === SCREEN.LOBBY); if (inGame && !armed) { history.pushState({ g: 1 }, ""); armed = true; } else if (!inGame) armed = false; }
-  function toast(msg) { let t = $("toast"); if (!t) { t = document.createElement("div"); t.id = "toast"; t.style.cssText = "position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:60;background:rgba(13,10,5,0.96);color:var(--parchment);border:1px solid var(--gold-deep);border-radius:999px;padding:10px 18px;font-size:13px;max-width:90vw;text-align:center;transition:opacity .2s;"; document.body.appendChild(t); } t.textContent = msg; t.style.opacity = "1"; clearTimeout(toastTimer); toastTimer = setTimeout(() => t.style.opacity = "0", 1600); }
+  function toast(msg) { let t = $("toast"); if (!t) { t = document.createElement("div"); t.id = "toast"; t.style.cssText = "position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:60;background:rgba(13,10,5,0.96);color:var(--parchment);border:1px solid var(--gold-deep);border-radius:999px;padding:10px 18px;font-size:13px;max-width:90vw;text-align:center;transition:opacity .2s;"; document.body.appendChild(t); } t.textContent = msg; t.style.opacity = "1"; clearTimeout(toastTimer); toastTimer = setTimeout(() => t.style.opacity = "0", 2000); }
   window.addEventListener("popstate", () => { if (!(screen === SCREEN.PLAYING || screen === SCREEN.LOBBY)) return; const now = Date.now(); if (now - lastBackAt < 2500) { clearSession(); if (ws) { try { ws.close(); } catch {} } armed = false; history.back(); return; } lastBackAt = now; history.pushState({ g: 1 }, ""); toast("한 번 더 ‘뒤로가기’를 누르면 나갑니다"); });
   window.addEventListener("pageshow", (e) => { if (e.persisted && onlineMode && (!ws || ws.readyState > WebSocket.OPEN)) connect(); });
   window.addEventListener("beforeunload", (e) => { if (intentionalNav) return; if (onlineMode && (screen === SCREEN.PLAYING || screen === SCREEN.LOBBY)) { e.preventDefault(); e.returnValue = ""; } });
@@ -532,6 +585,7 @@
   initSeg("segCount", (v) => { optCount = +v; });
   initSeg("segMode", (v) => { optMode = v; $("startSoloBtn").classList.toggle("hidden", v !== "solo"); $("onlineBox").classList.toggle("hidden", v !== "online"); if (v === "online" && (!ws || ws.readyState !== WebSocket.OPEN)) connect(); });
   $("startSoloBtn").addEventListener("click", startSolo);
+  $("rotBtn").addEventListener("click", () => { if (lastView && lastView.myTurn && !pending) { curRot = (curRot + 1) % 4; renderView(lastView); } });
   $("nickInput").value = myNick;
   $("nickInput").addEventListener("input", () => { myNick = $("nickInput").value.trim().slice(0, 8); try { localStorage.setItem("bg_nick", myNick); } catch {} });
   $("createBtn").addEventListener("click", () => { $("menuErr").textContent = ""; if (!ws || ws.readyState !== WebSocket.OPEN) { $("menuErr").textContent = "서버 연결 중… 잠시 후 다시 시도하세요."; connect(); return; } send({ type: "create", capacity: optCount, reconnect: true }); });
@@ -569,7 +623,7 @@
     $("chatInput").addEventListener("keydown", (e) => { if (e.key === "Enter") { sendChat($("chatInput").value); $("chatInput").value = ""; } });
   })();
 
-  const THIS_GAME = "ubongo";
+  const THIS_GAME = "carcassonne";
   const ROOM_GAMES = [
     { key: "davinci",    file: "davinci.html",    label: "🔎 다빈치코드", min: 2, max: 4 },
     { key: "loveletter", file: "loveletter.html", label: "💌 러브레터",   min: 2, max: 4 },
@@ -614,14 +668,17 @@
   { const _room = new URLSearchParams(location.search).get("room"); const _s = getSession(); if (_room || (_s && sessionFresh(_s))) connect(); }
 
   if (location.search.includes("debug")) {
-    window.__ub = () => ({ screen, soloMode, onlineMode, isHost, myIndex, myCode, G, lastView, place, handoffMode, intentionalNav, missing: missingPeers.size });
-    window.__ubact = (a) => dispatch(a);
-    window.__ubstart = () => startRound();
-    window.__ubsolve = () => { if (G && G.solution) dispatch({ action: "solve", placements: G.solution.map((s) => s.map((c) => c.slice())) }); };
+    window.__ca = () => ({ screen, soloMode, onlineMode, isHost, myIndex, myCode, G, lastView, curRot, pending, handoffMode, intentionalNav, missing: missingPeers.size });
+    window.__caact = (a) => dispatch(a);
+    window.__caF = (r, c, si) => feature(K(r, c), si);
+    window.__caScore = (r, c) => { scoreAround(K(r, c)); };
+    window.__caEnd = () => endGame();
+    window.__caLegal = (r, c, type, rot) => legalAt(r, c, type, rot);
     window.__goto = (k) => gotoGame(k);
     window.__st = () => ({ screen, isHost, myIndex, myCode, handoffMode, intentionalNav });
   }
 })();
+
 </script>
 </body>
 </html>
