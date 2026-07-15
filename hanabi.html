@@ -160,7 +160,7 @@
       <div class="tokens"><span>💡 정보 <b id="clues">8</b></span><span>💣 폭탄 <b id="fuses">3</b></span></div>
       <div class="fireworks" id="fireworks"></div>
       <div class="players" id="players"></div>
-      <div id="statusBar"></div>
+      <div id="statusBar" role="status" aria-live="polite"></div>
       <div id="actionBar"></div>
       <div id="discardInfo"></div>
       <div id="logBox"></div>
@@ -178,9 +178,9 @@
     </div>
   </div>
 
-  <button id="chatToggle" class="hidden" title="채팅">💬<span id="chatBadge" class="hidden"></span></button>
+  <button id="chatToggle" class="hidden" title="채팅" aria-label="채팅 열기">💬<span id="chatBadge" class="hidden"></span></button>
   <div id="chatPanel" class="hidden">
-    <div id="chatHead"><span>채팅</span><button id="chatClose" title="닫기">✕ 닫기</button></div>
+    <div id="chatHead"><span>채팅</span><button id="chatClose" title="닫기" aria-label="채팅 닫기">✕ 닫기</button></div>
     <div id="chatFeed"></div>
     <div id="chatEmojis"></div>
     <div id="chatInputRow"><input id="chatInput" maxlength="60" placeholder="메시지…" autocomplete="off" /><button id="chatSend">보내기</button></div>

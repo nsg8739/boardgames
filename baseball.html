@@ -184,7 +184,7 @@
         <span id="codeWrap" class="hidden" title="탭하면 코드 복사">코드 <b id="codeLabel">----</b></span>
       </div>
       <div class="secret">내 비밀번호(<span id="oppName">컴퓨터</span>가 맞혀야 함) <span class="digits" id="mySecret">· · ·</span></div>
-      <div id="status"></div>
+      <div id="status" role="status" aria-live="polite"></div>
       <div class="histories">
         <div class="hcol"><h3>내 추측</h3><div class="hlist" id="meList"></div></div>
         <div class="hcol"><h3 id="oppColTitle">컴퓨터 추측</h3><div class="hlist" id="oppListEl"></div></div>
@@ -207,9 +207,9 @@
     </div>
   </div>
 
-  <button id="chatToggle" class="hidden" title="채팅">💬<span id="chatBadge" class="hidden"></span></button>
+  <button id="chatToggle" class="hidden" title="채팅" aria-label="채팅 열기">💬<span id="chatBadge" class="hidden"></span></button>
   <div id="chatPanel" class="hidden">
-    <div id="chatHead"><span>채팅</span><button id="chatClose" title="닫기">✕ 닫기</button></div>
+    <div id="chatHead"><span>채팅</span><button id="chatClose" title="닫기" aria-label="채팅 닫기">✕ 닫기</button></div>
     <div id="chatFeed"></div>
     <div id="chatEmojis"></div>
     <div id="chatInputRow"><input id="chatInput" maxlength="60" placeholder="메시지…" autocomplete="off" /><button id="chatSend">보내기</button></div>

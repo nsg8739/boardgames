@@ -153,7 +153,7 @@
         <div class="played" id="playedStrip"></div>
         <div id="mistake"></div>
       </div>
-      <div id="statusBar"></div>
+      <div id="statusBar" role="status" aria-live="polite"></div>
       <div class="myhand">
         <div class="myLabel" id="myLabel">내 카드</div>
         <div id="myCards"></div>
@@ -173,9 +173,9 @@
     </div>
   </div>
 
-  <button id="chatToggle" class="hidden" title="채팅">💬<span id="chatBadge" class="hidden"></span></button>
+  <button id="chatToggle" class="hidden" title="채팅" aria-label="채팅 열기">💬<span id="chatBadge" class="hidden"></span></button>
   <div id="chatPanel" class="hidden">
-    <div id="chatHead"><span>채팅</span><button id="chatClose" title="닫기">✕ 닫기</button></div>
+    <div id="chatHead"><span>채팅</span><button id="chatClose" title="닫기" aria-label="채팅 닫기">✕ 닫기</button></div>
     <div id="chatFeed"></div>
     <div id="chatEmojis"></div>
     <div id="chatInputRow"><input id="chatInput" maxlength="60" placeholder="메시지…" autocomplete="off" /><button id="chatSend">보내기</button></div>
