@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>스플렌더 — 보드게임 모음</title>
+<title>루미큐브 — 보드게임 모음</title>
 <meta property="og:type" content="website" /><meta property="og:locale" content="ko_KR" />
 <meta property="og:site_name" content="보드게임 모음" />
-<meta property="og:title" content="스플렌더 — 보석상 발전 게임" />
-<meta property="og:description" content="보석 토큰을 모아 발전 카드를 사고 위신 15점에 먼저 도달! 혼자(vs 컴퓨터)도, 온라인 2~4인도." />
-<meta property="og:url" content="https://nsg8739.github.io/boardgames/splendor.html" />
+<meta property="og:title" content="루미큐브 — 숫자 타일 게임" />
+<meta property="og:description" content="같은 색 연속(런)·같은 숫자 세트(그룹)를 만들어 타일을 먼저 다 내려놓기! 혼자(vs 컴퓨터)도, 온라인 2~4인도." />
+<meta property="og:url" content="https://nsg8739.github.io/boardgames/rummikub.html" />
 <meta property="og:image" content="https://nsg8739.github.io/boardgames/og.png" />
 <meta property="og:image:width" content="1200" /><meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" /><meta name="twitter:image" content="https://nsg8739.github.io/boardgames/og.png" />
@@ -24,7 +24,7 @@
   * { box-sizing: border-box; }
   html, body { margin: 0; min-height: 100%; width: 100%; background: var(--bg); color: var(--parchment); font-family: "Segoe UI", "Malgun Gothic", sans-serif; }
   body { display: flex; flex-direction: column; align-items: center; padding: 14px 12px 40px; }
-  .wrap { width: 100%; max-width: 560px; }
+  .wrap { width: 100%; max-width: 600px; }
   #conn { position: fixed; top: 8px; right: 10px; z-index: 20; font-size: 11px; color: var(--muted); background: rgba(13,10,5,0.72); border: 1px solid var(--warm-border); border-radius: 999px; padding: 4px 10px; max-width: 62vw; text-align: right; }
   #conn .ok { color: #7fd18f; } #conn .bad { color: #e08a7a; }
   .top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
@@ -61,50 +61,32 @@
   .gameMeta b { color: var(--gold-bright); font-weight: 800; }
   #gameCodeWrap { cursor: pointer; white-space: nowrap; }
   #statusBar { text-align: center; font-family: var(--serif); font-size: 15px; font-weight: 700; color: var(--gold-bright); min-height: 22px; margin: 4px 0 8px; }
-  .sectLabel { font-size: 12px; color: var(--muted); font-weight: 700; margin: 8px 0 4px; }
+  .sectLabel { font-size: 12px; color: var(--muted); font-weight: 700; margin: 8px 0 4px; display: flex; justify-content: space-between; }
 
-  /* 귀족 */
-  .nobles { display: flex; gap: 6px; flex-wrap: wrap; }
-  .noble { border: 1px solid var(--gold-deep); border-radius: 8px; background: linear-gradient(180deg,#3a2f14,#2a2210); padding: 5px 7px; font-size: 11px; color: var(--gold-soft); display: flex; flex-direction: column; gap: 3px; min-width: 70px; }
-  .noble .np { font-weight: 800; color: var(--gold-bright); }
-  .noble .nr { display: flex; gap: 3px; flex-wrap: wrap; }
+  /* 타일 */
+  .tile { width: 30px; height: 40px; border-radius: 5px; background: linear-gradient(180deg,#f3ecdd,#e4d8bd); border: 1px solid #b6a884; display: inline-flex; align-items: center; justify-content: center; font-family: var(--serif); font-weight: 800; font-size: 17px; box-shadow: 0 1px 2px rgba(0,0,0,0.35); flex: none; user-select: none; }
+  .tile.c0 { color: #c0392b; } .tile.c1 { color: #2d6fc9; } .tile.c2 { color: #cf7d1c; } .tile.c3 { color: #2a2a2a; }
+  .tile.joker { color: #7a2e8a; font-size: 15px; }
+  .tile.sel { outline: 3px solid var(--gold-soft); outline-offset: 1px; transform: translateY(-4px); }
 
-  /* 발전 카드 행 */
-  .tier { display: flex; align-items: stretch; gap: 5px; margin-bottom: 6px; }
-  .deckPile { flex: none; width: 34px; border-radius: 8px; border: 1px dashed var(--warm-border); background: rgba(13,10,5,0.5); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: var(--muted); cursor: pointer; padding: 2px; }
-  .deckPile .dl { font-size: 15px; font-weight: 800; color: var(--gold-soft); }
-  .tcards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; flex: 1; }
-  .devcard { position: relative; aspect-ratio: 3/4; border-radius: 8px; border: 2px solid rgba(0,0,0,0.4); padding: 4px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.4); }
-  .devcard.empty { border-style: dashed; border-color: var(--warm-border); background: rgba(13,10,5,0.35); cursor: default; box-shadow: none; }
-  .devcard.sel { outline: 3px solid var(--gold-soft); outline-offset: 1px; }
-  .devcard .cvp { font-family: var(--serif); font-weight: 800; font-size: 16px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.6); line-height: 1; }
-  .devcard .cbon { align-self: flex-end; width: 15px; height: 15px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.7); }
-  .devcard .ccost { display: flex; flex-wrap: wrap; gap: 2px; }
-  .cchip { font-size: 10px; font-weight: 800; color: #fff; border-radius: 4px; padding: 0 3px; min-width: 13px; text-align: center; border: 1px solid rgba(0,0,0,0.35); text-shadow: 0 1px 1px rgba(0,0,0,0.7); }
+  #table { min-height: 60px; border: 1px dashed var(--warm-border); border-radius: 10px; padding: 6px; background: rgba(13,10,5,0.35); display: flex; flex-direction: column; gap: 5px; }
+  .tset { display: flex; gap: 3px; flex-wrap: wrap; padding: 4px; border: 1px solid transparent; border-radius: 8px; background: rgba(201,162,39,0.05); cursor: pointer; }
+  .tset.selT { border-color: var(--gold-soft); background: rgba(201,162,39,0.16); }
+  .tset .tsv { align-self: center; font-size: 10px; color: var(--muted); margin-left: 3px; }
+  #tableEmpty { color: var(--muted); font-size: 12px; text-align: center; padding: 14px; }
 
-  /* 토큰 공급 */
-  .tokens { display: flex; gap: 6px; justify-content: center; margin: 6px 0; flex-wrap: wrap; }
-  .tok { width: 44px; height: 44px; border-radius: 50%; border: 2px solid rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; color: #fff; cursor: pointer; box-shadow: inset 0 -2px 4px rgba(0,0,0,0.3), 0 2px 3px rgba(0,0,0,0.4); position: relative; text-shadow: 0 1px 2px rgba(0,0,0,0.6); }
-  .tok.dim { opacity: 0.3; cursor: default; }
-  .tok.sel { outline: 3px solid var(--gold-soft); outline-offset: 2px; }
-  .tok .seln { position: absolute; top: -6px; right: -6px; background: var(--gold-soft); color: var(--ink); border-radius: 50%; width: 18px; height: 18px; font-size: 11px; line-height: 18px; text-align: center; }
-
-  .actionBar { text-align: center; margin: 8px 0; min-height: 42px; display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
-  .actBtn { font-family: var(--serif); font-size: 14px; font-weight: 800; padding: 10px 16px; border-radius: 9px; cursor: pointer; border: 1px solid #7b2419; background: linear-gradient(180deg,#b5442f,#7b2419); color: #fff; }
+  #rack { display: flex; gap: 3px; flex-wrap: wrap; padding: 8px; border: 1px solid var(--gold-deep); border-radius: 10px; background: rgba(40,30,14,0.5); min-height: 52px; }
+  .actionBar { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin: 10px 0; }
+  .actBtn { font-family: var(--serif); font-size: 13px; font-weight: 800; padding: 10px 12px; border-radius: 9px; cursor: pointer; border: 1px solid #7b2419; background: linear-gradient(180deg,#b5442f,#7b2419); color: #fff; }
   .actBtn.sub { border: 1px solid var(--gold-deep); background: linear-gradient(180deg,var(--warm-bg2),var(--warm-bg)); color: var(--gold-bright); }
   .actBtn:disabled { opacity: 0.4; cursor: default; }
+  .meldInfo { text-align: center; font-size: 12px; color: var(--gold-soft); min-height: 16px; }
 
-  .players { display: flex; flex-direction: column; gap: 6px; }
-  .pl { border: 1px solid var(--warm-border); border-radius: 8px; padding: 6px 9px; background: rgba(13,10,5,0.4); font-size: 12px; }
+  .players { display: flex; gap: 6px; flex-wrap: wrap; }
+  .pl { border: 1px solid var(--warm-border); border-radius: 8px; padding: 5px 9px; background: rgba(13,10,5,0.4); font-size: 12px; min-width: 84px; }
   .pl.active { border-color: var(--gold-soft); } .pl.me { background: rgba(201,162,39,0.08); }
-  .pl .plhead { display: flex; justify-content: space-between; align-items: center; }
-  .pl .pn { font-weight: 700; color: var(--gold-bright); } .pl .psc { color: var(--gold-soft); font-weight: 800; font-size: 14px; }
-  .pl .prow { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; align-items: center; }
-  .minichip { display: inline-flex; align-items: center; gap: 2px; font-size: 11px; font-weight: 700; }
-  .mdot { width: 13px; height: 13px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.35); display: inline-block; }
-  .mdot.sq { border-radius: 3px; }
-  .myres { display: flex; gap: 4px; margin-top: 5px; flex-wrap: wrap; }
-  .myres .devcard { width: 46px; aspect-ratio: 3/4; }
+  .pl .pn { font-weight: 700; color: var(--gold-bright); } .pl .pc { color: var(--parchment); margin-top: 3px; }
+  .pl .badge2 { color: var(--gold-soft); font-size: 10px; }
   .backHome { text-align: center; margin-top: 14px; } .backHome a { color: var(--gold-bright); font-size: 13px; font-weight: 700; text-decoration: none; }
 
   #over { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 18px; background: rgba(8,5,2,0.72); }
@@ -142,12 +124,12 @@
   <div class="wrap">
     <div class="top">
       <a class="home" href="./index.html">🎲 메인</a>
-      <h1>스플렌더</h1>
+      <h1>루미큐브</h1>
       <span style="width:44px"></span>
     </div>
 
     <div id="menu" class="panel">
-      <div class="rules">보석 토큰을 모아 <b>발전 카드</b>를 사면 영구 보석과 위신 점수를 얻습니다.<br>한 턴에 ①다른 색 토큰 3개 ②같은 색 토큰 2개(4개 이상일 때) ③카드 예약(황금 획득) ④카드 구매 중 하나.<br><b>위신 15점</b>에 먼저 도달하면 그 라운드 종료 후 최고점 승!</div>
+      <div class="rules">타일로 <b>런</b>(같은 색 연속 3장↑)이나 <b>그룹</b>(같은 숫자·다른 색 3~4장)을 만들어 내려놓습니다.<br><b>첫 등록은 합계 30점 이상</b>이어야 하며, 이후엔 이미 놓인 세트에 이어붙일 수 있습니다.<br>손 타일을 가장 먼저 다 내려놓으면 승리! (조커는 아무 타일 대용)</div>
       <div class="optRow">
         <span class="optLabel">인원</span>
         <div class="seg" id="segCount"><button data-v="2" class="on">2명</button><button data-v="3">3명</button><button data-v="4">4명</button></div>
@@ -177,19 +159,18 @@
     <div id="board" class="hidden">
       <div id="peerAlert" class="hidden"></div>
       <div class="gameMeta">
-        <span>💠 스플렌더</span>
+        <span>🁴 루미큐브</span>
         <span id="gameCodeWrap" class="hidden" title="탭하면 코드 복사">CODE <b id="metaCode">----</b></span>
-        <span>15점 도달 승</span>
+        <span>남은 타일 <b id="deckLeft">0</b></span>
       </div>
       <div id="statusBar" role="status" aria-live="polite"></div>
-      <div class="sectLabel">귀족 (보너스 조건 충족 시 방문)</div>
-      <div class="nobles" id="nobles"></div>
-      <div class="sectLabel">발전 카드</div>
-      <div id="tiers"></div>
-      <div class="sectLabel">보석 토큰</div>
-      <div class="tokens" id="tokens"></div>
+      <div class="sectLabel"><span>테이블 (세트를 눌러 이어붙일 대상 선택)</span></div>
+      <div id="table"></div>
+      <div class="sectLabel"><span>내 타일</span><span id="rackCount"></span></div>
+      <div id="rack"></div>
+      <div class="meldInfo" id="meldInfo"></div>
       <div class="actionBar" id="actionBar"></div>
-      <div class="sectLabel">플레이어</div>
+      <div class="sectLabel"><span>플레이어</span></div>
       <div class="players" id="players"></div>
       <div class="backHome"><button id="toMenuBtn" style="background:none;border:none;color:var(--gold-bright);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">↩ 게임 메뉴</button> · <a href="./index.html">🎲 메인</a></div>
     </div>
@@ -222,22 +203,15 @@
   const isLocal = ["localhost", "127.0.0.1"].includes(location.hostname) || location.protocol === "file:";
   const SERVER_URL = override || (isLocal ? "ws://localhost:8080" : RENDER_URL);
 
-  // 보석 5색 + 황금(와일드). color 인덱스 0~4
-  const GEMS = [
-    { n: "다이아", c: "#dfe3ea", tc: "#2a2a33" },
-    { n: "사파이어", c: "#3f7fd8", tc: "#fff" },
-    { n: "에메랄드", c: "#3ea35a", tc: "#fff" },
-    { n: "루비", c: "#d1493a", tc: "#fff" },
-    { n: "오닉스", c: "#4a4350", tc: "#fff" },
-  ];
-  const GOLD = { n: "황금", c: "#e0b93a", tc: "#3a2a08" };
-  const WIN_PTS = 15;
+  const COLORS = ["#c0392b", "#2d6fc9", "#cf7d1c", "#2a2a2a"];  // 빨강·파랑·주황·검정
+  const MELD_MIN = 30;
   const SCREEN = { MENU: "menu", LOBBY: "lobby", PLAYING: "playing", OVER: "over" };
   let screen = SCREEN.MENU;
   let ws = null, myIndex = null, isHost = false, myCode = null, myToken = null;
   let optCount = 2, optMode = "solo", onlineMode = false;
   let soloMode = false, aiTimer = null;
-  let G = null, lastView = null, sel = null;  // sel: {kind:"tokens",cols:[]} | {kind:"card",src,tier,idx}
+  let G = null, lastView = null;
+  let selRack = new Set(), selSet = null;  // 선택한 손 타일 id / 이어붙일 테이블 세트 index
   let myNick = ""; try { myNick = (localStorage.getItem("bg_nick") || "").trim().slice(0, 8); } catch (e) {}
   let hostNames = {};
   let handoffMode = false, handoffCap = 0, intentionalNav = false;
@@ -247,7 +221,7 @@
   function hidePeerAlert() { const el = $("peerAlert"); if (!el) return; el.classList.add("hidden"); el.innerHTML = ""; }
   function endGameByHost() { try { send({ type: "ended" }); } catch (e) {} clearSession(); if (ws) { try { ws.close(); } catch (e) {} } onlineMode = false; isHost = false; myIndex = myCode = myToken = null; hidePeerAlert(); showMenuWithError("게임을 종료했습니다."); }
 
-  const SESS_KEY = "splendor_session", STATE_KEY = "splendor_state", REJOIN_WINDOW_MS = 300000;
+  const SESS_KEY = "rummikub_session", STATE_KEY = "rummikub_state", REJOIN_WINDOW_MS = 300000;
   function saveSession() { try { localStorage.setItem(SESS_KEY, JSON.stringify({ code: myCode, index: myIndex, token: myToken, isHost, ts: Date.now() })); } catch {} }
   function touchSession() { try { const s = JSON.parse(localStorage.getItem(SESS_KEY) || "null"); if (s) { s.ts = Date.now(); localStorage.setItem(SESS_KEY, JSON.stringify(s)); } } catch {} }
   function getSession() { try { return JSON.parse(localStorage.getItem(SESS_KEY) || "null"); } catch { return null; } }
@@ -259,190 +233,191 @@
 
   // ===== 엔진 =====
   function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-  function ri(n) { return Math.floor(Math.random() * n); }
-  function costTotal(card) { return card.cost.reduce((a, b) => a + b, 0); }
-  // 등급별 카드 생성(스플렌더식 근사): 보너스 색·비용·위신점수
-  function genCard(tier) {
-    const color = ri(5);
-    let pts, budget, cap;
-    if (tier === 0) { pts = Math.random() < 0.18 ? 1 : 0; budget = 3 + ri(3); cap = 4; }        // 3~5, 대부분 0점
-    else if (tier === 1) { pts = 1 + ri(3); budget = 6 + ri(3); cap = 6; }                        // 6~8, 1~3점
-    else { pts = 3 + ri(3); budget = 10 + ri(5); cap = 7; }                                        // 10~14, 3~5점
-    const cost = [0, 0, 0, 0, 0]; let rem = budget, guard = 0;
-    while (rem > 0 && guard++ < 400) {
-      const c = ri(5);
-      if (c === color && Math.random() < 0.7) continue;   // 보너스 색은 비용에 잘 안 넣음
-      if (cost[c] >= cap) continue;
-      cost[c]++; rem--;
+  // 세트 검증: 런(같은 색 연속) 또는 그룹(같은 숫자·다른 색). 조커 대체 지원. {ok, kind, value}
+  function validateSet(tiles) {
+    if (!tiles || tiles.length < 3) return { ok: false };
+    const real = tiles.filter((t) => !t.joker); const jok = tiles.length - real.length;
+    if (real.length === 0) return { ok: false };
+    // 그룹: 같은 숫자, 다른 색, 3~4장
+    if (tiles.length <= 4 && real.every((t) => t.num === real[0].num)) {
+      const cols = real.map((t) => t.color);
+      if (new Set(cols).size === cols.length && jok <= 4 - real.length) return { ok: true, kind: "group", value: real[0].num * tiles.length };
     }
-    return { tier, color, cost, pts };
+    // 런: 같은 색, 연속 숫자(조커로 빈칸 채움)
+    if (real.every((t) => t.color === real[0].color)) {
+      const nums = real.map((t) => t.num);
+      if (new Set(nums).size === nums.length) {
+        const L = tiles.length, lo = Math.min.apply(null, nums), hi = Math.max.apply(null, nums);
+        if (hi - lo + 1 <= L) {
+          let start = Math.min(lo, 14 - L); if (start < 1) start = 1;
+          if (start <= lo && start + L - 1 >= hi && start >= 1 && start + L - 1 <= 13) {
+            let value = 0; for (let x = start; x <= start + L - 1; x++) value += x;
+            return { ok: true, kind: "run", value };
+          }
+        }
+      }
+    }
+    return { ok: false };
   }
-  function genNoble() {
-    // 4-4(두 색) 또는 3-3-3(세 색)
-    const req = [0, 0, 0, 0, 0]; const cols = shuffle([0, 1, 2, 3, 4]);
-    if (Math.random() < 0.5) { req[cols[0]] = 4; req[cols[1]] = 4; }
-    else { req[cols[0]] = 3; req[cols[1]] = 3; req[cols[2]] = 3; }
-    return { req, pts: 3 };
-  }
+  function setValue(tiles) { const r = validateSet(tiles); return r.ok ? r.value : 0; }
+  function tilePoints(t) { return t.joker ? 30 : t.num; }
+  function rackPoints(p) { return p.rack.reduce((s, t) => s + tilePoints(t), 0); }
+
   function newGame(count) {
-    const tokCount = count === 2 ? 4 : count === 3 ? 5 : 7;
-    const tiers = [];
-    for (let t = 0; t < 3; t++) {
-      const deck = []; const dsize = t === 0 ? 40 : t === 1 ? 30 : 20;
-      for (let i = 0; i < dsize; i++) deck.push(genCard(t));
-      const cards = [deck.pop(), deck.pop(), deck.pop(), deck.pop()];
-      tiers.push({ deck, cards });
-    }
-    const nobles = []; for (let i = 0; i < count + 1; i++) nobles.push(genNoble());
-    const players = [];
-    for (let i = 0; i < count; i++) players.push({ tokens: [0, 0, 0, 0, 0], gold: 0, bonus: [0, 0, 0, 0, 0], cards: 0, reserved: [], points: 0 });
-    G = { count, pool: [tokCount, tokCount, tokCount, tokCount, tokCount], goldPool: 5, tiers, nobles, players, turn: 0, phase: "play", winner: null, finalTurn: false, discarder: null, log: [] };
-    log("게임 시작 — 위신 " + WIN_PTS + "점을 향해!");
+    let id = 0; const deck = [];
+    for (let cp = 0; cp < 2; cp++) for (let c = 0; c < 4; c++) for (let n = 1; n <= 13; n++) deck.push({ id: id++, color: c, num: n });
+    deck.push({ id: id++, joker: true }); deck.push({ id: id++, joker: true });
+    shuffle(deck);
+    const players = []; for (let i = 0; i < count; i++) { const rack = []; for (let k = 0; k < 14; k++) rack.push(deck.pop()); players.push({ rack, melded: false }); }
+    G = { count, deck, table: [], players, turn: 0, phase: "play", winner: null, turnPoints: 0, playedThisTurn: false, passes: 0, snap: null, log: [] };
+    takeSnap();
+    log("게임 시작 — 첫 등록 30점 이상!");
   }
+  function takeSnap() { G.snap = { rack: G.players[G.turn].rack.map((t) => ({ ...t })), table: G.table.map((s) => s.map((t) => ({ ...t }))) }; G.turnPoints = 0; G.playedThisTurn = false; }
   function nm(i) { if (soloMode) return i === 0 ? "나" : "컴퓨터" + i; return hostNames[i] || ("P" + (i + 1)); }
   function log(m) { G.log.push(m); if (G.log.length > 20) G.log.shift(); }
-  function totalTokens(p) { return p.tokens.reduce((a, b) => a + b, 0) + p.gold; }
-  function goldNeeded(p, card) { let g = 0; for (let c = 0; c < 5; c++) { const need = Math.max(0, card.cost[c] - p.bonus[c]); g += Math.max(0, need - p.tokens[c]); } return g; }
-  function canAfford(p, card) { return goldNeeded(p, card) <= p.gold; }
 
-  function checkNobles(pi) {
-    const p = G.players[pi];
-    for (let n = 0; n < G.nobles.length; n++) {
-      const nb = G.nobles[n];
-      if (nb.req.every((r, c) => p.bonus[c] >= r)) { p.points += nb.pts; G.nobles.splice(n, 1); log(`${nm(pi)} 귀족 방문 (+3점)`); return; }
-    }
-  }
-  function refillTier(t, idx) {
-    const tier = G.tiers[t];
-    tier.cards[idx] = tier.deck.length ? tier.deck.pop() : null;
-  }
-  function advanceTurn() {
-    G.turn = (G.turn + 1) % G.count;
-    if (G.finalTurn && G.turn === 0) {  // 마지막 라운드 종료(전원 동일 턴 수)
-      G.phase = "over";
-      let best = -1, w = 0;
-      G.players.forEach((p, i) => { if (p.points > best || (p.points === best && p.cards < G.players[w].cards)) { best = p.points; w = i; } });
-      G.winner = w;
-    }
-  }
-  function afterGain(pi) {  // 토큰 획득/예약 후: 10개 초과면 반환 단계, 아니면 턴 종료
-    if (totalTokens(G.players[pi]) > 10) { G.phase = "discard"; G.discarder = pi; return; }
-    advanceTurn();
+  function advanceTurn() { G.turn = (G.turn + 1) % G.count; takeSnap(); }
+  function endGame(winner) {
+    G.phase = "over";
+    if (winner == null) { let best = Infinity; G.players.forEach((p, i) => { const pt = rackPoints(p); if (pt < best) { best = pt; winner = i; } }); }
+    G.winner = winner;
   }
 
-  function doTake(pi, cols) {
-    const p = G.players[pi];
-    if (cols.length === 2 && cols[0] === cols[1]) {           // 같은 색 2개
-      const c = cols[0]; if (G.pool[c] < 4) return false;
-      G.pool[c] -= 2; p.tokens[c] += 2; log(`${nm(pi)}: ${GEMS[c].n} 2개`);
-    } else {                                                   // 다른 색 최대 3개
-      const uniq = [...new Set(cols)]; if (uniq.length !== cols.length || cols.length < 1 || cols.length > 3) return false;
-      if (!cols.every((c) => c >= 0 && c < 5 && G.pool[c] > 0)) return false;
-      cols.forEach((c) => { G.pool[c]--; p.tokens[c]++; }); log(`${nm(pi)}: ${cols.map((c) => GEMS[c].n).join(", ")}`);
-    }
-    afterGain(pi); return true;
+  // 손에서 tile id들을 꺼내 (없으면 null) 반환
+  function pullFromRack(pi, ids) {
+    const rack = G.players[pi].rack; const out = [];
+    for (const id of ids) { const idx = rack.findIndex((t) => t.id === id); if (idx < 0) return null; out.push(rack[idx]); }
+    return out;
   }
-  function pickCard(src, tier, idx, p) {
-    if (src === "reserve") return p.reserved[idx] || null;
-    if (tier == null || idx == null) return null;
-    return G.tiers[tier] ? G.tiers[tier].cards[idx] : null;
+  function removeFromRack(pi, tiles) { const rack = G.players[pi].rack; tiles.forEach((t) => { const i = rack.findIndex((x) => x.id === t.id); if (i >= 0) rack.splice(i, 1); }); }
+
+  function doLay(pi, ids) {
+    const p = G.players[pi]; const tiles = pullFromRack(pi, ids);
+    if (!tiles || tiles.length < 3) return false;
+    const v = validateSet(tiles); if (!v.ok) return false;
+    removeFromRack(pi, tiles); G.table.push(tiles); G.turnPoints += v.value; G.playedThisTurn = true; G.passes = 0;
+    log(`${nm(pi)}: ${v.kind === "group" ? "그룹" : "런"} 등록`);
+    return true;
   }
-  function doBuy(pi, src, tier, idx) {
-    const p = G.players[pi]; const card = pickCard(src, tier, idx, p);
-    if (!card || !canAfford(p, card)) return false;
-    for (let c = 0; c < 5; c++) { let need = Math.max(0, card.cost[c] - p.bonus[c]); const pay = Math.min(need, p.tokens[c]); p.tokens[c] -= pay; G.pool[c] += pay; need -= pay; if (need > 0) { p.gold -= need; G.goldPool += need; } }
-    p.bonus[card.color]++; p.points += card.pts; p.cards++;
-    log(`${nm(pi)}: 카드 구매 (${GEMS[card.color].n}${card.pts ? " +" + card.pts + "점" : ""})`);
-    if (src === "reserve") p.reserved.splice(idx, 1); else refillTier(tier, idx);
-    checkNobles(pi);
-    if (p.points >= WIN_PTS) G.finalTurn = true;
+  function doAppend(pi, setIdx, ids) {
+    const p = G.players[pi]; if (!p.melded) return false;               // 첫 등록 전엔 이어붙이기 불가
+    const set = G.table[setIdx]; if (!set) return false;
+    const tiles = pullFromRack(pi, ids); if (!tiles || !tiles.length) return false;
+    const combined = set.concat(tiles); if (!validateSet(combined).ok) return false;
+    removeFromRack(pi, tiles); G.table[setIdx] = combined; G.playedThisTurn = true; G.passes = 0;
+    log(`${nm(pi)}: 세트에 ${tiles.length}장 추가`);
+    return true;
+  }
+  function doUndo(pi) {
+    if (!G.snap) return false;
+    G.players[pi].rack = G.snap.rack.map((t) => ({ ...t }));
+    G.table = G.snap.table.map((s) => s.map((t) => ({ ...t })));
+    G.turnPoints = 0; G.playedThisTurn = false;
+    return true;
+  }
+  function doDraw(pi) {
+    if (G.playedThisTurn) return false;
+    if (G.deck.length) { G.players[pi].rack.push(G.deck.pop()); G.passes = 0; log(`${nm(pi)}: 타일 뽑음`); }
+    else { G.passes++; log(`${nm(pi)}: 뽑을 타일 없음(패스)`); if (G.passes >= G.count) { endGame(null); return true; } }
     advanceTurn(); return true;
   }
-  function doReserve(pi, src, tier, idx) {
-    const p = G.players[pi]; if (p.reserved.length >= 3) return false;
-    let card;
-    if (src === "deck") { const d = G.tiers[tier] && G.tiers[tier].deck; if (!d || !d.length) return false; card = d.pop(); }
-    else { card = G.tiers[tier] ? G.tiers[tier].cards[idx] : null; if (!card) return false; refillTier(tier, idx); }
-    p.reserved.push(card);
-    if (G.goldPool > 0) { G.goldPool--; p.gold++; }
-    log(`${nm(pi)}: 카드 예약${G.goldPool >= 0 ? " (황금 획득)" : ""}`);
-    afterGain(pi); return true;
-  }
-  function doDiscard(pi, color) {
+  function doEndTurn(pi) {
+    if (!G.playedThisTurn) return false;
     const p = G.players[pi];
-    if (color === 5) { if (p.gold <= 0) return false; p.gold--; G.goldPool++; }
-    else { if (color < 0 || color > 4 || p.tokens[color] <= 0) return false; p.tokens[color]--; G.pool[color]++; }
-    log(`${nm(pi)}: 토큰 반환`);
-    if (totalTokens(p) <= 10) { G.phase = "play"; G.discarder = null; advanceTurn(); }
-    return true;
+    if (!p.melded && G.turnPoints < MELD_MIN) return false;   // 첫 등록 30점 미달 → 커밋 불가(되돌리거나 채워야 함)
+    if (!p.melded) { p.melded = true; log(`${nm(pi)} 첫 등록 완료(${G.turnPoints}점)`); }
+    if (p.rack.length === 0) { endGame(pi); return true; }
+    advanceTurn(); return true;
   }
 
   function applyAction(a) {
-    if (!G) return;
-    const pi = a.from;
-    if (G.phase === "discard") {
-      if (a.action === "discard" && pi === G.discarder) { doDiscard(pi, a.color); broadcast(); }
-      return;
-    }
-    if (G.phase !== "play" || pi !== G.turn) return;
+    if (!G || G.phase !== "play") return;
+    const pi = a.from; if (pi !== G.turn) return;
     let ok = false;
-    if (a.action === "take") ok = doTake(pi, a.cols || []);
-    else if (a.action === "buy") ok = doBuy(pi, a.src, a.tier, a.idx);
-    else if (a.action === "reserve") ok = doReserve(pi, a.src, a.tier, a.idx);
+    if (a.action === "lay") ok = doLay(pi, a.ids || []);
+    else if (a.action === "append") ok = doAppend(pi, a.setIdx, a.ids || []);
+    else if (a.action === "undo") ok = doUndo(pi);
+    else if (a.action === "draw") ok = doDraw(pi);
+    else if (a.action === "endTurn") ok = doEndTurn(pi);
     if (ok) broadcast();
   }
   function dispatch(a) { a.from = myIndex; if (isHost) applyAction(a); else send({ type: "act", to: 0, a }); }
 
-  // ===== AI(솔로) =====
-  function aiTurn(i) {
-    const p = G.players[i];
-    if (G.phase === "discard") {  // 초과 토큰 반환(가장 많이 든 색부터)
-      let bc = 0, bv = -1; for (let c = 0; c < 5; c++) if (p.tokens[c] > bv) { bv = p.tokens[c]; bc = c; }
-      applyAction({ from: i, action: "discard", color: bc }); return;
+  // ===== AI(솔로) — 기본 그리디: 그룹/런을 찾아 첫 등록 30점↑이면 등록, 아니면 뽑기 =====
+  function findSets(rack) {
+    let pool = rack.map((t) => ({ ...t })); const sets = [];
+    // 그룹: 숫자별 3색 이상
+    for (let n = 1; n <= 13; n++) {
+      const grp = []; for (let c = 0; c < 4; c++) { const t = pool.find((x) => !x.joker && x.num === n && x.color === c); if (t) grp.push(t); }
+      if (grp.length >= 3) { grp.forEach((t) => pool.splice(pool.findIndex((x) => x.id === t.id), 1)); sets.push(grp); }
     }
-    // 1) 살 수 있는 카드 중 최고 점수(동점이면 저렴) 구매
-    const cands = [];
-    G.tiers.forEach((t, ti) => t.cards.forEach((c, idx) => { if (c && canAfford(p, c)) cands.push({ src: "board", tier: ti, idx, c }); }));
-    p.reserved.forEach((c, idx) => { if (canAfford(p, c)) cands.push({ src: "reserve", tier: null, idx, c }); });
-    if (cands.length) { cands.sort((a, b) => b.c.pts - a.c.pts || costTotal(a.c) - costTotal(b.c)); const pk = cands[0]; applyAction({ from: i, action: "buy", src: pk.src, tier: pk.tier, idx: pk.idx }); return; }
-    // 2) 목표 카드(가장 저렴한 미보유)에 필요한 색 위주로 3색 토큰
-    if (totalTokens(p) <= 8) {
-      const avail = []; for (let c = 0; c < 5; c++) if (G.pool[c] > 0) avail.push(c);
-      if (avail.length) {
-        // 필요 색 가중
-        const need = [0, 0, 0, 0, 0];
-        G.tiers.forEach((t) => t.cards.forEach((c) => { if (c) for (let k = 0; k < 5; k++) need[k] += Math.max(0, c.cost[k] - p.bonus[k] - p.tokens[k]); }));
-        avail.sort((a, b) => need[b] - need[a]);
-        return void applyAction({ from: i, action: "take", cols: avail.slice(0, 3) });
+    // 런: 색별 연속 3장 이상
+    for (let c = 0; c < 4; c++) {
+      let nums = [...new Set(pool.filter((x) => !x.joker && x.color === c).map((x) => x.num))].sort((a, b) => a - b);
+      let k = 0;
+      while (k < nums.length) {
+        let run = [nums[k]], m = k + 1;
+        while (m < nums.length && nums[m] === run[run.length - 1] + 1) { run.push(nums[m]); m++; }
+        if (run.length >= 3) { const st = run.map((nn) => pool.find((x) => !x.joker && x.color === c && x.num === nn)).filter(Boolean); st.forEach((t) => pool.splice(pool.findIndex((x) => x.id === t.id), 1)); sets.push(st); }
+        k = m;
       }
     }
-    // 3) 같은 색 2개
-    for (let c = 0; c < 5; c++) if (G.pool[c] >= 4 && totalTokens(p) <= 8) return void applyAction({ from: i, action: "take", cols: [c, c] });
-    // 4) 예약(황금 확보)
-    for (let ti = 2; ti >= 0; ti--) { const idx = G.tiers[ti].cards.findIndex((x) => x); if (p.reserved.length < 3 && idx >= 0) return void applyAction({ from: i, action: "reserve", src: "board", tier: ti, idx }); }
-    advanceTurn(); broadcast();
+    // 조커 활용: 2장짜리 그룹/런을 조커로 완성(3장)
+    let jokers = pool.filter((t) => t.joker);
+    const take = (t) => { const i = pool.findIndex((x) => x.id === t.id); if (i >= 0) pool.splice(i, 1); };
+    for (let n = 1; n <= 13 && jokers.length; n++) {
+      const g = []; for (let c = 0; c < 4; c++) { const t = pool.find((x) => !x.joker && x.num === n && x.color === c); if (t) g.push(t); }
+      if (g.length === 2) { const jk = jokers.shift(); const st = g.concat([jk]); st.forEach(take); sets.push(st); }
+    }
+    for (let c = 0; c < 4 && jokers.length; c++) {
+      const nums = [...new Set(pool.filter((x) => !x.joker && x.color === c).map((x) => x.num))].sort((a, b) => a - b);
+      for (let k = 0; k + 1 < nums.length && jokers.length; k++) {
+        if (nums[k + 1] === nums[k] + 1 || nums[k + 1] === nums[k] + 2) {  // 연속 또는 한 칸 사이
+          const t1 = pool.find((x) => !x.joker && x.color === c && x.num === nums[k]);
+          const t2 = pool.find((x) => !x.joker && x.color === c && x.num === nums[k + 1]);
+          if (t1 && t2 && validateSet([t1, t2, jokers[0]]).ok) { const jk = jokers.shift(); const st = [t1, t2, jk]; st.forEach(take); sets.push(st); }
+        }
+      }
+    }
+    return sets;
+  }
+  function aiTurn(i) {
+    const p = G.players[i]; const sets = findSets(p.rack);
+    const pts = sets.reduce((a, s) => a + setValue(s), 0);
+    if (sets.length && (p.melded || pts >= MELD_MIN)) {
+      sets.forEach((s) => doLay(i, s.map((t) => t.id)));
+      // 이미 등록했다면 테이블에 이어붙이기 시도(간단): 각 남은 타일을 붙일 수 있는 세트에
+      if (p.melded || G.turnPoints >= MELD_MIN) {
+        let changed = true;
+        while (changed) {
+          changed = false;
+          for (const t of p.rack.slice()) {
+            for (let si = 0; si < G.table.length; si++) { if (validateSet(G.table[si].concat([t])).ok) { G.table[si] = G.table[si].concat([t]); removeFromRack(i, [t]); G.playedThisTurn = true; changed = true; break; } }
+            if (changed) break;
+          }
+        }
+      }
+      if (!doEndTurn(i)) { doUndo(i); doDraw(i); }
+      broadcast();
+    } else { doDraw(i); broadcast(); }
   }
   function maybeAI() {
-    if (!soloMode || !G || G.winner != null) return;
-    const actor = G.phase === "discard" ? G.discarder : G.turn;
-    if (actor === 0 || actor == null) return;
+    if (!soloMode || !G || G.phase !== "play" || G.turn === 0) return;
     if (aiTimer) clearTimeout(aiTimer);
-    aiTimer = setTimeout(() => { aiTimer = null; if (soloMode && G && G.winner == null) { const act = G.phase === "discard" ? G.discarder : G.turn; if (act && act !== 0) aiTurn(act); } }, 750);
+    aiTimer = setTimeout(() => { aiTimer = null; if (soloMode && G && G.phase === "play" && G.turn !== 0) aiTurn(G.turn); }, 800);
   }
 
   // ===== 뷰 =====
   function viewFor(pi) {
+    const p = G.players[pi];
     return {
-      online: !soloMode, count: G.count, turn: G.turn, myIndex: pi, phase: G.phase, winner: G.winner, discarder: G.discarder,
+      online: !soloMode, count: G.count, turn: G.turn, myIndex: pi, phase: G.phase, winner: G.winner, deckLeft: G.deck.length,
       myTurn: G.turn === pi && G.phase === "play",
-      pool: G.pool.slice(), goldPool: G.goldPool,
-      nobles: G.nobles.map((n) => ({ req: n.req.slice(), pts: n.pts })),
-      tiers: G.tiers.map((t) => ({ deckCount: t.deck.length, cards: t.cards.map((c) => c ? { tier: c.tier, color: c.color, cost: c.cost.slice(), pts: c.pts } : null) })),
-      players: G.players.map((p, i) => ({
-        idx: i, bonus: p.bonus.slice(), tokens: p.tokens.slice(), gold: p.gold, points: p.points, cards: p.cards,
-        reservedCount: p.reserved.length,
-        reserved: i === pi ? p.reserved.map((c) => ({ tier: c.tier, color: c.color, cost: c.cost.slice(), pts: c.pts })) : null,
-      })),
+      table: G.table.map((s) => ({ tiles: s.map((t) => ({ ...t })), value: setValue(s) })),
+      myRack: p.rack.map((t) => ({ ...t })), myMelded: p.melded,
+      turnPoints: G.turnPoints, playedThisTurn: G.playedThisTurn,
+      players: G.players.map((pp, i) => ({ idx: i, rackCount: pp.rack.length, melded: pp.melded })),
       names: Array.from({ length: G.count }, (_, i) => hostNames[i] || null), log: G.log.slice(-3),
     };
   }
@@ -457,61 +432,39 @@
 
   // ===== 렌더 =====
   function nmv(v, i) { if (soloMode) return i === 0 ? "나" : "컴퓨터" + i; const n = v.names[i]; if (i === v.myIndex) return n || "나"; return n || ("P" + (i + 1)); }
-  function costChips(cost) { return cost.map((n, c) => n ? `<span class="cchip" style="background:${GEMS[c].c};color:${GEMS[c].tc}">${n}</span>` : "").join(""); }
-  function cardHtml(c, cls) {
-    if (!c) return `<div class="devcard empty"></div>`;
-    return `<div class="devcard ${cls || ""}" style="background:linear-gradient(180deg,${GEMS[c.color].c}cc,${GEMS[c.color].c}88)">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start"><span class="cvp">${c.pts || ""}</span><span class="cbon" style="background:${GEMS[c.color].c}"></span></div>
-      <div class="ccost">${costChips(c.cost)}</div></div>`;
-  }
-  function myAfford(v, c) {  // 클라이언트 구매 가능 판정
-    const me = v.players[v.myIndex]; let g = 0;
-    for (let k = 0; k < 5; k++) { const need = Math.max(0, c.cost[k] - me.bonus[k]); g += Math.max(0, need - me.tokens[k]); }
-    return g <= me.gold;
-  }
+  function tileHtml(t, sel) { if (t.joker) return `<div class="tile joker${sel ? " sel" : ""}" data-id="${t.id}">🃏</div>`; return `<div class="tile c${t.color}${sel ? " sel" : ""}" data-id="${t.id}">${t.num}</div>`; }
+  function sortRack(rack) { return rack.slice().sort((a, b) => { if (a.joker) return 1; if (b.joker) return -1; return a.color - b.color || a.num - b.num; }); }
   function renderView(v) {
-    if (!v || !Array.isArray(v.pool)) return;
+    if (!v || !Array.isArray(v.myRack)) return;
     lastView = v;
     if (screen !== SCREEN.PLAYING && screen !== SCREEN.OVER) setScreen(SCREEN.PLAYING);
+    $("deckLeft").textContent = v.deckLeft;
     $("gameCodeWrap").classList.toggle("hidden", !(v.online && myCode)); if (v.online && myCode) $("metaCode").textContent = myCode;
-    if (sel && sel.kind === "card") { const c = sel.src === "reserve" ? (v.players[v.myIndex].reserved || [])[sel.idx] : (v.tiers[sel.tier] && v.tiers[sel.tier].cards[sel.idx]); if (!c) sel = null; }
+    if (selSet != null && selSet >= v.table.length) selSet = null;
 
-    const discardMe = v.phase === "discard" && v.discarder === v.myIndex;
-    $("statusBar").textContent = v.phase === "over" ? ""
-      : v.phase === "discard" ? (discardMe ? "토큰이 10개를 넘어요 — 반환할 토큰을 누르세요" : `${nmv(v, v.discarder)}가 토큰을 반환하는 중…`)
-      : (v.myTurn ? "내 차례 — 토큰/카드를 선택하세요" : `${nmv(v, v.turn)} 차례…`);
+    $("statusBar").textContent = v.phase === "over" ? "" : (v.myTurn ? "내 차례 — 세트를 만들어 내려놓으세요" : `${nmv(v, v.turn)} 차례…`);
+    $("rackCount").textContent = `${v.myRack.length}장`;
 
-    // 귀족
-    $("nobles").innerHTML = v.nobles.map((n) => `<div class="noble"><span class="np">${n.pts}점</span><div class="nr">${n.req.map((r, c) => r ? `<span class="minichip"><span class="mdot" style="background:${GEMS[c].c}"></span>${r}</span>` : "").join("")}</div></div>`).join("") || `<span class="hint">없음</span>`;
+    // 테이블
+    const tb = $("table"); tb.innerHTML = "";
+    if (!v.table.length) tb.innerHTML = `<div id="tableEmpty">아직 내려놓인 세트가 없습니다</div>`;
+    v.table.forEach((s, si) => {
+      const row = document.createElement("div"); row.className = "tset" + (selSet === si ? " selT" : "");
+      row.innerHTML = s.tiles.map((t) => tileHtml(t, false)).join("") + `<span class="tsv">${s.value}점</span>`;
+      if (v.myTurn && v.myMelded) row.addEventListener("click", () => { selSet = (selSet === si ? null : si); renderView(v); });
+      tb.appendChild(row);
+    });
 
-    // 발전 카드 등급(3→1)
-    const tbox = $("tiers"); tbox.innerHTML = "";
-    for (let t = 2; t >= 0; t--) {
-      const row = document.createElement("div"); row.className = "tier";
-      const deck = document.createElement("div"); deck.className = "deckPile"; deck.innerHTML = `<span>Lv${t + 1}</span><span class="dl">${v.tiers[t].deckCount}</span>`;
-      if (v.myTurn) deck.addEventListener("click", () => { sel = { kind: "card", src: "deck", tier: t, idx: -1 }; renderView(v); });
-      row.appendChild(deck);
-      const cc = document.createElement("div"); cc.className = "tcards";
-      v.tiers[t].cards.forEach((c, idx) => {
-        const seld = sel && sel.kind === "card" && sel.src === "board" && sel.tier === t && sel.idx === idx;
-        const el = document.createElement("div"); el.innerHTML = cardHtml(c, seld ? "sel" : ""); const node = el.firstElementChild;
-        if (c && v.myTurn) node.addEventListener("click", () => { sel = { kind: "card", src: "board", tier: t, idx }; renderView(v); });
-        cc.appendChild(node);
-      });
-      row.appendChild(cc); tbox.appendChild(row);
-    }
+    // 내 손(정렬)
+    const rk = $("rack"); rk.innerHTML = "";
+    sortRack(v.myRack).forEach((t) => {
+      const w = document.createElement("div"); w.innerHTML = tileHtml(t, selRack.has(t.id)); const node = w.firstElementChild;
+      if (v.myTurn) node.addEventListener("click", () => { if (selRack.has(t.id)) selRack.delete(t.id); else selRack.add(t.id); renderView(v); });
+      rk.appendChild(node);
+    });
 
-    // 토큰 공급
-    const tk = $("tokens"); tk.innerHTML = "";
-    for (let c = 0; c < 5; c++) {
-      const el = document.createElement("div"); el.className = "tok"; el.style.background = GEMS[c].c; el.style.color = GEMS[c].tc; el.textContent = v.pool[c];
-      const selCount = (sel && sel.kind === "tokens") ? sel.cols.filter((x) => x === c).length : 0;
-      if (selCount) { el.classList.add("sel"); el.innerHTML = `${v.pool[c]}<span class="seln">${selCount}</span>`; }
-      if (v.pool[c] === 0 || !v.myTurn) el.classList.add("dim");
-      if (v.myTurn) el.addEventListener("click", () => onToken(v, c));
-      tk.appendChild(el);
-    }
-    const gel = document.createElement("div"); gel.className = "tok dim"; gel.style.background = GOLD.c; gel.style.color = GOLD.tc; gel.title = "황금(예약 시 획득)"; gel.textContent = v.goldPool; tk.appendChild(gel);
+    // 첫 등록 안내
+    $("meldInfo").textContent = v.myTurn && !v.myMelded ? `첫 등록 점수: ${v.turnPoints} / ${MELD_MIN}` : "";
 
     renderActionBar(v);
 
@@ -519,80 +472,44 @@
     const box = $("players"); box.innerHTML = "";
     for (let i = 0; i < v.count; i++) {
       const p = v.players[i]; const el = document.createElement("div"); el.className = "pl" + (v.turn === i ? " active" : "") + (i === v.myIndex ? " me" : "");
-      const bonusStr = GEMS.map((g, c) => p.bonus[c] ? `<span class="minichip"><span class="mdot sq" style="background:${g.c}"></span>${p.bonus[c]}</span>` : "").filter(Boolean).join(" ") || "<span class='hint'>보너스 없음</span>";
-      const tokStr = GEMS.map((g, c) => p.tokens[c] ? `<span class="minichip"><span class="mdot" style="background:${g.c}"></span>${p.tokens[c]}</span>` : "").filter(Boolean).join(" ") + (p.gold ? ` <span class="minichip"><span class="mdot" style="background:${GOLD.c}"></span>${p.gold}</span>` : "");
-      let html = `<div class="plhead"><span class="pn">${escapeHtml(nmv(v, i))}</span><span class="psc">${p.points}점</span></div>`;
-      html += `<div class="prow"><span class="hint">보너스</span> ${bonusStr}</div>`;
-      html += `<div class="prow"><span class="hint">토큰</span> ${tokStr || "<span class='hint'>없음</span>"}<span class="hint" style="margin-left:auto">예약 ${p.reservedCount}</span></div>`;
-      el.innerHTML = html;
-      if (i === v.myIndex && p.reserved && p.reserved.length) {
-        const rd = document.createElement("div"); rd.className = "myres";
-        p.reserved.forEach((c, idx) => {
-          const seld = sel && sel.kind === "card" && sel.src === "reserve" && sel.idx === idx;
-          const w = document.createElement("div"); w.innerHTML = cardHtml(c, seld ? "sel" : ""); const node = w.firstElementChild;
-          if (v.myTurn) node.addEventListener("click", () => { sel = { kind: "card", src: "reserve", tier: null, idx }; renderView(v); });
-          rd.appendChild(node);
-        });
-        el.appendChild(rd);
-      }
-      // 반환 단계: 내 토큰 클릭 반환
-      if (discardMe && i === v.myIndex) {
-        const dd = document.createElement("div"); dd.className = "prow"; dd.innerHTML = `<span class="hint">반환:</span>`;
-        for (let c = 0; c < 5; c++) if (p.tokens[c] > 0) { const b = mkDiscBtn(c, GEMS[c]); dd.appendChild(b); }
-        if (p.gold > 0) dd.appendChild(mkDiscBtn(5, GOLD));
-        el.appendChild(dd);
-      }
+      el.innerHTML = `<div class="pn">${escapeHtml(nmv(v, i))}</div><div class="pc">타일 ${p.rackCount}장 ${p.melded ? '<span class="badge2">·등록✓</span>' : ""}</div>`;
       box.appendChild(el);
     }
     if (v.phase === "over") showOver(v);
     else if (screen === SCREEN.OVER) setScreen(SCREEN.PLAYING);
   }
-  function mkDiscBtn(c, gem) { const b = document.createElement("button"); b.className = "minichip"; b.style.cssText = "cursor:pointer;border:1px solid var(--warm-border);border-radius:6px;background:var(--warm-bg);padding:3px 6px;"; b.innerHTML = `<span class="mdot" style="background:${gem.c}"></span>반환`; b.addEventListener("click", () => dispatch({ action: "discard", color: c })); return b; }
-
-  function onToken(v, c) {
-    if (!v.myTurn || v.pool[c] === 0) return;
-    if (!sel || sel.kind !== "tokens") sel = { kind: "tokens", cols: [] };
-    const cnt = sel.cols.filter((x) => x === c).length;
-    // 이미 이 색이 선택됨 → 해제. 아니면 추가(최대 3, 서로 다른 색)
-    if (cnt > 0) { sel.cols = sel.cols.filter((x) => x !== c); }
-    else { const distinct = new Set(sel.cols); if (distinct.size >= 3) { toast("최대 3색까지 선택할 수 있어요"); return; } sel.cols.push(c); }
-    if (!sel.cols.length) sel = null;
-    renderView(v);
-  }
   function renderActionBar(v) {
     const bar = $("actionBar"); bar.innerHTML = "";
     if (!v.myTurn) return;
-    if (sel && sel.kind === "tokens" && sel.cols.length) {
-      const distinct = [...new Set(sel.cols)];
-      const takeBtn = document.createElement("button"); takeBtn.className = "actBtn";
-      takeBtn.textContent = `${distinct.length}색 가져가기`;
-      takeBtn.addEventListener("click", () => { const cols = distinct.slice(); sel = null; dispatch({ action: "take", cols }); });
-      bar.appendChild(takeBtn);
-      if (distinct.length === 1 && v.pool[distinct[0]] >= 4) {
-        const t2 = document.createElement("button"); t2.className = "actBtn sub"; t2.textContent = `같은 색 2개`;
-        t2.addEventListener("click", () => { const c = distinct[0]; sel = null; dispatch({ action: "take", cols: [c, c] }); });
-        bar.appendChild(t2);
-      }
-    } else if (sel && sel.kind === "card") {
-      const me = v.players[v.myIndex];
-      const card = sel.src === "reserve" ? (me.reserved || [])[sel.idx] : sel.src === "deck" ? null : (v.tiers[sel.tier] && v.tiers[sel.tier].cards[sel.idx]);
-      if (sel.src !== "deck" && card) {
-        const buy = document.createElement("button"); buy.className = "actBtn"; buy.textContent = "구매"; buy.disabled = !myAfford(v, card);
-        buy.addEventListener("click", () => { const s = sel; sel = null; dispatch({ action: "buy", src: s.src, tier: s.tier, idx: s.idx }); });
-        bar.appendChild(buy);
-      }
-      if (sel.src !== "reserve" && me.reservedCount < 3) {
-        const rev = document.createElement("button"); rev.className = "actBtn sub"; rev.textContent = sel.src === "deck" ? "덱에서 예약" : "예약(황금)";
-        rev.addEventListener("click", () => { const s = sel; sel = null; dispatch({ action: "reserve", src: s.src, tier: s.tier, idx: s.idx }); });
-        bar.appendChild(rev);
-      }
+    const ids = [...selRack];
+    // 새 세트로 내기
+    const lay = document.createElement("button"); lay.className = "actBtn"; lay.textContent = "새 세트로 내기"; lay.disabled = ids.length < 3;
+    lay.addEventListener("click", () => { const s = ids.slice(); selRack.clear(); dispatch({ action: "lay", ids: s }); });
+    bar.appendChild(lay);
+    // 이어붙이기
+    if (v.myMelded) {
+      const app = document.createElement("button"); app.className = "actBtn sub"; app.textContent = "선택 세트에 붙이기"; app.disabled = selSet == null || ids.length < 1;
+      app.addEventListener("click", () => { const s = ids.slice(), si = selSet; selRack.clear(); selSet = null; dispatch({ action: "append", setIdx: si, ids: s }); });
+      bar.appendChild(app);
     }
-    if (sel) { const cancel = document.createElement("button"); cancel.className = "actBtn sub"; cancel.textContent = "취소"; cancel.addEventListener("click", () => { sel = null; renderView(v); }); bar.appendChild(cancel); }
+    // 되돌리기 / 턴 종료 / 뽑기
+    if (v.playedThisTurn) {
+      const undo = document.createElement("button"); undo.className = "actBtn sub"; undo.textContent = "↩ 되돌리기";
+      undo.addEventListener("click", () => { selRack.clear(); selSet = null; dispatch({ action: "undo" }); });
+      bar.appendChild(undo);
+      const end = document.createElement("button"); end.className = "actBtn"; end.textContent = "턴 종료"; end.disabled = !v.myMelded && v.turnPoints < MELD_MIN;
+      end.addEventListener("click", () => { selRack.clear(); selSet = null; dispatch({ action: "endTurn" }); });
+      bar.appendChild(end);
+    } else {
+      const draw = document.createElement("button"); draw.className = "actBtn sub"; draw.textContent = "🂠 타일 뽑기";
+      draw.addEventListener("click", () => { selRack.clear(); selSet = null; dispatch({ action: "draw" }); });
+      bar.appendChild(draw);
+    }
   }
   function showOver(v) {
     $("overTitle").textContent = v.winner === v.myIndex ? "🎉 승리!" : "게임 종료";
-    const rows = v.players.map((p, i) => ({ i, s: p.points, cd: p.cards })).sort((a, b) => b.s - a.s || a.cd - b.cd);
-    $("scoreTable").innerHTML = rows.map((r) => `<div class="sr ${r.i === v.winner ? "win" : ""}">${escapeHtml(nmv(v, r.i))}${r.i === v.winner ? " 🏆" : ""}<span>${r.s}점 · 카드 ${r.cd}</span></div>`).join("");
+    const rows = v.players.map((p) => ({ i: p.idx, c: p.rackCount })).sort((a, b) => a.c - b.c);
+    $("scoreTable").innerHTML = rows.map((r) => `<div class="sr ${r.i === v.winner ? "win" : ""}">${escapeHtml(nmv(v, r.i))}${r.i === v.winner ? " 🏆" : ""}<span>${r.c === 0 ? "완성!" : "타일 " + r.c + "장 남음"}</span></div>`).join("");
     $("gamePicker").classList.add("hidden");
     $("otherGameBtn").classList.toggle("hidden", !(isHost && isOnlineRoom()));
     setScreen(SCREEN.OVER); $("over").classList.remove("hidden");
@@ -611,8 +528,8 @@
     updateHistoryGuard(s);
   }
   function showMenuWithError(msg) { $("menuErr").textContent = msg || ""; onlineMode = false; setScreen(SCREEN.MENU); }
-  function startSolo() { soloMode = true; isHost = true; myIndex = 0; myCode = myToken = null; onlineMode = false; hostNames = {}; sel = null; newGame(optCount); setScreen(SCREEN.PLAYING); broadcast(); }
-  function newOnlineGame() { const c = G ? G.count : optCount; sel = null; newGame(c); broadcast(); }
+  function startSolo() { soloMode = true; isHost = true; myIndex = 0; myCode = myToken = null; onlineMode = false; hostNames = {}; selRack.clear(); selSet = null; newGame(optCount); setScreen(SCREEN.PLAYING); broadcast(); }
+  function newOnlineGame() { const c = G ? G.count : optCount; selRack.clear(); selSet = null; newGame(c); broadcast(); }
 
   function send(obj) { if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj)); }
   function sendNick() { if (isHost) { if (myIndex != null) hostNames[myIndex] = myNick; if (G) broadcast(); } else if (myNick) { send({ type: "nick", name: myNick, to: 0 }); } }
@@ -728,7 +645,7 @@
     $("chatInput").addEventListener("keydown", (e) => { if (e.key === "Enter") { sendChat($("chatInput").value); $("chatInput").value = ""; } });
   })();
 
-  const THIS_GAME = "splendor";
+  const THIS_GAME = "rummikub";
   const ROOM_GAMES = [
     { key: "davinci",    file: "davinci.html",    label: "🔎 다빈치코드", min: 2, max: 4 },
     { key: "loveletter", file: "loveletter.html", label: "💌 러브레터",   min: 2, max: 4 },
@@ -770,8 +687,9 @@
   { const _room = new URLSearchParams(location.search).get("room"); const _s = getSession(); if (_room || (_s && sessionFresh(_s))) connect(); }
 
   if (location.search.includes("debug")) {
-    window.__sp = () => ({ screen, soloMode, onlineMode, isHost, myIndex, myCode, G, lastView, handoffMode, intentionalNav, missing: missingPeers.size });
-    window.__spact = (a) => dispatch(a);
+    window.__rk = () => ({ screen, soloMode, onlineMode, isHost, myIndex, myCode, G, lastView, handoffMode, intentionalNav, missing: missingPeers.size });
+    window.__rkact = (a) => dispatch(a);
+    window.__rkai = () => { if (G) aiTurn(G.turn); };
     window.__goto = (k) => gotoGame(k);
     window.__st = () => ({ screen, isHost, myIndex, myCode, handoffMode, intentionalNav });
   }

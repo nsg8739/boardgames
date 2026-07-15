@@ -1,9 +1,9 @@
 // 보드게임 모음 서비스워커 — 설치형(PWA) + 오프라인 폴백.
 // 전략: 같은 출처 GET은 네트워크 우선(항상 최신) → 실패 시 캐시. 외부(중계 서버·도블 iframe)는 건드리지 않음.
-const CACHE = "boardgames-v12";
+const CACHE = "boardgames-v13";
 const SHELL = [
   "./", "./index.html",
-  "./davinci.html", "./baseball.html", "./loveletter.html", "./gridgames.html", "./oncard.html", "./battleship.html", "./nothanks.html", "./themind.html", "./sixnimmt.html", "./sudoku.html", "./setgame.html", "./incangold.html", "./hanabi.html", "./pointsalad.html", "./splendor.html", "./dobble.html", "./versus.html", "./pong.html",
+  "./davinci.html", "./baseball.html", "./loveletter.html", "./gridgames.html", "./oncard.html", "./battleship.html", "./nothanks.html", "./themind.html", "./sixnimmt.html", "./sudoku.html", "./setgame.html", "./incangold.html", "./hanabi.html", "./pointsalad.html", "./splendor.html", "./rummikub.html", "./dobble.html", "./versus.html", "./pong.html",
   "./manifest.json", "./icon.svg"
 ];
 
