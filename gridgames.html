@@ -69,8 +69,8 @@
   .disc.p0 { background: radial-gradient(circle at 35% 30%, #f08a7c, var(--p0)); }
   .disc.p1 { background: radial-gradient(circle at 35% 30%, #8fb6ef, var(--p1)); }
 
-  #boardWrap { display: flex; justify-content: center; }
-  #boardGrid { display: grid; gap: 3px; background: rgba(13,10,5,0.5); border: 1px solid var(--warm-border); border-radius: 8px; padding: 5px; width: 100%; touch-action: manipulation; }
+  #boardWrap { display: block; overflow-x: auto; }  /* 오목 등 큰 판은 셀 크기를 유지한 채 가로 스크롤 */
+  #boardGrid { display: grid; gap: 3px; background: rgba(13,10,5,0.5); border: 1px solid var(--warm-border); border-radius: 8px; padding: 5px; width: 100%; margin: 0 auto; touch-action: manipulation; }
   #boardGrid.connect4 { background: #24406b; border-color: #16294a; }
   .cell { aspect-ratio: 1 / 1; border: 1px solid var(--warm-border); border-radius: 5px; background: var(--warm-bg); display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
   .connect4 .cell { border-radius: 50%; background: #0d1b33; border-color: #16294a; }
@@ -393,8 +393,14 @@
   function renderBoard(v) {
     const grid = $("boardGrid");
     grid.className = v.variant === "connect4" ? "connect4" : (v.variant === "gomoku" ? "v-gomoku" : "");
-    grid.style.gridTemplateColumns = `repeat(${v.cols}, 1fr)`;
-    grid.style.maxWidth = v.variant === "gomoku" ? "460px" : (v.variant === "connect4" ? "360px" : "280px");
+    if (v.variant === "gomoku") {
+      // 15×15는 화면폭에 맞추면 셀이 ~20px로 작아 오탭이 잦다. 셀을 30px로 고정하고 판을 가로 스크롤.
+      grid.style.gridTemplateColumns = `repeat(${v.cols}, 30px)`;
+      grid.style.width = "max-content"; grid.style.maxWidth = "none";
+    } else {
+      grid.style.gridTemplateColumns = `repeat(${v.cols}, 1fr)`;
+      grid.style.width = "100%"; grid.style.maxWidth = v.variant === "connect4" ? "360px" : "280px";
+    }
     const winSet = new Set((v.winLine || []).map(([r, c]) => r + "," + c));
     const myTurn = v.myTurn;
     grid.innerHTML = "";

@@ -120,6 +120,8 @@
   .reff { font-size: 12.5px; color: var(--parchment); line-height: 1.45; margin-top: 2px; }
   #rulesClose { width: 100%; margin-top: 12px; font-family: var(--serif); font-weight: 800; padding: 11px 0; border-radius: 8px; cursor: pointer; border: 1px solid var(--gold-deep); background: linear-gradient(180deg,var(--gold-bright),var(--gold-deep)); color: var(--ink); }
 </style>
+<link rel="manifest" href="./manifest.json" />
+<meta name="theme-color" content="#17110a" />
 </head>
 <body>
   <div id="conn"></div>
@@ -257,6 +259,7 @@
   function beginTurn(){
     const p = G.players[G.turn];
     p.protected = false;
+    if(G.reveal && G.reveal[G.turn]) delete G.reveal[G.turn];  // 사제(2)로 본 정보는 내 다음 차례에 소멸(라운드 내내 낡은 정보가 계속 노출되지 않도록)
     if(G.deck.length===0){ endShowdown(); return; }
     p.hand.push(G.deck.pop());  // 드로우 → 손패 2장
     G.phase = "play";
