@@ -92,6 +92,8 @@
   #chatToggle:hover, #chatToggle:focus { opacity: 1; }
   #chatBadge { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; border-radius: 9px; background: #a6402f; color: #fff; font-size: 11px; line-height: 18px; padding: 0 4px; }
   #chatPanel { position: fixed; left: 12px; bottom: calc(70px + env(safe-area-inset-bottom)); z-index: 46; width: min(300px, calc(100vw - 24px)); background: rgba(20,14,7,0.98); border: 1px solid var(--warm-border); border-radius: 12px; padding: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 8px; }
+  #peerAlert { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 12px; margin: 0 0 10px; padding: 8px 12px; border: 1px solid #a5562f; border-radius: 8px; background: rgba(165,86,47,0.16); color: #f0b48e; font-size: 12.5px; text-align: center; line-height: 1.4; }
+  #peerAlert button { flex: none; cursor: pointer; border: 1px solid #f0883e; border-radius: 6px; background: rgba(240,136,62,0.18); color: #ffcda6; font-weight: 700; font-size: 12.5px; padding: 6px 12px; }
   body:has(#chatPanel:not(.hidden)) { padding-bottom: 340px; }
   #chatHead { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--muted); }
   #chatClose { background: rgba(166,64,47,0.85); border: 1px solid var(--warm-border); color: #fff; font-size: 12px; font-weight: 700; border-radius: 6px; padding: 4px 10px; cursor: pointer; }
@@ -150,6 +152,7 @@
     </div>
 
     <div id="board" class="hidden">
+      <div id="peerAlert" class="hidden"></div>
       <div class="gmeta gmeta"><span>💌 러브레터 <b id="cntLabel"></b></span><span id="codeWrap" title="탭하면 코드 복사">코드 <b id="codeLabel">----</b></span><span>덱 <b id="deckLeft">0</b></span></div>
       <div class="opps" id="opps"></div>
       <div id="status"></div>
@@ -204,7 +207,11 @@
   let ws = null, myIndex = null, isHost = false, myCode = null, myToken = null, onlineMode = false;
   let optCount = 2, optTarget = 3, lastView = null, G = null;
   let handoffMode = false, handoffCap = 0, intentionalNav = false;  // 방 유지(게임 간 이동)
-  const missingPeers = new Set();  // 접속이 끊긴 슬롯(방 유지 이동 가능 여부 판단)
+  const missingPeers = new Set();
+  let reconnectTries = 0, reconnectTimer = null;
+  function showPeerAlert() { const el = $("peerAlert"); if (!el) return; el.innerHTML = "<span>⚠ 상대 접속이 끊겼어요 — 재접속을 기다리는 중…</span>"; if (isHost) { const b = document.createElement("button"); b.textContent = "게임 종료"; b.addEventListener("click", endGameByHost); el.appendChild(b); } el.classList.remove("hidden"); }
+  function hidePeerAlert() { const el = $("peerAlert"); if (!el) return; el.classList.add("hidden"); el.innerHTML = ""; }
+  function endGameByHost() { try { send({ type: "ended" }); } catch (e) {} clearSession(); if (ws) { try { ws.close(); } catch (e) {} } onlineMode = false; isHost = false; myIndex = myCode = myToken = null; hidePeerAlert(); showMenuWithError("게임을 종료했습니다."); }  // 접속이 끊긴 슬롯(방 유지 이동 가능 여부 판단)
   let sel = null;  // 카드 선택 상태
   let myNick = ""; try { myNick = (localStorage.getItem("bg_nick") || "").trim().slice(0, 8); } catch (e) {}
   let hostNames = {};  // 호스트: 슬롯 index → 닉네임
@@ -460,11 +467,23 @@
       const s=getSession();
       if(s&&s.code&&s.token!=null&&sessionFresh(s)){ onlineMode=true; isHost=s.isHost; myIndex=s.index; myCode=s.code; myToken=s.token; $("lobbyTitle").textContent="이전 게임에 재접속 중…"; $("lobbyCodeWrap").style.display="none"; setScreen(SCREEN.LOBBY); send({type:"rejoin",code:s.code,index:s.index,token:s.token}); }
     });
-    ws.addEventListener("close", ()=>{ $("conn").innerHTML="<span class='bad'>● 서버 연결 끊김</span>"; if(onlineMode&&(screen===SCREEN.PLAYING||screen===SCREEN.LOBBY)) showMenuWithError("서버 연결이 끊겼습니다."); });
+    ws.addEventListener("close", () => {
+      $("conn").innerHTML = "<span class='bad'>● 서버 연결 끊김</span>";
+      if (intentionalNav) return;
+      if (onlineMode && (screen === SCREEN.PLAYING || screen === SCREEN.LOBBY)) {
+        const _s = getSession();
+        if (_s && sessionFresh(_s) && reconnectTries < 4) {  // 일시적 끊김/서버 콜드스타트는 자동 재접속(세션으로 rejoin)
+          reconnectTries++;
+          $("conn").innerHTML = "<span class='bad'>● 재접속 시도 중… (" + reconnectTries + ")</span>";
+          if (reconnectTimer) clearTimeout(reconnectTimer);
+          reconnectTimer = setTimeout(connect, 1200 * reconnectTries);
+        } else showMenuWithError("서버 연결이 끊겼습니다.");
+      }
+    });
     ws.addEventListener("error", ()=>{ $("conn").innerHTML="<span class='bad'>● 서버에 연결할 수 없습니다</span>"; });
     ws.addEventListener("message", (ev)=>{ let m; try{m=JSON.parse(ev.data);}catch{return;} onMessage(m); });
   }
-  function onMessage(m){
+  function onMessage(m){ reconnectTries = 0;
     switch(m.type){
       case "created": onlineMode=true; isHost=true; myIndex=0; myCode=m.code; myToken=m.token; saveSession(); $("roomCode").textContent=m.code; $("lobbyTitle").textContent="상대를 기다리는 중…"; $("lobbyCodeWrap").style.display=""; setScreen(SCREEN.LOBBY); sendNick(); break;
       case "joined": onlineMode=true; isHost=false; myIndex=m.index; myCode=m.code; myToken=m.token; saveSession(); $("lobbyTitle").textContent="입장 완료! 시작 대기 중…"; $("lobbyCodeWrap").style.display="none"; setScreen(SCREEN.LOBBY); sendNick(); break;
@@ -476,8 +495,9 @@
         if(isHost){ try{ hostNames=JSON.parse(localStorage.getItem(STATE_KEY+"_n")||"{}"); }catch{ hostNames={}; } const g=loadState(); if(g){ G=g; optCount=G.count; broadcast(); } else { $("roomCode").textContent=m.code; $("lobbyCodeWrap").style.display=""; $("lobbyTitle").textContent="상대를 기다리는 중…"; setScreen(SCREEN.LOBBY); } }
         else { $("lobbyTitle").textContent="재접속됨 — 동기화 중…"; setScreen(SCREEN.LOBBY); } sendNick(); break;
       case "rejoin-failed": clearSession(); onlineMode=false; isHost=false; myIndex=myCode=myToken=null; showMenuWithError(m.message||"재접속하지 못했습니다."); break;
-      case "peer-reconnected": if(m.index!=null) missingPeers.delete(m.index); restoreConn(); sendNick(); if(isHost&&G) broadcast(); break;
-      case "peer-disconnected": if(m.index!=null) missingPeers.add(m.index); $("conn").innerHTML="<span class='bad'>● 상대 접속 끊김 — 대기 중…</span>"; break;
+      case "peer-reconnected": if(m.index!=null) missingPeers.delete(m.index); restoreConn(); hidePeerAlert(); sendNick(); if(isHost&&G) broadcast(); break;
+      case "peer-disconnected": if(m.index!=null) missingPeers.add(m.index); $("conn").innerHTML="<span class='bad'>● 상대 접속 끊김 — 대기 중…</span>"; if(screen===SCREEN.PLAYING||screen===SCREEN.OVER) showPeerAlert(); break;
+      case "ended": clearSession(); showMenuWithError("방장이 게임을 종료했습니다."); break;
       case "roster": $("rosterInfo").textContent=`${m.count} / ${m.capacity}명 입장`; if(handoffMode&&isHost) maybeStartHandoff(m.count); break;
       case "nick": if(isHost){ hostNames[m.from]=(m.name||"").toString().trim().slice(0,8); if(G) broadcast(); } break;
       case "goto": { const g=ROOM_GAMES.find(x=>x.key===m.game); if(g){ saveRoomHandoff(); intentionalNav=true; setTimeout(()=>{ location.href=handoffUrl(g.file); },60); } break; }
@@ -566,7 +586,7 @@
   // ── 방 유지: 게임을 마친 뒤 같은 서버 방을 유지한 채 다른 게임으로 이동 ──
   const THIS_GAME = "loveletter";
   const ROOM_GAMES = [
-    { key:"davinci",    file:"davinci.html",    label:"🎲 다빈치코드", min:2, max:4 },
+    { key:"davinci",    file:"davinci.html",    label:"🔎 다빈치코드", min:2, max:4 },
     { key:"loveletter", file:"loveletter.html", label:"💌 러브레터",   min:2, max:4 },
     { key:"oncard",     file:"oncard.html",     label:"🃏 원카드",     min:2, max:4 },
     { key:"nothanks",   file:"nothanks.html",   label:"🙅 노땡스",     min:2, max:4 },

@@ -672,7 +672,7 @@
 
   // ===== 재접속용 세션/상태 저장 (localStorage: 새로고침·탭 닫기에도 유지 → 실수로 나가도 코드로 복귀) =====
   let myCode = null, myToken = null;
-  let handoffMode = false;   // 방 유지로 이 게임에 도착(?room=1) → 메뉴 대신 같은 방에 재접속
+  let handoffMode = false; let reconnectTries = 0, reconnectTimer = null;   // 방 유지로 이 게임에 도착(?room=1) → 메뉴 대신 같은 방에 재접속
   let handoffCap = 0;        // 방 유지 시 방 정원(전원 복귀 판단용)
   let intentionalNav = false; // 방 유지 이동 등 의도적 페이지 이동(beforeunload 확인창 억제)
   const missingPeers = new Set();  // 현재 접속이 끊긴 슬롯(방 유지 이동 가능 여부 판단)
@@ -921,8 +921,12 @@
       t.faceUp = false;
       if (t.joker) { G.drawn = { owner: from, tile: t }; G.drawReason = "penalty"; G.phase = "placeJoker"; return true; }
       insertNumbered(G.players[from].hand, t);
+      nextTurn(from);
+      return false;
     }
-    nextTurn(from);  // 더미 비었으면 그냥 턴 넘김
+    // 더미 소진: PLUS와 동일하게 자기 가림 타일 1장을 공개(무벌칙으로 무제한 추리하는 것 방지). 없으면 턴만 넘김.
+    if (hasDown(G.players[from].hand)) { G.phase = "penalty"; return true; }
+    nextTurn(from);
     return false;
   }
 
@@ -1436,14 +1440,23 @@
       }
     });
     ws.addEventListener("close", () => {
-      $("conn").innerHTML = "<span class='bad'>● 서버 연결 끊김</span> — 새로고침하세요";
-      if (screen === SCREEN.PLAYING || screen === SCREEN.LOBBY) showMenuWithError("서버 연결이 끊겼습니다.");
+      $("conn").innerHTML = "<span class='bad'>● 서버 연결 끊김</span>";
+      if (intentionalNav) return;
+      if (!soloMode && myToken != null && (screen === SCREEN.PLAYING || screen === SCREEN.LOBBY)) {
+        const _s = getSession();
+        if (_s && sessionFresh(_s) && reconnectTries < 4) {
+          reconnectTries++;
+          $("conn").innerHTML = "<span class='bad'>● 재접속 시도 중… (" + reconnectTries + ")</span>";
+          if (reconnectTimer) clearTimeout(reconnectTimer);
+          reconnectTimer = setTimeout(connect, 1200 * reconnectTries);
+        } else showMenuWithError("서버 연결이 끊겼습니다.");
+      }
     });
     ws.addEventListener("error", () => { $("conn").innerHTML = "<span class='bad'>● 서버에 연결할 수 없습니다</span> (주소/상태 확인)"; });
     ws.addEventListener("message", (ev) => { let m; try { m = JSON.parse(ev.data); } catch { return; } onMessage(m); });
   }
 
-  function onMessage(m) {
+  function onMessage(m) { reconnectTries = 0;
     switch (m.type) {
       case "created":
         isHost = true; myIndex = 0; myCode = m.code; myToken = m.token;
@@ -1510,6 +1523,7 @@
         $("conn").innerHTML = "<span class='bad'>● 상대 접속 끊김 — 재접속 대기 중…</span>";
         if (screen === SCREEN.PLAYING || screen === SCREEN.OVER) showPeerAlert();  // 호스트는 여기서 '게임 종료' 가능
         break;
+      case "ended": clearSession(); showMenuWithError("방장이 게임을 종료했습니다."); break;
       case "roster":
         $("rosterInfo").textContent = `${m.count} / ${m.capacity}명 입장`;
         if (handoffMode && isHost) maybeStartHandoff(m.count);
@@ -1835,7 +1849,7 @@
   // ── 방 유지: 게임을 마친 뒤 같은 서버 방을 유지한 채 다른 게임으로 이동 ──
   const THIS_GAME = "davinci";
   const ROOM_GAMES = [
-    { key: "davinci",    file: "davinci.html",    label: "🎲 다빈치코드", min: 2, max: 4 },
+    { key: "davinci",    file: "davinci.html",    label: "🔎 다빈치코드", min: 2, max: 4 },
     { key: "loveletter", file: "loveletter.html", label: "💌 러브레터",   min: 2, max: 4 },
     { key: "oncard",     file: "oncard.html",     label: "🃏 원카드",     min: 2, max: 4 },
     { key: "nothanks",   file: "nothanks.html",   label: "🙅 노땡스",     min: 2, max: 4 },

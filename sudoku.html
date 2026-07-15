@@ -145,14 +145,51 @@
     for (let r = 0; r < 9; r++) { const row = []; for (let c = 0; c < 9; c++) row.push(digits[base(rowOrder[r], colOrder[c])]); g.push(row); }
     return g;
   }
+  function sdOk(g, r, c, n) {
+    for (let k = 0; k < 9; k++) { if (g[r][k] === n) return false; if (g[k][c] === n) return false; }
+    const br = Math.floor(r / 3) * 3, bc = Math.floor(c / 3) * 3;
+    for (let dr = 0; dr < 3; dr++) for (let dc = 0; dc < 3; dc++) if (g[br + dr][bc + dc] === n) return false;
+    return true;
+  }
+  // 해의 개수를 limit까지만 센다(2로 호출해 '유일해' 여부만 판정). MRV(후보 최소 칸 우선) 가지치기로 빠르게.
+  function countSolutions(g, limit) {
+    let bi = -1, bcand = null;
+    for (let i = 0; i < 81; i++) {
+      const r = Math.floor(i / 9), c = i % 9;
+      if (g[r][c]) continue;
+      const cand = [];
+      for (let n = 1; n <= 9; n++) if (sdOk(g, r, c, n)) cand.push(n);
+      if (cand.length === 0) return 0;
+      if (bcand === null || cand.length < bcand.length) { bi = i; bcand = cand; if (cand.length === 1) break; }
+    }
+    if (bi === -1) return 1;
+    const r = Math.floor(bi / 9), c = bi % 9;
+    let total = 0;
+    for (const n of bcand) {
+      g[r][c] = n;
+      total += countSolutions(g, limit - total);
+      g[r][c] = 0;
+      if (total >= limit) break;
+    }
+    return total;
+  }
   function newPuzzle() {
     solution = makeSolution();
     given = Array.from({ length: 9 }, () => Array(9).fill(true));
-    // 제거할 칸 수
+    const work = solution.map((row) => row.slice());
     let remove = 81 - GIVENS[optDiff];
     const cells = shuffle(Array.from({ length: 81 }, (_, i) => i));
-    for (const idx of cells) { if (remove <= 0) break; const r = Math.floor(idx / 9), c = idx % 9; given[r][c] = false; remove--; }
-    board = solution.map((row, r) => row.map((v, c) => given[r][c] ? v : 0));
+    // 유일해가 유지되는 한에서만 칸을 비운다(복수 해 = 논리로 못 푸는 퍼즐 방지).
+    // 목표 개수에 못 미쳐도 남는 칸만큼만 비워 유일성을 우선한다.
+    for (const idx of cells) {
+      if (remove <= 0) break;
+      const r = Math.floor(idx / 9), c = idx % 9;
+      const saved = work[r][c];
+      work[r][c] = 0;
+      if (countSolutions(work.map((row) => row.slice()), 2) === 1) { given[r][c] = false; remove--; }
+      else work[r][c] = saved;
+    }
+    board = work.map((row) => row.slice());
     puzzle = board.map((row) => row.slice());
     sel = null; solved = false;
     elapsedBase = 0; startTs = performance.now();
