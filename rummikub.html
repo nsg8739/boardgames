@@ -62,6 +62,13 @@
   #gameCodeWrap { cursor: pointer; white-space: nowrap; }
   #statusBar { text-align: center; font-family: var(--serif); font-size: 15px; font-weight: 700; color: var(--gold-bright); min-height: 22px; margin: 4px 0 8px; }
   .sectLabel { font-size: 12px; color: var(--muted); font-weight: 700; margin: 8px 0 4px; display: flex; justify-content: space-between; }
+  .rackTools { display: flex; align-items: center; gap: 7px; }
+  .sortToggle { display: inline-flex; overflow: hidden; border: 1px solid var(--warm-border); border-radius: 6px; }
+  .sortToggle button { border: 0; border-right: 1px solid var(--warm-border); background: var(--warm-bg); color: var(--muted);
+    padding: 3px 6px; font: 700 10px var(--serif); cursor: pointer; }
+  .sortToggle button:last-child { border-right: 0; }
+  .sortToggle button.on { background: var(--gold-deep); color: #fff7df; }
+  .sortToggle button:focus-visible { outline: 2px solid var(--gold-soft); outline-offset: -2px; }
 
   /* 타일 */
   .tile { position: relative; width: 30px; height: 40px; border-radius: 5px; background: linear-gradient(180deg,#f3ecdd,#e4d8bd); border: 1px solid #b6a884; display: inline-flex; align-items: center; justify-content: center; font-family: var(--serif); font-weight: 800; font-size: 17px; box-shadow: 0 1px 2px rgba(0,0,0,0.35); flex: none; user-select: none; }
@@ -173,7 +180,7 @@
       <div id="table"></div>
       <div class="sectLabel"><span>재배열 작업대</span><span id="workCount"></span></div>
       <div id="work"></div>
-      <div class="sectLabel"><span>내 타일</span><span id="rackCount"></span></div>
+      <div class="sectLabel"><span>내 타일</span><span class="rackTools"><span id="rackCount"></span><span class="sortToggle" id="rackSort" aria-label="손패 정렬 기준"><button type="button" data-sort="color">색상순</button><button type="button" data-sort="number">숫자순</button></span></span></div>
       <div id="rack"></div>
       <div class="meldInfo" id="meldInfo"></div>
       <div class="actionBar" id="actionBar"></div>
@@ -219,6 +226,7 @@
   let soloMode = false, aiTimer = null;
   let G = null, lastView = null;
   let selRack = new Set(), selSet = null;  // 선택한 손 타일 id / 이어붙일 테이블 세트 index
+  let rackSortMode = "color"; try { if (localStorage.getItem("rk_sort") === "number") rackSortMode = "number"; } catch {}
   let myNick = ""; try { myNick = (localStorage.getItem("bg_nick") || "").trim().slice(0, 8); } catch (e) {}
   let hostNames = {};
   let handoffMode = false, handoffCap = 0, intentionalNav = false;
@@ -493,7 +501,13 @@
     const state = (t.joker ? " joker" : ` c${t.color}`) + (sel ? " sel" : "") + (t.isNew ? " newTile" : "");
     return `<div class="tile${state}" data-id="${t.id}">${t.joker ? "🃏" : t.num}</div>`;
   }
-  function sortRack(rack) { return rack.slice().sort((a, b) => { if (a.joker) return 1; if (b.joker) return -1; return a.color - b.color || a.num - b.num; }); }
+  function sortRack(rack, mode = "color") {
+    return rack.slice().sort((a, b) => {
+      if (a.joker) return b.joker ? 0 : 1;
+      if (b.joker) return -1;
+      return mode === "number" ? (a.num - b.num || a.color - b.color) : (a.color - b.color || a.num - b.num);
+    });
+  }
   function renderView(v) {
     if (!v || !Array.isArray(v.myRack)) return;
     if (!Array.isArray(v.work)) v.work = [];
@@ -526,7 +540,8 @@
 
     // 내 손(정렬)
     const rk = $("rack"); rk.innerHTML = "";
-    sortRack(v.myRack).forEach((t) => {
+    $("rackSort").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.sort === rackSortMode));
+    sortRack(v.myRack, rackSortMode).forEach((t) => {
       const w = document.createElement("div"); w.innerHTML = tileHtml(t, selRack.has(t.id)); const node = w.firstElementChild;
       if (v.myTurn) node.addEventListener("click", () => { if (selRack.has(t.id)) selRack.delete(t.id); else selRack.add(t.id); renderView(v); });
       rk.appendChild(node);
@@ -694,6 +709,12 @@
     if (v === "online" && (!ws || ws.readyState !== WebSocket.OPEN)) connect();
   });
   $("startSoloBtn").addEventListener("click", startSolo);
+  $("rackSort").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-sort]"); if (!b) return;
+    rackSortMode = b.dataset.sort === "number" ? "number" : "color";
+    try { localStorage.setItem("rk_sort", rackSortMode); } catch {}
+    if (lastView) renderView(lastView);
+  });
   $("nickInput").value = myNick;
   $("nickInput").addEventListener("input", () => { myNick = $("nickInput").value.trim().slice(0, 8); try { localStorage.setItem("bg_nick", myNick); } catch {} });
   $("createBtn").addEventListener("click", () => { $("menuErr").textContent = ""; if (!ws || ws.readyState !== WebSocket.OPEN) { $("menuErr").textContent = "서버 연결 중… 잠시 후 다시 시도하세요."; connect(); return; } send({ type: "create", capacity: optCount, reconnect: true }); });
