@@ -75,7 +75,9 @@
   .tset .tsv { align-self: center; font-size: 10px; color: var(--muted); margin-left: 3px; }
   #tableEmpty { color: var(--muted); font-size: 12px; text-align: center; padding: 14px; }
 
-  #rack { display: flex; gap: 3px; flex-wrap: wrap; padding: 8px; border: 1px solid var(--gold-deep); border-radius: 10px; background: rgba(40,30,14,0.5); min-height: 52px; }
+  #rack, #work { display: flex; gap: 3px; flex-wrap: wrap; padding: 8px; border: 1px solid var(--gold-deep); border-radius: 10px; background: rgba(40,30,14,0.5); min-height: 52px; }
+  #work { border-style: dashed; border-color: var(--gold-soft); background: rgba(201,162,39,0.08); }
+  #work:empty::after { content: "재배열할 세트를 누르면 이곳으로 이동합니다"; color: var(--muted); font-size: 11px; margin: auto; }
   .actionBar { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin: 10px 0; }
   .actBtn { font-family: var(--serif); font-size: 13px; font-weight: 800; padding: 10px 12px; border-radius: 9px; cursor: pointer; border: 1px solid #7b2419; background: linear-gradient(180deg,#b5442f,#7b2419); color: #fff; }
   .actBtn.sub { border: 1px solid var(--gold-deep); background: linear-gradient(180deg,var(--warm-bg2),var(--warm-bg)); color: var(--gold-bright); }
@@ -129,7 +131,7 @@
     </div>
 
     <div id="menu" class="panel">
-      <div class="rules">타일로 <b>런</b>(같은 색 연속 3장↑)이나 <b>그룹</b>(같은 숫자·다른 색 3~4장)을 만들어 내려놓습니다.<br><b>첫 등록은 합계 30점 이상</b>이어야 하며, 이후엔 이미 놓인 세트에 이어붙일 수 있습니다.<br>손 타일을 가장 먼저 다 내려놓으면 승리! (조커는 아무 타일 대용)</div>
+      <div class="rules">타일로 <b>런</b>(같은 색 연속 3장↑)이나 <b>그룹</b>(같은 숫자·다른 색 3~4장)을 만들어 내려놓습니다.<br><b>첫 등록은 합계 30점 이상</b>이어야 하며, 이후엔 테이블의 세트를 분리·재구성할 수 있습니다.<br>회수한 조커는 같은 턴에 다시 사용하고, 손 타일을 가장 먼저 다 내려놓으면 승리!</div>
       <div class="optRow">
         <span class="optLabel">인원</span>
         <div class="seg" id="segCount"><button data-v="2" class="on">2명</button><button data-v="3">3명</button><button data-v="4">4명</button></div>
@@ -164,8 +166,10 @@
         <span>남은 타일 <b id="deckLeft">0</b></span>
       </div>
       <div id="statusBar" role="status" aria-live="polite"></div>
-      <div class="sectLabel"><span>테이블 (세트를 눌러 이어붙일 대상 선택)</span></div>
+      <div class="sectLabel"><span>테이블 (세트 선택 후 이어붙이기 또는 재배열)</span></div>
       <div id="table"></div>
+      <div class="sectLabel"><span>재배열 작업대</span><span id="workCount"></span></div>
+      <div id="work"></div>
       <div class="sectLabel"><span>내 타일</span><span id="rackCount"></span></div>
       <div id="rack"></div>
       <div class="meldInfo" id="meldInfo"></div>
@@ -228,7 +232,11 @@
   function sessionFresh(s) { return !!(s && s.ts && Date.now() - s.ts < REJOIN_WINDOW_MS); }
   function clearSession() { try { localStorage.removeItem(SESS_KEY); localStorage.removeItem(STATE_KEY); localStorage.removeItem(STATE_KEY + "_n"); } catch {} }
   function saveState() { if (isHost && G) { try { localStorage.setItem(STATE_KEY, JSON.stringify(G)); localStorage.setItem(STATE_KEY + "_n", JSON.stringify(hostNames)); } catch {} } }
-  function loadState() { try { return JSON.parse(localStorage.getItem(STATE_KEY) || "null"); } catch { return null; } }
+  function loadState() { try {
+    const g = JSON.parse(localStorage.getItem(STATE_KEY) || "null");
+    if (g) { g.work = Array.isArray(g.work) ? g.work : []; g.rackUsed = Number(g.rackUsed) || 0; }
+    return g;
+  } catch { return null; } }
   function restoreConn() { $("conn").innerHTML = "<span class='ok'>● 서버 연결됨</span>"; }
 
   // ===== 엔진 =====
@@ -269,11 +277,20 @@
     deck.push({ id: id++, joker: true }); deck.push({ id: id++, joker: true });
     shuffle(deck);
     const players = []; for (let i = 0; i < count; i++) { const rack = []; for (let k = 0; k < 14; k++) rack.push(deck.pop()); players.push({ rack, melded: false }); }
-    G = { count, deck, table: [], players, turn: 0, phase: "play", winner: null, turnPoints: 0, playedThisTurn: false, passes: 0, snap: null, log: [] };
+    G = { count, deck, table: [], work: [], players, turn: 0, phase: "play", winner: null, turnPoints: 0, rackUsed: 0, playedThisTurn: false, passes: 0, snap: null, log: [] };
     takeSnap();
     log("게임 시작 — 첫 등록 30점 이상!");
   }
-  function takeSnap() { G.snap = { rack: G.players[G.turn].rack.map((t) => ({ ...t })), table: G.table.map((s) => s.map((t) => ({ ...t }))) }; G.turnPoints = 0; G.playedThisTurn = false; }
+  function takeSnap() {
+    G.work = [];
+    G.snap = {
+      rack: G.players[G.turn].rack.map((t) => ({ ...t })),
+      table: G.table.map((s) => s.map((t) => ({ ...t }))),
+      passes: G.passes,
+      logLength: G.log.length,
+    };
+    G.turnPoints = 0; G.rackUsed = 0; G.playedThisTurn = false;
+  }
   function nm(i) { if (soloMode) return i === 0 ? "나" : "컴퓨터" + i; return hostNames[i] || ("P" + (i + 1)); }
   function log(m) { G.log.push(m); if (G.log.length > 20) G.log.shift(); }
 
@@ -286,17 +303,39 @@
 
   // 손에서 tile id들을 꺼내 (없으면 null) 반환
   function pullFromRack(pi, ids) {
+    if (new Set(ids).size !== ids.length) return null;  // 같은 타일 ID 반복으로 타일이 복제되는 것을 차단
     const rack = G.players[pi].rack; const out = [];
     for (const id of ids) { const idx = rack.findIndex((t) => t.id === id); if (idx < 0) return null; out.push(rack[idx]); }
     return out;
   }
   function removeFromRack(pi, tiles) { const rack = G.players[pi].rack; tiles.forEach((t) => { const i = rack.findIndex((x) => x.id === t.id); if (i >= 0) rack.splice(i, 1); }); }
 
+  // 손패와 재배열 작업대에서 선택한 타일을 함께 꺼낸다. 출처는 턴 검증에 사용한다.
+  function pullForMeld(pi, ids) {
+    if (!Array.isArray(ids) || new Set(ids).size !== ids.length) return null;
+    const rack = G.players[pi].rack, out = []; let rackCount = 0;
+    for (const id of ids) {
+      let t = rack.find((x) => x.id === id);
+      if (t) { out.push(t); rackCount++; continue; }
+      t = G.work.find((x) => x.id === id);
+      if (!t) return null;
+      out.push(t);
+    }
+    return { tiles: out, rackCount };
+  }
+  function removeForMeld(pi, tiles) {
+    removeFromRack(pi, tiles);
+    const ids = new Set(tiles.map((t) => t.id));
+    G.work = G.work.filter((t) => !ids.has(t.id));
+  }
+
   function doLay(pi, ids) {
-    const p = G.players[pi]; const tiles = pullFromRack(pi, ids);
+    const p = G.players[pi];
+    const picked = p.melded ? pullForMeld(pi, ids) : { tiles: pullFromRack(pi, ids), rackCount: ids.length };
+    const tiles = picked && picked.tiles;
     if (!tiles || tiles.length < 3) return false;
     const v = validateSet(tiles); if (!v.ok) return false;
-    removeFromRack(pi, tiles); G.table.push(tiles); G.turnPoints += v.value; G.playedThisTurn = true; G.passes = 0;
+    removeForMeld(pi, tiles); G.table.push(tiles); G.turnPoints += v.value; G.rackUsed += picked.rackCount; G.playedThisTurn = true; G.passes = 0;
     log(`${nm(pi)}: ${v.kind === "group" ? "그룹" : "런"} 등록`);
     return true;
   }
@@ -305,7 +344,7 @@
     const set = G.table[setIdx]; if (!set) return false;
     const tiles = pullFromRack(pi, ids); if (!tiles || !tiles.length) return false;
     const combined = set.concat(tiles); if (!validateSet(combined).ok) return false;
-    removeFromRack(pi, tiles); G.table[setIdx] = combined; G.playedThisTurn = true; G.passes = 0;
+    removeFromRack(pi, tiles); G.table[setIdx] = combined; G.rackUsed += tiles.length; G.playedThisTurn = true; G.passes = 0;
     log(`${nm(pi)}: 세트에 ${tiles.length}장 추가`);
     return true;
   }
@@ -313,7 +352,15 @@
     if (!G.snap) return false;
     G.players[pi].rack = G.snap.rack.map((t) => ({ ...t }));
     G.table = G.snap.table.map((s) => s.map((t) => ({ ...t })));
-    G.turnPoints = 0; G.playedThisTurn = false;
+    G.work = []; G.passes = G.snap.passes; G.log.length = G.snap.logLength;
+    G.turnPoints = 0; G.rackUsed = 0; G.playedThisTurn = false;
+    return true;
+  }
+  function doTakeSet(pi, setIdx) {
+    if (!G.players[pi].melded || !Number.isInteger(setIdx) || !G.table[setIdx]) return false;
+    G.work.push(...G.table.splice(setIdx, 1)[0]);
+    G.playedThisTurn = true;
+    log(`${nm(pi)}: 테이블 세트 재배열`);
     return true;
   }
   function doDraw(pi) {
@@ -326,6 +373,7 @@
     if (!G.playedThisTurn) return false;
     const p = G.players[pi];
     if (!p.melded && G.turnPoints < MELD_MIN) return false;   // 첫 등록 30점 미달 → 커밋 불가(되돌리거나 채워야 함)
+    if (G.work.length || (p.melded && G.rackUsed < 1)) return false; // 모든 타일을 합법적으로 재배치하고 손패도 사용해야 함
     if (!p.melded) { p.melded = true; log(`${nm(pi)} 첫 등록 완료(${G.turnPoints}점)`); }
     if (p.rack.length === 0) { endGame(pi); return true; }
     advanceTurn(); return true;
@@ -338,6 +386,7 @@
     if (a.action === "lay") ok = doLay(pi, a.ids || []);
     else if (a.action === "append") ok = doAppend(pi, a.setIdx, a.ids || []);
     else if (a.action === "undo") ok = doUndo(pi);
+    else if (a.action === "takeSet") ok = doTakeSet(pi, a.setIdx);
     else if (a.action === "draw") ok = doDraw(pi);
     else if (a.action === "endTurn") ok = doEndTurn(pi);
     if (ok) broadcast();
@@ -415,9 +464,10 @@
       online: !soloMode, count: G.count, turn: G.turn, myIndex: pi, phase: G.phase, winner: G.winner, deckLeft: G.deck.length,
       myTurn: G.turn === pi && G.phase === "play",
       table: G.table.map((s) => ({ tiles: s.map((t) => ({ ...t })), value: setValue(s) })),
+      work: G.work.map((t) => ({ ...t })),
       myRack: p.rack.map((t) => ({ ...t })), myMelded: p.melded,
-      turnPoints: G.turnPoints, playedThisTurn: G.playedThisTurn,
-      players: G.players.map((pp, i) => ({ idx: i, rackCount: pp.rack.length, melded: pp.melded })),
+      turnPoints: G.turnPoints, rackUsed: G.rackUsed, playedThisTurn: G.playedThisTurn,
+      players: G.players.map((pp, i) => ({ idx: i, rackCount: pp.rack.length, rackPoints: rackPoints(pp), melded: pp.melded })),
       names: Array.from({ length: G.count }, (_, i) => hostNames[i] || null), log: G.log.slice(-3),
     };
   }
@@ -436,13 +486,14 @@
   function sortRack(rack) { return rack.slice().sort((a, b) => { if (a.joker) return 1; if (b.joker) return -1; return a.color - b.color || a.num - b.num; }); }
   function renderView(v) {
     if (!v || !Array.isArray(v.myRack)) return;
+    if (!Array.isArray(v.work)) v.work = [];
     lastView = v;
     if (screen !== SCREEN.PLAYING && screen !== SCREEN.OVER) setScreen(SCREEN.PLAYING);
     $("deckLeft").textContent = v.deckLeft;
     $("gameCodeWrap").classList.toggle("hidden", !(v.online && myCode)); if (v.online && myCode) $("metaCode").textContent = myCode;
     if (selSet != null && selSet >= v.table.length) selSet = null;
 
-    $("statusBar").textContent = v.phase === "over" ? "" : (v.myTurn ? "내 차례 — 세트를 만들어 내려놓으세요" : `${nmv(v, v.turn)} 차례…`);
+    $("statusBar").textContent = v.phase === "over" ? "" : (v.myTurn ? (v.work.length ? "재배열 중 — 작업대 타일을 모두 유효한 세트로 만드세요" : "내 차례 — 세트를 만들거나 테이블을 재배열하세요") : `${nmv(v, v.turn)} 차례…`);
     $("rackCount").textContent = `${v.myRack.length}장`;
 
     // 테이블
@@ -455,6 +506,14 @@
       tb.appendChild(row);
     });
 
+    const work = $("work"); work.innerHTML = "";
+    $("workCount").textContent = v.work.length ? `${v.work.length}장 미배치` : "";
+    sortRack(v.work).forEach((t) => {
+      const w = document.createElement("div"); w.innerHTML = tileHtml(t, selRack.has(t.id)); const node = w.firstElementChild;
+      if (v.myTurn) node.addEventListener("click", () => { if (selRack.has(t.id)) selRack.delete(t.id); else selRack.add(t.id); renderView(v); });
+      work.appendChild(node);
+    });
+
     // 내 손(정렬)
     const rk = $("rack"); rk.innerHTML = "";
     sortRack(v.myRack).forEach((t) => {
@@ -464,7 +523,7 @@
     });
 
     // 첫 등록 안내
-    $("meldInfo").textContent = v.myTurn && !v.myMelded ? `첫 등록 점수: ${v.turnPoints} / ${MELD_MIN}` : "";
+    $("meldInfo").textContent = v.myTurn && !v.myMelded ? `첫 등록 점수: ${v.turnPoints} / ${MELD_MIN}` : (v.myTurn && v.playedThisTurn ? `이번 턴 손패 사용: ${v.rackUsed}장` : "");
 
     renderActionBar(v);
 
@@ -491,13 +550,17 @@
       const app = document.createElement("button"); app.className = "actBtn sub"; app.textContent = "선택 세트에 붙이기"; app.disabled = selSet == null || ids.length < 1;
       app.addEventListener("click", () => { const s = ids.slice(), si = selSet; selRack.clear(); selSet = null; dispatch({ action: "append", setIdx: si, ids: s }); });
       bar.appendChild(app);
+      const take = document.createElement("button"); take.className = "actBtn sub"; take.textContent = "선택 세트 재배열"; take.disabled = selSet == null;
+      take.addEventListener("click", () => { const si = selSet; selSet = null; dispatch({ action: "takeSet", setIdx: si }); });
+      bar.appendChild(take);
     }
     // 되돌리기 / 턴 종료 / 뽑기
     if (v.playedThisTurn) {
       const undo = document.createElement("button"); undo.className = "actBtn sub"; undo.textContent = "↩ 되돌리기";
       undo.addEventListener("click", () => { selRack.clear(); selSet = null; dispatch({ action: "undo" }); });
       bar.appendChild(undo);
-      const end = document.createElement("button"); end.className = "actBtn"; end.textContent = "턴 종료"; end.disabled = !v.myMelded && v.turnPoints < MELD_MIN;
+      const end = document.createElement("button"); end.className = "actBtn"; end.textContent = "턴 종료";
+      end.disabled = v.work.length > 0 || (!v.myMelded && v.turnPoints < MELD_MIN) || (v.myMelded && v.rackUsed < 1);
       end.addEventListener("click", () => { selRack.clear(); selSet = null; dispatch({ action: "endTurn" }); });
       bar.appendChild(end);
     } else {
@@ -508,8 +571,13 @@
   }
   function showOver(v) {
     $("overTitle").textContent = v.winner === v.myIndex ? "🎉 승리!" : "게임 종료";
-    const rows = v.players.map((p) => ({ i: p.idx, c: p.rackCount })).sort((a, b) => a.c - b.c);
-    $("scoreTable").innerHTML = rows.map((r) => `<div class="sr ${r.i === v.winner ? "win" : ""}">${escapeHtml(nmv(v, r.i))}${r.i === v.winner ? " 🏆" : ""}<span>${r.c === 0 ? "완성!" : "타일 " + r.c + "장 남음"}</span></div>`).join("");
+    const rows = v.players.map((p) => ({ i: p.idx, c: p.rackCount, pt: p.rackPoints })).sort((a, b) => a.pt - b.pt);
+    const winnerPoints = rows.find((r) => r.i === v.winner)?.pt || 0;
+    const winnerScore = rows.filter((r) => r.i !== v.winner).reduce((s, r) => s + Math.max(0, r.pt - winnerPoints), 0);
+    $("scoreTable").innerHTML = rows.map((r) => {
+      const score = r.i === v.winner ? winnerScore : -Math.max(0, r.pt - winnerPoints);
+      return `<div class="sr ${r.i === v.winner ? "win" : ""}">${escapeHtml(nmv(v, r.i))}${r.i === v.winner ? " 🏆" : ""}<span>${score >= 0 ? "+" : ""}${score}점 · ${r.c}장</span></div>`;
+    }).join("");
     $("gamePicker").classList.add("hidden");
     $("otherGameBtn").classList.toggle("hidden", !(isHost && isOnlineRoom()));
     setScreen(SCREEN.OVER); $("over").classList.remove("hidden");
@@ -590,7 +658,7 @@
       case "goto": { const g = ROOM_GAMES.find((x) => x.key === m.game); if (g) { saveRoomHandoff(); intentionalNav = true; setTimeout(() => { location.href = handoffUrl(g.file); }, 60); } break; }
       case "peer-joined": if (isHost) newOnlineGame(); else setScreen(SCREEN.PLAYING); sendNick(); break;
       case "view": if (!isHost) { handoffMode = false; renderView(m.view); touchSession(); } break;
-      case "act": if (isHost) applyAction(m.a); break;
+      case "act": if (isHost && m.a && Number.isInteger(m.from)) applyAction({ ...m.a, from: m.from }); break;
       case "restart": if (isHost) newOnlineGame(); break;
       case "error": $("menuErr").textContent = m.message || "오류가 발생했습니다."; break;
       case "peer-left": clearSession(); showMenuWithError("상대가 나갔습니다. 새 방을 만들거나 다시 입장하세요."); break;

@@ -89,8 +89,19 @@
   .card .pin:hover, .card .pin:focus-visible { opacity: 1; color: var(--gold-soft); outline: none; }
   .card.fav { border-color: var(--gold); box-shadow: inset 0 0 0 1px rgba(230,192,74,0.30), 0 8px 26px rgba(0,0,0,0.45); }
   .card.fav .pin { color: var(--gold-soft); opacity: 1; }
-  .favLabel { grid-column: 1 / -1; font-size: 12px; font-weight: 700; letter-spacing: 1.5px; color: var(--muted); margin: 6px 2px -6px; }
-  .favLabel.star { color: var(--gold-bright); }
+  /* 자주 쓰는 게임은 상단에서 빠르게 찾되 전체 목록의 흐름을 방해하지 않도록 아이콘만 작게 표시한다. */
+  .favTitle { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; letter-spacing: 1.5px; color: var(--gold-bright); margin: 0 2px 8px; }
+  .favTitle .count { color: var(--muted); font-size: 11px; letter-spacing: 0; font-weight: 500; }
+  .favTitle.hidden, #favBar.hidden { display: none; }
+  #favBar { display: flex; flex-wrap: wrap; gap: 7px; margin: 0 0 20px; padding: 9px;
+    background: rgba(201,162,39,0.06); border: 1px solid var(--warm-border); border-radius: 12px; }
+  .favIcon { position: relative; width: 42px; height: 42px; display: inline-flex; align-items: center; justify-content: center;
+    text-decoration: none; background: var(--card); border: 1px solid var(--gold-deep); border-radius: 10px;
+    box-shadow: inset 0 0 0 1px rgba(230,192,74,0.12); font-size: 22px; line-height: 1;
+    transition: transform .1s, background .12s, border-color .12s; }
+  .favIcon:hover, .favIcon:focus-visible { background: var(--card-hover); border-color: var(--gold); transform: translateY(-2px); outline: none; }
+  .favIcon:focus-visible { box-shadow: 0 0 0 3px rgba(230,192,74,0.28); }
+  @media (max-width: 360px) { .favIcon { width: 39px; height: 39px; font-size: 20px; } #favBar { gap: 6px; padding: 8px; } }
 
   footer { text-align: center; margin-top: 28px; color: var(--muted); font-size: 12px; line-height: 1.7; }
   footer .divider { width: 60%; max-width: 260px; height: 1px; margin: 0 auto 14px;
@@ -262,7 +273,7 @@
     </footer>
   </div>
   <script>
-    // 즐겨찾기(⭐) 상단 고정 — 카드마다 별 버튼, localStorage에 저장, 켜면 맨 위로 정렬
+    // 즐겨찾기(⭐) — 카드마다 별 버튼. 고정하면 상단에 '아이콘+이름' 칩으로 표시(전체 목록은 그대로).
     (function initFav() {
       var grid = document.querySelector(".grid");
       if (!grid) return;
@@ -270,23 +281,35 @@
       var keyOf = function (a) { return (a.getAttribute("href") || "").replace(/^\.\//, ""); };
       var load = function () { try { return JSON.parse(localStorage.getItem("bg_favs") || "[]"); } catch (e) { return []; } };
       var save = function (f) { try { localStorage.setItem("bg_favs", JSON.stringify(f)); } catch (e) {} };
-      var favLabel = document.createElement("div"); favLabel.className = "favLabel star"; favLabel.textContent = "⭐ 즐겨찾기";
-      var allLabel = document.createElement("div"); allLabel.className = "favLabel"; allLabel.textContent = "전체 게임";
+      // 상단 즐겨찾기 바를 그리드 앞에 삽입
+      var favTitle = document.createElement("div"); favTitle.className = "favTitle hidden";
+      var favTitleText = document.createElement("span"); favTitleText.textContent = "⭐ 즐겨찾기";
+      var favCount = document.createElement("span"); favCount.className = "count";
+      favTitle.appendChild(favTitleText); favTitle.appendChild(favCount);
+      var favBar = document.createElement("div"); favBar.id = "favBar"; favBar.className = "hidden";
+      grid.parentNode.insertBefore(favTitle, grid); grid.parentNode.insertBefore(favBar, grid);
       cards.forEach(function (a) {
         var btn = document.createElement("button"); btn.className = "pin"; btn.type = "button";
-        btn.setAttribute("aria-label", "즐겨찾기 상단 고정");
+        btn.setAttribute("aria-label", "즐겨찾기");
         btn.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); toggle(keyOf(a)); });
         a.appendChild(btn);
       });
       function render() {
         var favs = load(), favSet = {}; favs.forEach(function (k) { favSet[k] = true; });
-        var favCards = [], rest = [];
-        cards.forEach(function (a) { (favSet[keyOf(a)] ? favCards : rest).push(a); });
-        favCards.sort(function (a, b) { return favs.indexOf(keyOf(a)) - favs.indexOf(keyOf(b)); });
         cards.forEach(function (a) { var f = !!favSet[keyOf(a)]; a.classList.toggle("fav", f); var pin = a.querySelector(".pin"); if (pin) pin.textContent = f ? "★" : "☆"; });
-        grid.innerHTML = "";
-        if (favCards.length) { grid.appendChild(favLabel); favCards.forEach(function (a) { grid.appendChild(a); }); grid.appendChild(allLabel); }
-        rest.forEach(function (a) { grid.appendChild(a); });
+        favBar.innerHTML = "";
+        favs.forEach(function (k) {
+          var card = cards.filter(function (a) { return keyOf(a) === k; })[0]; if (!card) return;
+          var icon = (card.querySelector(".icon") || {}).textContent || "🎲";
+          var name = (card.querySelector(".name") || {}).textContent || k;
+          var link = document.createElement("a"); link.className = "favIcon"; link.href = "./" + k;
+          link.textContent = icon; link.title = name; link.setAttribute("aria-label", name + " 열기");
+          favBar.appendChild(link);
+        });
+        var visibleCount = favBar.children.length;
+        favCount.textContent = visibleCount + "개";
+        var show = visibleCount > 0;
+        favBar.classList.toggle("hidden", !show); favTitle.classList.toggle("hidden", !show);
       }
       function toggle(k) { var f = load(), i = f.indexOf(k); if (i >= 0) f.splice(i, 1); else f.push(k); save(f); render(); }
       render();
