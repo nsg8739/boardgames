@@ -64,10 +64,13 @@
   .sectLabel { font-size: 12px; color: var(--muted); font-weight: 700; margin: 8px 0 4px; display: flex; justify-content: space-between; }
 
   /* 타일 */
-  .tile { width: 30px; height: 40px; border-radius: 5px; background: linear-gradient(180deg,#f3ecdd,#e4d8bd); border: 1px solid #b6a884; display: inline-flex; align-items: center; justify-content: center; font-family: var(--serif); font-weight: 800; font-size: 17px; box-shadow: 0 1px 2px rgba(0,0,0,0.35); flex: none; user-select: none; }
+  .tile { position: relative; width: 30px; height: 40px; border-radius: 5px; background: linear-gradient(180deg,#f3ecdd,#e4d8bd); border: 1px solid #b6a884; display: inline-flex; align-items: center; justify-content: center; font-family: var(--serif); font-weight: 800; font-size: 17px; box-shadow: 0 1px 2px rgba(0,0,0,0.35); flex: none; user-select: none; }
   .tile.c0 { color: #c0392b; } .tile.c1 { color: #2d6fc9; } .tile.c2 { color: #cf7d1c; } .tile.c3 { color: #2a2a2a; }
   .tile.joker { color: #7a2e8a; font-size: 15px; }
   .tile.sel { outline: 3px solid var(--gold-soft); outline-offset: 1px; transform: translateY(-4px); }
+  .tile.newTile::after { content: "NEW"; position: absolute; top: -7px; right: -5px; padding: 1px 3px; border-radius: 4px;
+    background: #b5442f; color: #fff7df; border: 1px solid #f2cc60; font-family: Arial, sans-serif; font-size: 7px; font-weight: 900; line-height: 1.2;
+    letter-spacing: -.2px; box-shadow: 0 1px 3px rgba(0,0,0,.55); z-index: 2; pointer-events: none; }
 
   #table { min-height: 60px; border: 1px dashed var(--warm-border); border-radius: 10px; padding: 6px; background: rgba(13,10,5,0.35); display: flex; flex-direction: column; gap: 5px; }
   .tset { display: flex; gap: 3px; flex-wrap: wrap; padding: 4px; border: 1px solid transparent; border-radius: 8px; background: rgba(201,162,39,0.05); cursor: pointer; }
@@ -276,7 +279,7 @@
     for (let cp = 0; cp < 2; cp++) for (let c = 0; c < 4; c++) for (let n = 1; n <= 13; n++) deck.push({ id: id++, color: c, num: n });
     deck.push({ id: id++, joker: true }); deck.push({ id: id++, joker: true });
     shuffle(deck);
-    const players = []; for (let i = 0; i < count; i++) { const rack = []; for (let k = 0; k < 14; k++) rack.push(deck.pop()); players.push({ rack, melded: false }); }
+    const players = []; for (let i = 0; i < count; i++) { const rack = []; for (let k = 0; k < 14; k++) rack.push(deck.pop()); players.push({ rack, melded: false, newTileId: null }); }
     G = { count, deck, table: [], work: [], players, turn: 0, phase: "play", winner: null, turnPoints: 0, rackUsed: 0, playedThisTurn: false, passes: 0, snap: null, log: [] };
     takeSnap();
     log("게임 시작 — 첫 등록 30점 이상!");
@@ -365,8 +368,11 @@
   }
   function doDraw(pi) {
     if (G.playedThisTurn) return false;
-    if (G.deck.length) { G.players[pi].rack.push(G.deck.pop()); G.passes = 0; log(`${nm(pi)}: 타일 뽑음`); }
-    else { G.passes++; log(`${nm(pi)}: 뽑을 타일 없음(패스)`); if (G.passes >= G.count) { endGame(null); return true; } }
+    if (G.deck.length) {
+      const drawn = G.deck.pop(); G.players[pi].rack.push(drawn); G.players[pi].newTileId = drawn.id;
+      G.passes = 0; log(`${nm(pi)}: 타일 뽑음`);
+    }
+    else { G.players[pi].newTileId = null; G.passes++; log(`${nm(pi)}: 뽑을 타일 없음(패스)`); if (G.passes >= G.count) { endGame(null); return true; } }
     advanceTurn(); return true;
   }
   function doEndTurn(pi) {
@@ -375,6 +381,7 @@
     if (!p.melded && G.turnPoints < MELD_MIN) return false;   // 첫 등록 30점 미달 → 커밋 불가(되돌리거나 채워야 함)
     if (G.work.length || (p.melded && G.rackUsed < 1)) return false; // 모든 타일을 합법적으로 재배치하고 손패도 사용해야 함
     if (!p.melded) { p.melded = true; log(`${nm(pi)} 첫 등록 완료(${G.turnPoints}점)`); }
+    p.newTileId = null;
     if (p.rack.length === 0) { endGame(pi); return true; }
     advanceTurn(); return true;
   }
@@ -464,8 +471,8 @@
       online: !soloMode, count: G.count, turn: G.turn, myIndex: pi, phase: G.phase, winner: G.winner, deckLeft: G.deck.length,
       myTurn: G.turn === pi && G.phase === "play",
       table: G.table.map((s) => ({ tiles: s.map((t) => ({ ...t })), value: setValue(s) })),
-      work: G.work.map((t) => ({ ...t })),
-      myRack: p.rack.map((t) => ({ ...t })), myMelded: p.melded,
+      work: G.work.map((t) => ({ ...t, isNew: t.id === p.newTileId })),
+      myRack: p.rack.map((t) => ({ ...t, isNew: t.id === p.newTileId })), myMelded: p.melded,
       turnPoints: G.turnPoints, rackUsed: G.rackUsed, playedThisTurn: G.playedThisTurn,
       players: G.players.map((pp, i) => ({ idx: i, rackCount: pp.rack.length, rackPoints: rackPoints(pp), melded: pp.melded })),
       names: Array.from({ length: G.count }, (_, i) => hostNames[i] || null), log: G.log.slice(-3),
@@ -482,7 +489,10 @@
 
   // ===== 렌더 =====
   function nmv(v, i) { if (soloMode) return i === 0 ? "나" : "컴퓨터" + i; const n = v.names[i]; if (i === v.myIndex) return n || "나"; return n || ("P" + (i + 1)); }
-  function tileHtml(t, sel) { if (t.joker) return `<div class="tile joker${sel ? " sel" : ""}" data-id="${t.id}">🃏</div>`; return `<div class="tile c${t.color}${sel ? " sel" : ""}" data-id="${t.id}">${t.num}</div>`; }
+  function tileHtml(t, sel) {
+    const state = (t.joker ? " joker" : ` c${t.color}`) + (sel ? " sel" : "") + (t.isNew ? " newTile" : "");
+    return `<div class="tile${state}" data-id="${t.id}">${t.joker ? "🃏" : t.num}</div>`;
+  }
   function sortRack(rack) { return rack.slice().sort((a, b) => { if (a.joker) return 1; if (b.joker) return -1; return a.color - b.color || a.num - b.num; }); }
   function renderView(v) {
     if (!v || !Array.isArray(v.myRack)) return;
@@ -593,6 +603,8 @@
     const inGame = !soloMode && (s === SCREEN.PLAYING || s === SCREEN.OVER);
     $("chatToggle").classList.toggle("hidden", !inGame);
     if (!inGame) $("chatPanel").classList.add("hidden");
+    // 솔로는 서버를 사용하지 않으므로 연결 상태는 온라인 화면에서만 보여준다.
+    $("conn").classList.toggle("hidden", !(onlineMode || s === SCREEN.LOBBY || (s === SCREEN.MENU && optMode === "online")));
     updateHistoryGuard(s);
   }
   function showMenuWithError(msg) { $("menuErr").textContent = msg || ""; onlineMode = false; setScreen(SCREEN.MENU); }
@@ -674,7 +686,13 @@
 
   function initSeg(id, cb) { $(id).addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; [...$(id).children].forEach((c) => c.classList.remove("on")); b.classList.add("on"); cb(b.getAttribute("data-v")); }); }
   initSeg("segCount", (v) => { optCount = +v; });
-  initSeg("segMode", (v) => { optMode = v; $("startSoloBtn").classList.toggle("hidden", v !== "solo"); $("onlineBox").classList.toggle("hidden", v !== "online"); if (v === "online" && (!ws || ws.readyState !== WebSocket.OPEN)) connect(); });
+  initSeg("segMode", (v) => {
+    optMode = v;
+    $("startSoloBtn").classList.toggle("hidden", v !== "solo");
+    $("onlineBox").classList.toggle("hidden", v !== "online");
+    $("conn").classList.toggle("hidden", v !== "online");
+    if (v === "online" && (!ws || ws.readyState !== WebSocket.OPEN)) connect();
+  });
   $("startSoloBtn").addEventListener("click", startSolo);
   $("nickInput").value = myNick;
   $("nickInput").addEventListener("input", () => { myNick = $("nickInput").value.trim().slice(0, 8); try { localStorage.setItem("bg_nick", myNick); } catch {} });
