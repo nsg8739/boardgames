@@ -192,7 +192,7 @@
       </div>
       <div class="entry" id="entry"></div>
       <div class="pad" id="pad"></div>
-      <div class="actions"><button id="hintBtn">💡 힌트</button><button id="clearBtn">지우기</button><button id="submitBtn" disabled>확인 ▶</button></div>
+      <div class="actions"><button id="clearBtn">지우기</button><button id="submitBtn" disabled>확인 ▶</button></div>
       <div class="backHome" style="text-align:center;margin-top:14px;"><button id="toMenuBtn" style="background:none;border:none;color:var(--gold-bright);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">↩ 게임 메뉴</button> · <a href="./index.html" style="color:var(--gold-bright);font-size:13px;font-weight:700;text-decoration:none;">🎲 메인</a></div>
     </div>
   </div>
@@ -222,15 +222,12 @@
   const $ = (id) => document.getElementById(id);
   let N = 3; const AI_DELAY = 650;
   let optDigits = 3, optDiff = "normal";  // 자리수(3/4), 컴퓨터 난이도(쉬움/보통/어려움)
-  let recorded = false, hintsUsed = 0;    // 전적 중복기록 방지 / 힌트 사용 횟수
+  let recorded = false;                  // 전적 중복기록 방지
   // ===== 전적 기록(localStorage) =====
   function loadRec() { try { return JSON.parse(localStorage.getItem("baseball_record") || "null") || { g: 0, w: 0, l: 0, d: 0 }; } catch (e) { return { g: 0, w: 0, l: 0, d: 0 }; } }
   function saveRec(r) { try { localStorage.setItem("baseball_record", JSON.stringify(r)); } catch (e) {} }
   function addResult(res) { const r = loadRec(); r.g++; if (res === "w") r.w++; else if (res === "l") r.l++; else r.d++; saveRec(r); updateRecordBar(); }
   function updateRecordBar() { const el = $("recordBar"); if (!el) return; const r = loadRec(); el.textContent = r.g ? `전적: ${r.g}판 · ${r.w}승 ${r.l}패${r.d ? " " + r.d + "무" : ""}` : "전적 없음"; }
-  // ===== 힌트: 내 추측 기록과 일치하는 정답 후보 =====
-  function hintCandidates() { let c = allCodes(); for (const it of (lastView ? lastView.myGuesses : [])) c = c.filter((cd) => { const j = judge(it.g, cd); return j.s === it.s && j.b === it.b; }); return c; }
-
   // ===== 서버 주소 (davinci/versus와 동일 릴레이) =====
   const RENDER_URL = "wss://pingpong-server-hgl2.onrender.com";
   const override = new URLSearchParams(location.search).get("server");
@@ -350,7 +347,7 @@
     onlineMode = false;
     N = optDigits;  // 선택한 자리수로 솔로 시작
     solo = { N, diff: optDiff, mySecret: randSecret(), aiSecret: randSecret(), my: [], ai: [], myTurn: true, winner: null, cands: allCodes() };
-    entry = []; hintsUsed = 0; recorded = false;
+    entry = []; recorded = false;
     renderView(soloView());
   }
   function soloPlayerGuess(d) {
@@ -396,7 +393,7 @@
     lastView = v;
     if (v.digits) N = v.digits;  // 현재 게임의 자리수에 맞춰 입력칸/판정 동기화
     if (screen !== SCREEN.PLAYING && screen !== SCREEN.OVER) setScreen(SCREEN.PLAYING);
-    if (v.winner == null) { recorded = false; if (v.myGuesses && v.myGuesses.length === 0) hintsUsed = 0; }  // 새 판 → 재기록·힌트 리셋
+    if (v.winner == null) recorded = false;  // 새 판 → 전적 재기록 허용
     if (v.winner != null) { showOver(v); }
     else if (screen === SCREEN.OVER) setScreen(SCREEN.PLAYING);
 
@@ -450,7 +447,6 @@
         ? `${who}의 숫자 <span class="reveal">${fmt(v.oppReveal)}</span> 를 맞혔어요!`
         : `${who}가 내 숫자 <span class="reveal">${fmt(v.mySecret)}</span> 를 맞혔어요.`;
     }
-    if (hintsUsed > 0) $("overSub").innerHTML += ` <span style="color:var(--muted);font-size:12px;">(힌트 ${hintsUsed}회)</span>`;
     if (!recorded) { recorded = true; addResult(v.draw ? "d" : (v.iWon ? "w" : "l")); }
     // 방 유지: 방장·온라인에서만 '다른 게임' 노출(피커 초기화)
     $("gamePicker").classList.add("hidden");
@@ -610,14 +606,6 @@
   $("codeWrap").addEventListener("click", () => { if (myCode) navigator.clipboard?.writeText(myCode).then(() => { const b = $("codeLabel"), o = b.textContent; b.textContent = "복사됨"; setTimeout(() => (b.textContent = myCode), 1000); }).catch(() => {}); });
 
   $("clearBtn").addEventListener("click", () => { if (!canInput()) return; entry = []; renderPad(); renderEntry(); });
-  $("hintBtn").addEventListener("click", () => {
-    if (!canInput()) return;
-    const c = hintCandidates();
-    if (!c.length) { $("status").textContent = "일치하는 후보가 없어요(입력 확인)"; return; }
-    entry = c[Math.floor(Math.random() * c.length)].slice(); hintsUsed++;
-    $("status").textContent = `💡 남은 정답 후보 ${c.length}개 — 추천값을 채웠어요`;
-    renderPad(); renderEntry();
-  });
   $("submitBtn").addEventListener("click", submitGuess);
   $("againBtn").addEventListener("click", () => { if (onlineMode) { if (isHost) newOnlineGame(); else send({ type: "restart", to: 0 }); } else startSolo(); });
   document.addEventListener("keydown", (e) => {
