@@ -214,6 +214,7 @@
   let soloMode = false;
   let G = null, lastView = null;
   let place = [], activePiece = null, activeOffs = null, lastRound = -1;   // 내 배치 상태
+  let solvePendingRound = null, solvePendingTimer = null;
   let nextTimer = null, aiTimers = [];
   let myNick = ""; try { myNick = (localStorage.getItem("bg_nick") || "").trim().slice(0, 8); } catch (e) {}
   let hostNames = {};
@@ -280,13 +281,14 @@
   }
 
   function newGame(count) {
-    G = { count, scores: new Array(count).fill(0), W: 0, H: 0, pieces: [], solution: [], roundWinner: null, round: 0, phase: "reveal", winner: null, log: [] };
+    G = { count, scores: new Array(count).fill(0), W: 0, H: 0, pieces: [], solution: [], roundWinner: null, round: 0, phase: "reveal", winner: null, nextRoundAt: null, log: [] };
     log("게임 시작 — 곧 첫 퍼즐이 나옵니다");
     scheduleNext(600);
   }
   function startRound() {
     if (!G || G.winner != null) return;
     clearTimers();
+    G.nextRoundAt = null;
     const pz = makePuzzle();
     G.round++; G.W = pz.W; G.H = pz.H; G.pieces = pz.pieces; G.solution = pz.solution; G.roundWinner = null; G.phase = "race";
     log(`라운드 ${G.round} 시작!`);
@@ -296,7 +298,9 @@
   function scheduleNext(delay) {
     if (!isHost && !soloMode) return;
     clearTimers();
-    nextTimer = setTimeout(() => { nextTimer = null; startRound(); }, delay != null ? delay : NEXT_DELAY);
+    const wait = Math.max(0, delay != null ? delay : NEXT_DELAY);
+    G.nextRoundAt = Date.now() + wait;
+    nextTimer = setTimeout(() => { nextTimer = null; startRound(); }, wait);
   }
   function inBounds(r, c) { return r >= 0 && r < G.H && c >= 0 && c < G.W; }
   // 제출된 배치 검증: 각 조각이 자기 모양(회전/뒤집기 포함)이고, 판을 겹침 없이 정확히 채우는가
@@ -316,10 +320,19 @@
     if (!validateSolution(placements)) return false;
     G.roundWinner = pi; G.scores[pi]++; G.phase = "reveal";
     log(`🧩 ${nm(pi)} 완성! (+1)`);
-    if (G.scores[pi] >= WIN_ROUNDS) { clearTimers(); G.winner = pi; G.phase = "over"; broadcast(); return true; }
-    broadcast(); scheduleNext(); return true;
+    if (G.scores[pi] >= WIN_ROUNDS) { clearTimers(); G.nextRoundAt = null; G.winner = pi; G.phase = "over"; broadcast(); return true; }
+    scheduleNext(); broadcast(); return true;
   }
-  function applyAction(a) { if (!G) return; if (a.action === "solve") doSolve(a.from, a.placements); }
+  function solveResult(pi, round, accepted, reason) {
+    if (soloMode || pi === 0) { handleSolveResult({ round, accepted, reason }); return; }
+    send({ type: "solve-result", to: pi, round, accepted, reason });
+  }
+  function applyAction(a) {
+    if (!G || !a || a.action !== "solve" || !Number.isInteger(a.from) || a.from < 0 || a.from >= G.count) return;
+    if (a.round !== G.round || G.phase !== "race" || G.roundWinner != null) { solveResult(a.from, a.round, false, "이미 종료된 라운드입니다."); return; }
+    const accepted = doSolve(a.from, a.placements);
+    solveResult(a.from, a.round, accepted, accepted ? "" : "배치가 판을 정확히 채우지 못했습니다.");
+  }
   function dispatch(a) { a.from = myIndex; if (isHost) applyAction(a); else send({ type: "act", to: 0, a }); }
 
   // ===== AI(솔로) — 정답(생성 해답)을 랜덤 지연 후 제출 =====
@@ -359,6 +372,7 @@
   function renderView(v) {
     if (!v || typeof v.round !== "number") return;
     lastView = v;
+    if (solvePendingRound != null && (v.phase !== "race" || solvePendingRound !== v.round)) clearSolvePending();
     if (screen !== SCREEN.PLAYING && screen !== SCREEN.OVER) setScreen(SCREEN.PLAYING);
     $("roundNo").textContent = v.round;
     $("gameCodeWrap").classList.toggle("hidden", !(v.online && myCode)); if (v.online && myCode) $("metaCode").textContent = myCode;
@@ -401,7 +415,8 @@
     const canAct = racing(v);
     $("rotBtn").disabled = !(canAct && activePiece != null); $("flipBtn").disabled = !(canAct && activePiece != null); $("clearBtn").disabled = !canAct;
     const allPlaced = v.pieces.length > 0 && place.length === v.pieces.length && place.every((x) => x);
-    $("ubongoBtn").disabled = !(canAct && allPlaced);
+    $("ubongoBtn").disabled = !(canAct && allPlaced) || solvePendingRound === v.round;
+    $("ubongoBtn").textContent = solvePendingRound === v.round ? "판정 중…" : "🧩 우봉고!";
 
     // 점수판
     const box = $("players"); box.innerHTML = "";
@@ -428,8 +443,19 @@
   $("ubongoBtn").addEventListener("click", () => {
     if (!lastView || !racing(lastView)) return;
     if (!(place.length && place.every((x) => x))) return;
-    dispatch({ action: "solve", placements: place.map((cells) => cells.map((c) => c.slice())) });
+    if (solvePendingRound === lastView.round) return;
+    solvePendingRound = lastView.round;
+    clearTimeout(solvePendingTimer);
+    solvePendingTimer = setTimeout(() => { const round = solvePendingRound; clearSolvePending(); if (lastView && lastView.phase === "race" && lastView.round === round) { toast("응답이 늦어지고 있어요. 다시 제출해 주세요."); renderView(lastView); } }, 5000);
+    renderView(lastView);
+    dispatch({ action: "solve", round: lastView.round, placements: place.map((cells) => cells.map((c) => c.slice())) });
   });
+  function clearSolvePending() { clearTimeout(solvePendingTimer); solvePendingTimer = null; solvePendingRound = null; }
+  function handleSolveResult(m) {
+    if (solvePendingRound !== m.round) return;
+    clearSolvePending();
+    if (!m.accepted) { toast(m.reason || "제출을 확인하지 못했습니다. 다시 시도해 주세요."); if (lastView) renderView(lastView); }
+  }
   function showOver(v) {
     $("overTitle").textContent = v.winner === v.myIndex ? "🎉 승리!" : "게임 종료";
     const rows = v.scores.map((s, i) => ({ i, s })).sort((a, b) => b.s - a.s);
@@ -452,8 +478,8 @@
     updateHistoryGuard(s);
   }
   function showMenuWithError(msg) { $("menuErr").textContent = msg || ""; onlineMode = false; setScreen(SCREEN.MENU); }
-  function startSolo() { soloMode = true; isHost = true; myIndex = 0; myCode = myToken = null; onlineMode = false; hostNames = {}; place = []; activePiece = null; activeOffs = null; lastRound = -1; newGame(optCount); setScreen(SCREEN.PLAYING); broadcast(); }
-  function newOnlineGame() { const c = G ? G.count : optCount; place = []; activePiece = null; activeOffs = null; lastRound = -1; newGame(c); broadcast(); }
+  function startSolo() { soloMode = true; isHost = true; myIndex = 0; myCode = myToken = null; onlineMode = false; hostNames = {}; place = []; activePiece = null; activeOffs = null; lastRound = -1; clearSolvePending(); newGame(optCount); setScreen(SCREEN.PLAYING); broadcast(); }
+  function newOnlineGame() { const c = G ? G.count : optCount; place = []; activePiece = null; activeOffs = null; lastRound = -1; clearSolvePending(); newGame(c); broadcast(); }
 
   function send(obj) { if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj)); }
   function sendNick() { if (isHost) { if (myIndex != null) hostNames[myIndex] = myNick; if (G) broadcast(); } else if (myNick) { send({ type: "nick", name: myNick, to: 0 }); } }
@@ -501,7 +527,7 @@
       case "rejoined":
         onlineMode = true; myIndex = m.index; myCode = m.code; myToken = m.token; isHost = (m.index === 0); saveSession(); restoreConn();
         if (handoffMode) { handoffCap = m.capacity || 2; if (isHost) { $("lobbyTitle").textContent = "방 유지 — 다른 플레이어 대기 중…"; setScreen(SCREEN.LOBBY); maybeStartHandoff(m.count); } else { $("lobbyTitle").textContent = "방 유지됨 — 방장이 곧 새 게임을 시작합니다…"; setScreen(SCREEN.LOBBY); } sendNick(); break; }
-        if (isHost) { try { hostNames = JSON.parse(localStorage.getItem(STATE_KEY + "_n") || "{}"); } catch { hostNames = {}; } const g = loadState(); if (g) { G = g; broadcast(); if (G.phase === "reveal") scheduleNext(); } else { $("roomCode").textContent = m.code; $("lobbyCodeWrap").style.display = ""; $("lobbyTitle").textContent = "상대를 기다리는 중…"; setScreen(SCREEN.LOBBY); } }
+        if (isHost) { try { hostNames = JSON.parse(localStorage.getItem(STATE_KEY + "_n") || "{}"); } catch { hostNames = {}; } const g = loadState(); if (g) { G = g; if (G.phase === "reveal") scheduleNext(G.nextRoundAt ? G.nextRoundAt - Date.now() : NEXT_DELAY); broadcast(); } else { $("roomCode").textContent = m.code; $("lobbyCodeWrap").style.display = ""; $("lobbyTitle").textContent = "상대를 기다리는 중…"; setScreen(SCREEN.LOBBY); } }
         else { $("lobbyTitle").textContent = "재접속됨 — 동기화 중…"; setScreen(SCREEN.LOBBY); }
         sendNick(); break;
       case "rejoin-failed": clearSession(); onlineMode = false; isHost = false; myIndex = myCode = myToken = null; showMenuWithError(m.message || "재접속하지 못했습니다."); break;
@@ -514,7 +540,8 @@
       case "goto": { const g = ROOM_GAMES.find((x) => x.key === m.game); if (g) { saveRoomHandoff(); intentionalNav = true; setTimeout(() => { location.href = handoffUrl(g.file); }, 60); } break; }
       case "peer-joined": if (isHost) newOnlineGame(); else setScreen(SCREEN.PLAYING); sendNick(); break;
       case "view": if (!isHost) { handoffMode = false; renderView(m.view); touchSession(); } break;
-      case "act": if (isHost) applyAction(m.a); break;
+      case "act": if (isHost && m.a && Number.isInteger(m.from)) applyAction({ ...m.a, from: m.from }); break;
+      case "solve-result": if (!isHost) handleSolveResult(m); break;
       case "restart": if (isHost) newOnlineGame(); break;
       case "error": $("menuErr").textContent = m.message || "오류가 발생했습니다."; break;
       case "peer-left": clearSession(); showMenuWithError("상대가 나갔습니다. 새 방을 만들거나 다시 입장하세요."); break;
@@ -618,7 +645,7 @@
     window.__ub = () => ({ screen, soloMode, onlineMode, isHost, myIndex, myCode, G, lastView, place, handoffMode, intentionalNav, missing: missingPeers.size });
     window.__ubact = (a) => dispatch(a);
     window.__ubstart = () => startRound();
-    window.__ubsolve = () => { if (G && G.solution) dispatch({ action: "solve", placements: G.solution.map((s) => s.map((c) => c.slice())) }); };
+    window.__ubsolve = () => { if (G && G.solution) dispatch({ action: "solve", round: G.round, placements: G.solution.map((s) => s.map((c) => c.slice())) }); };
     window.__goto = (k) => gotoGame(k);
     window.__st = () => ({ screen, isHost, myIndex, myCode, handoffMode, intentionalNav });
   }
