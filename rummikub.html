@@ -59,6 +59,8 @@
 
   .gameMeta { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border: 1px solid rgba(201,162,39,0.35); border-radius: 8px; background: rgba(13,10,5,0.46); font-family: var(--serif); font-size: 12px; margin-bottom: 8px; }
   .gameMeta b { color: var(--gold-bright); font-weight: 800; }
+  #turnTimer { color: var(--gold-bright); font-weight: 800; white-space: nowrap; }
+  #turnTimer.urgent { color: #f07b66; }
   #gameCodeWrap { cursor: pointer; white-space: nowrap; }
   #statusBar { text-align: center; font-family: var(--serif); font-size: 15px; font-weight: 700; color: var(--gold-bright); min-height: 22px; margin: 4px 0 8px; }
   .sectLabel { font-size: 12px; color: var(--muted); font-weight: 700; margin: 8px 0 4px; display: flex; justify-content: space-between; }
@@ -154,6 +156,10 @@
       <div id="onlineBox" class="hidden">
         <input id="nickInput" class="nick" maxlength="8" placeholder="닉네임 (예: 아빠)" autocomplete="off" />
         <div class="orDivider"><span>온라인</span></div>
+        <div class="optRow">
+          <span class="optLabel">턴 제한시간</span>
+          <div class="seg" id="segTurnTime"><button data-v="0" class="on">없음</button><button data-v="30">30초</button><button data-v="60">1분</button><button data-v="120">2분</button></div>
+        </div>
         <button id="createBtn" class="cta">방 만들기</button>
         <div class="joinGroup"><input id="codeInput" maxlength="4" placeholder="방 코드" autocomplete="off" /><button id="joinBtn" class="cta2">입장</button></div>
       </div>
@@ -173,6 +179,7 @@
       <div class="gameMeta">
         <span>🁴 루미큐브</span>
         <span id="gameCodeWrap" class="hidden" title="탭하면 코드 복사">CODE <b id="metaCode">----</b></span>
+        <span id="turnTimer" class="hidden" aria-label="턴 남은 시간"></span>
         <span>남은 타일 <b id="deckLeft">0</b></span>
       </div>
       <div id="statusBar" role="status" aria-live="polite"></div>
@@ -222,8 +229,8 @@
   const SCREEN = { MENU: "menu", LOBBY: "lobby", PLAYING: "playing", OVER: "over" };
   let screen = SCREEN.MENU;
   let ws = null, myIndex = null, isHost = false, myCode = null, myToken = null;
-  let optCount = 2, optMode = "solo", onlineMode = false;
-  let soloMode = false, aiTimer = null;
+  let optCount = 2, optMode = "solo", optTurnSeconds = 0, onlineMode = false;
+  let soloMode = false, aiTimer = null, turnTimer = null, clockTimer = null;
   let G = null, lastView = null;
   let selRack = new Set(), selSet = null;  // 선택한 손 타일 id / 이어붙일 테이블 세트 index
   let rackSortMode = "color"; try { if (localStorage.getItem("rk_sort") === "number") rackSortMode = "number"; } catch {}
@@ -282,13 +289,13 @@
   function tilePoints(t) { return t.joker ? 30 : t.num; }
   function rackPoints(p) { return p.rack.reduce((s, t) => s + tilePoints(t), 0); }
 
-  function newGame(count) {
+  function newGame(count, turnLimit = 0) {
     let id = 0; const deck = [];
     for (let cp = 0; cp < 2; cp++) for (let c = 0; c < 4; c++) for (let n = 1; n <= 13; n++) deck.push({ id: id++, color: c, num: n });
     deck.push({ id: id++, joker: true }); deck.push({ id: id++, joker: true });
     shuffle(deck);
     const players = []; for (let i = 0; i < count; i++) { const rack = []; for (let k = 0; k < 14; k++) rack.push(deck.pop()); players.push({ rack, melded: false, newTileId: null }); }
-    G = { count, deck, table: [], work: [], players, turn: 0, phase: "play", winner: null, turnPoints: 0, rackUsed: 0, playedThisTurn: false, passes: 0, snap: null, log: [] };
+    G = { count, deck, table: [], work: [], players, turn: 0, phase: "play", winner: null, turnPoints: 0, rackUsed: 0, playedThisTurn: false, passes: 0, snap: null, log: [], turnLimit, turnDeadline: turnLimit ? Date.now() + turnLimit * 1000 : null };
     takeSnap();
     log("게임 시작 — 첫 등록 30점 이상!");
   }
@@ -305,8 +312,9 @@
   function nm(i) { if (soloMode) return i === 0 ? "나" : "컴퓨터" + i; return hostNames[i] || ("P" + (i + 1)); }
   function log(m) { G.log.push(m); if (G.log.length > 20) G.log.shift(); }
 
-  function advanceTurn() { G.turn = (G.turn + 1) % G.count; takeSnap(); }
+  function advanceTurn() { G.turn = (G.turn + 1) % G.count; takeSnap(); G.turnDeadline = G.turnLimit ? Date.now() + G.turnLimit * 1000 : null; }
   function endGame(winner) {
+    clearTimeout(turnTimer); turnTimer = null;
     G.phase = "over";
     if (winner == null) { let best = Infinity; G.players.forEach((p, i) => { const pt = rackPoints(p); if (pt < best) { best = pt; winner = i; } }); }
     G.winner = winner;
@@ -394,8 +402,23 @@
     advanceTurn(); return true;
   }
 
+  function expireTurn() {
+    if (!G || G.phase !== "play" || !G.turnLimit || Date.now() < G.turnDeadline) return false;
+    const pi = G.turn;
+    if (G.playedThisTurn) doUndo(pi);
+    log(`${nm(pi)}: 제한시간 초과 — 타일 자동 뽑기`);
+    doDraw(pi);
+    return true;
+  }
+  function scheduleTurnTimer() {
+    clearTimeout(turnTimer); turnTimer = null;
+    if (!isHost || !G || G.phase !== "play" || !G.turnLimit || !G.turnDeadline) return;
+    turnTimer = setTimeout(() => { turnTimer = null; if (expireTurn()) broadcast(); }, Math.max(0, G.turnDeadline - Date.now()) + 20);
+  }
+
   function applyAction(a) {
     if (!G || G.phase !== "play") return;
+    if (G.turnLimit && Date.now() >= G.turnDeadline) { if (expireTurn()) broadcast(); return; }
     const pi = a.from; if (pi !== G.turn) return;
     let ok = false;
     if (a.action === "lay") ok = doLay(pi, a.ids || []);
@@ -482,6 +505,7 @@
       work: G.work.map((t) => ({ ...t, isNew: t.id === p.newTileId })),
       myRack: p.rack.map((t) => ({ ...t, isNew: t.id === p.newTileId })), myMelded: p.melded,
       turnPoints: G.turnPoints, rackUsed: G.rackUsed, playedThisTurn: G.playedThisTurn,
+      turnLimit: G.turnLimit || 0, turnDeadline: G.turnDeadline || null,
       players: G.players.map((pp, i) => ({ idx: i, rackCount: pp.rack.length, rackPoints: rackPoints(pp), melded: pp.melded })),
       names: Array.from({ length: G.count }, (_, i) => hostNames[i] || null), log: G.log.slice(-3),
     };
@@ -493,6 +517,7 @@
     saveState();
     if (!soloMode) touchSession();
     if (soloMode) maybeAI();
+    scheduleTurnTimer();
   }
 
   // ===== 렌더 =====
@@ -514,6 +539,7 @@
     lastView = v;
     if (screen !== SCREEN.PLAYING && screen !== SCREEN.OVER) setScreen(SCREEN.PLAYING);
     $("deckLeft").textContent = v.deckLeft;
+    renderTurnClock(v);
     $("gameCodeWrap").classList.toggle("hidden", !(v.online && myCode)); if (v.online && myCode) $("metaCode").textContent = myCode;
     if (selSet != null && selSet >= v.table.length) selSet = null;
 
@@ -561,6 +587,20 @@
     }
     if (v.phase === "over") showOver(v);
     else if (screen === SCREEN.OVER) setScreen(SCREEN.PLAYING);
+  }
+  function renderTurnClock(v) {
+    clearInterval(clockTimer); clockTimer = null;
+    const el = $("turnTimer");
+    if (!v.turnLimit || !v.turnDeadline || v.phase !== "play") { el.classList.add("hidden"); return; }
+    el.classList.remove("hidden");
+    const tick = () => {
+      const left = Math.max(0, Math.ceil((v.turnDeadline - Date.now()) / 1000));
+      const min = Math.floor(left / 60), sec = left % 60;
+      el.textContent = `⏱ ${min}:${String(sec).padStart(2, "0")}`;
+      el.classList.toggle("urgent", left <= 10);
+      if (left <= 0) { clearInterval(clockTimer); clockTimer = null; }
+    };
+    tick(); clockTimer = setInterval(tick, 250);
   }
   function renderActionBar(v) {
     const bar = $("actionBar"); bar.innerHTML = "";
@@ -623,8 +663,8 @@
     updateHistoryGuard(s);
   }
   function showMenuWithError(msg) { $("menuErr").textContent = msg || ""; onlineMode = false; setScreen(SCREEN.MENU); }
-  function startSolo() { soloMode = true; isHost = true; myIndex = 0; myCode = myToken = null; onlineMode = false; hostNames = {}; selRack.clear(); selSet = null; newGame(optCount); setScreen(SCREEN.PLAYING); broadcast(); }
-  function newOnlineGame() { const c = G ? G.count : optCount; selRack.clear(); selSet = null; newGame(c); broadcast(); }
+  function startSolo() { soloMode = true; isHost = true; myIndex = 0; myCode = myToken = null; onlineMode = false; hostNames = {}; selRack.clear(); selSet = null; newGame(optCount, 0); setScreen(SCREEN.PLAYING); broadcast(); }
+  function newOnlineGame() { const c = G ? G.count : optCount, limit = G ? (G.turnLimit || 0) : optTurnSeconds; selRack.clear(); selSet = null; newGame(c, limit); broadcast(); }
 
   function send(obj) { if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj)); }
   function sendNick() { if (isHost) { if (myIndex != null) hostNames[myIndex] = myNick; if (G) broadcast(); } else if (myNick) { send({ type: "nick", name: myNick, to: 0 }); } }
@@ -701,6 +741,7 @@
 
   function initSeg(id, cb) { $(id).addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; [...$(id).children].forEach((c) => c.classList.remove("on")); b.classList.add("on"); cb(b.getAttribute("data-v")); }); }
   initSeg("segCount", (v) => { optCount = +v; });
+  initSeg("segTurnTime", (v) => { optTurnSeconds = +v; });
   initSeg("segMode", (v) => {
     optMode = v;
     $("startSoloBtn").classList.toggle("hidden", v !== "solo");
